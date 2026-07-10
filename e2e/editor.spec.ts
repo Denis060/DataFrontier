@@ -25,6 +25,8 @@ test.describe("article editor", () => {
     // ── Write ────────────────────────────────────────────────
     await page.goto("/admin/articles/new");
     await page.getByPlaceholder("Article title").fill(title);
+    // New articles open in Rich mode; this test exercises the Markdown path.
+    await page.getByRole("button", { name: "Markdown" }).click();
     await page.getByPlaceholder(/Write in Markdown/).fill(`# Heading\n\n${marker}\n`);
 
     // ── Insert an image via the toolbar file input ───────────
