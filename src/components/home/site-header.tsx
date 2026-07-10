@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { UserMenu, type SessionProfile } from "@/components/auth/user-menu";
 import type { HomeData } from "@/lib/queries";
 
 type Props = {
@@ -11,9 +12,10 @@ type Props = {
   established: number | null;
   nav: HomeData["menus"];
   ticker: HomeData["ticker"];
+  profile?: SessionProfile;
 };
 
-export function SiteHeader({ siteName, established, nav, ticker }: Props) {
+export function SiteHeader({ siteName, established, nav, ticker, profile = null }: Props) {
   const [open, setOpen] = useState(false);
   const [brand, accent] = splitBrand(siteName);
 
@@ -47,6 +49,7 @@ export function SiteHeader({ siteName, established, nav, ticker }: Props) {
             </Link>
           ))}
           <ThemeToggle />
+          <UserMenu profile={profile} />
         </nav>
 
         <div className="flex items-center gap-2 lg:hidden">
@@ -79,6 +82,30 @@ export function SiteHeader({ siteName, established, nav, ticker }: Props) {
               {item.label}
             </Link>
           ))}
+
+          <div className="mt-2 flex items-center justify-between border-t border-border pt-3">
+            {profile ? (
+              <>
+                <span className="text-[13px] text-muted">{profile.full_name}</span>
+                <div className="flex items-center gap-3">
+                  {["admin", "editor", "author"].includes(profile.role) && (
+                    <Link href="/admin" className="text-[13px] text-gold" onClick={() => setOpen(false)}>
+                      Newsroom
+                    </Link>
+                  )}
+                  <form action="/auth/signout" method="post">
+                    <button type="submit" className="text-[13px] text-muted">
+                      Sign out
+                    </button>
+                  </form>
+                </div>
+              </>
+            ) : (
+              <Link href="/login" className="text-[13px] text-gold" onClick={() => setOpen(false)}>
+                Sign in
+              </Link>
+            )}
+          </div>
         </nav>
       )}
 

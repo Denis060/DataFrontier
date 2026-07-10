@@ -1,4 +1,5 @@
 import { getHomeData, menuFor } from "@/lib/queries";
+import { getCurrentProfile } from "@/lib/auth";
 import { SiteHeader } from "@/components/home/site-header";
 import { Hero } from "@/components/home/hero";
 import { NewsletterBand } from "@/components/home/newsletter-band";
@@ -14,7 +15,7 @@ import { SiteFooter } from "@/components/home/site-footer";
 export const revalidate = 60;
 
 export default async function Home() {
-  const d = await getHomeData();
+  const [d, profile] = await Promise.all([getHomeData(), getCurrentProfile()]);
   const s = d.settings;
   const siteName = s?.site_name ?? "The DataFrontier";
 
@@ -29,6 +30,7 @@ export default async function Home() {
         established={s?.established_year ?? null}
         nav={menuFor(d.menus, "header")}
         ticker={d.ticker}
+        profile={profile}
       />
 
       <main className="flex-1">

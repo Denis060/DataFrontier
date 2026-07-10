@@ -10,6 +10,7 @@ import {
   menuFor,
   type ArticleCard,
 } from "@/lib/queries";
+import { getCurrentProfile } from "@/lib/auth";
 import { Pill } from "@/components/pill";
 import { ShareBar } from "@/components/article/share-bar";
 import { ViewCounter } from "@/components/article/view-counter";
@@ -73,9 +74,17 @@ function RailCard({ a }: { a: ArticleCard }) {
   );
 }
 
-function RailSection({ title, children }: { title: string; children: React.ReactNode }) {
+function RailSection({
+  title,
+  children,
+  className = "",
+}: {
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <section>
+    <section className={className}>
       <h2 className="mb-3 border-b-2 border-border pb-2.5 font-mono text-[10px] uppercase tracking-[2px] text-muted">
         {title}
       </h2>
@@ -86,7 +95,11 @@ function RailSection({ title, children }: { title: string; children: React.React
 
 export default async function ArticlePage({ params }: Props) {
   const { slug } = await params;
-  const [article, chrome] = await Promise.all([getArticle(slug), getChrome()]);
+  const [article, chrome, profile] = await Promise.all([
+    getArticle(slug),
+    getChrome(),
+    getCurrentProfile(),
+  ]);
   if (!article) notFound();
 
   const [related, moreByAuthor] = await Promise.all([
@@ -105,6 +118,7 @@ export default async function ArticlePage({ params }: Props) {
         established={settings?.established_year ?? null}
         nav={menuFor(chrome.menus, "header")}
         ticker={chrome.ticker}
+        profile={profile}
       />
 
       {!isDraft && <ViewCounter slug={article.slug} />}
@@ -184,7 +198,9 @@ export default async function ArticlePage({ params }: Props) {
               A rail taller than the viewport can never hold its sticky
               position, so it scrolls within itself instead. */}
           <aside className="flex flex-col gap-9 lg:sticky lg:top-28 lg:max-h-[calc(100vh-8rem)] lg:self-start lg:overflow-y-auto lg:pr-1">
-            <RailSection title="Share">
+            {/* Desktop only. On mobile the rail stacks beneath the article, so
+                this would sit immediately under the in-article share bar. */}
+            <RailSection title="Share" className="hidden lg:block">
               <ShareBar url={shareUrl} title={article.title} />
             </RailSection>
 
