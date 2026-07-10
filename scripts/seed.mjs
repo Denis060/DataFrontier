@@ -320,6 +320,14 @@ const menu = (location, entries, is_external = false) =>
   }));
 
 const MENUS = [
+  ...menu("header", [
+    "Agentic AI:/category/agentic-ai",
+    "ML & Data:/category/ml-data",
+    "Africa AI:/category/ai-in-africa",
+    "Events:/events",
+    "Careers:/jobs",
+  ]),
+  { location: "header", label: "Subscribe Free →", url: "/newsletter", icon: null, sort_order: 6, is_external: false, is_button: true },
   ...menu("footer_topics", [
     "Agentic AI Systems:/category/agentic-ai",
     "Machine Learning:/category/ml-data",
@@ -464,6 +472,55 @@ const CHEAT_SHEETS = [
   },
 ];
 
+/** Events, dated relative to now so some are always upcoming, one is past. */
+const now = new Date();
+const daysOut = (n) => new Date(now.getTime() + n * 86400000).toISOString();
+const EVENTS = [
+  {
+    slug: "agentic-ai-summit-2026",
+    title: "Agentic AI Summit 2026",
+    summary: "A day on building, evaluating, and shipping production agents.",
+    description:
+      "Practitioners from across the ecosystem share what actually works when agents leave the demo and hit production. Talks on memory architectures, evaluation harnesses, and cost control.",
+    host: "The Data Frontier",
+    location: "Online",
+    is_online: true,
+    starts_at: daysOut(21),
+    timezone: "UTC",
+    register_url: "https://example.com/agentic-summit",
+    category: "agentic-ai",
+    is_featured: true,
+  },
+  {
+    slug: "africa-ml-meetup-lagos",
+    title: "Africa ML Meetup — Lagos",
+    summary: "In-person evening of talks and networking for ML practitioners.",
+    description:
+      "A community meetup for machine-learning engineers and data scientists across West Africa. Lightning talks, a panel on low-resource NLP, and plenty of networking.",
+    host: "Africa ML Community",
+    location: "Lagos, Nigeria",
+    is_online: false,
+    starts_at: daysOut(40),
+    timezone: "Africa/Lagos",
+    register_url: "https://example.com/africa-ml-lagos",
+    category: "ai-in-africa",
+  },
+  {
+    slug: "data-viz-workshop",
+    title: "Hands-On Data Visualization Workshop",
+    summary: "Build clear, honest charts from messy real-world data.",
+    description:
+      "A practical, laptop-open workshop. Bring a dataset; leave with a dashboard and the principles to make it readable.",
+    host: "The Data Frontier",
+    location: "Online",
+    is_online: true,
+    starts_at: daysOut(-14),
+    timezone: "UTC",
+    register_url: "https://example.com/dataviz-workshop",
+    category: "ml-data",
+  },
+];
+
 const ISSUES = Array.from({ length: 6 }, (_, i) => ({
   issue_number: i + 1,
   title: `Issue #${i + 1}`,
@@ -525,10 +582,11 @@ async function undoAll() {
   console.log("Removing seeded data…");
   await db.from("articles").delete().in("slug", ARTICLES.map((a) => a.slug));
   await db.from("cheat_sheets").delete().in("slug", CHEAT_SHEETS.map((c) => c.slug));
+  await db.from("events").delete().in("slug", EVENTS.map((e) => e.slug));
   await db.from("newsletter_issues").delete().in("slug", ISSUES.map((i) => i.slug));
   await db.from("jobs").delete().in("company", JOBS.map((j) => j.company));
   await db.from("ticker_items").delete().in("text", TICKER);
-  await db.from("menu_links").delete().neq("location", "header");
+  await db.from("menu_links").delete().neq("id", "00000000-0000-0000-0000-000000000000");
   await db.from("site_settings").update({ hero_article_id: null, editor_profile_id: null }).eq("id", true);
   for (const a of AUTHORS) {
     const u = await findUserByEmail(a.email);
@@ -573,7 +631,7 @@ async function seed() {
   die("ticker", tErr);
   console.log(`  ✓ ${TICKER.length} ticker items`);
 
-  await db.from("menu_links").delete().neq("location", "header");
+  await db.from("menu_links").delete().neq("id", "00000000-0000-0000-0000-000000000000");
   const { error: mErr } = await db.from("menu_links").insert(MENUS);
   die("menus", mErr);
   console.log(`  ✓ ${MENUS.length} footer/social links`);
@@ -614,6 +672,26 @@ async function seed() {
   const { error: csErr } = await db.from("cheat_sheets").upsert(cheatRows, { onConflict: "slug" });
   die("cheat sheets", csErr);
   console.log(`  ✓ ${cheatRows.length} cheat sheets`);
+
+  const eventRows = EVENTS.map((e) => ({
+    slug: e.slug,
+    title: e.title,
+    summary: e.summary,
+    description: e.description,
+    host: e.host,
+    location: e.location,
+    is_online: e.is_online,
+    starts_at: e.starts_at,
+    timezone: e.timezone,
+    register_url: e.register_url,
+    category_id: categories[e.category],
+    is_featured: e.is_featured ?? false,
+    published: true,
+    created_by: authors["ibrahim-fofanah"],
+  }));
+  const { error: evErr } = await db.from("events").upsert(eventRows, { onConflict: "slug" });
+  die("events", evErr);
+  console.log(`  ✓ ${eventRows.length} events`);
 
   const { data: hero, error: hErr } = await db
     .from("articles")

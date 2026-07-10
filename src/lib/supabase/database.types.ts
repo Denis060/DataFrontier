@@ -386,6 +386,87 @@ export type Database = {
           },
         ]
       }
+      events: {
+        Row: {
+          category_id: string | null
+          cover_image: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          ends_at: string | null
+          host: string | null
+          id: string
+          is_featured: boolean
+          is_online: boolean
+          location: string | null
+          published: boolean
+          register_url: string | null
+          slug: string
+          starts_at: string
+          summary: string | null
+          timezone: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          cover_image?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string | null
+          host?: string | null
+          id?: string
+          is_featured?: boolean
+          is_online?: boolean
+          location?: string | null
+          published?: boolean
+          register_url?: string | null
+          slug: string
+          starts_at: string
+          summary?: string | null
+          timezone?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          cover_image?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string | null
+          host?: string | null
+          id?: string
+          is_featured?: boolean
+          is_online?: boolean
+          location?: string | null
+          published?: boolean
+          register_url?: string | null
+          slug?: string
+          starts_at?: string
+          summary?: string | null
+          timezone?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       formats: {
         Row: {
           color: Database["public"]["Enums"]["accent_color"]

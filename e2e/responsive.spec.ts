@@ -14,6 +14,7 @@ const PAGES = [
   { name: "cheat-sheets", path: "/cheat-sheets" },
   { name: "newsletter-archive", path: "/newsletter/archive" },
   { name: "write", path: "/write" },
+  { name: "events", path: "/events" },
 ];
 
 for (const { name, path } of PAGES) {
