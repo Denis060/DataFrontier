@@ -129,7 +129,10 @@ body {
   color: var(--df-ink);
   font-family: var(--font-sans), system-ui, sans-serif;
   line-height: 1.6;
-  overflow-x: hidden;
+  /* `clip`, not `hidden`: both stop sideways overflow, but `hidden` makes the
+     body a scroll container, and a position:sticky child then resolves against
+     it instead of the viewport — so the sticky rail never sticks. */
+  overflow-x: clip;
   transition:
     background-color 0.2s ease,
     color 0.2s ease;
@@ -156,6 +159,139 @@ body::before {
 ::-webkit-scrollbar-thumb {
   background: var(--df-border-strong);
   border-radius: 3px;
+}
+
+/* ─── ARTICLE PROSE ───────────────────────────────────────
+   Hand-rolled rather than @tailwindcss/typography, so headings and rules
+   inherit the same serif/mono/accent tokens as the rest of the site. */
+.article-prose {
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--df-ink);
+}
+.article-prose > * + * {
+  margin-top: 1.4em;
+}
+.article-prose h2,
+.article-prose h3 {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  margin-top: 2.2em;
+  margin-bottom: 0.6em;
+}
+.article-prose h2 {
+  font-size: 30px;
+}
+.article-prose h3 {
+  font-size: 22px;
+}
+/* rehype-autolink-headings wraps the text in an <a>; keep it looking like a heading. */
+.article-prose h2 a,
+.article-prose h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+.article-prose h2 a:hover::after,
+.article-prose h3 a:hover::after {
+  content: " #";
+  color: var(--df-gold);
+}
+.article-prose strong {
+  color: var(--df-ink);
+  font-weight: 600;
+}
+.article-prose ul,
+.article-prose ol {
+  padding-left: 1.4em;
+}
+.article-prose ul {
+  list-style: disc;
+}
+.article-prose ol {
+  list-style: decimal;
+}
+.article-prose li::marker {
+  color: var(--df-muted);
+}
+.article-prose li + li {
+  margin-top: 0.4em;
+}
+.article-prose blockquote {
+  border-left: 2px solid var(--df-border-strong);
+  padding-left: 1.2em;
+  color: var(--df-muted);
+  font-style: italic;
+}
+.article-prose hr {
+  border: 0;
+  border-top: 1px solid var(--df-border);
+  margin: 2.5em 0;
+}
+.article-prose img {
+  border-radius: 6px;
+  border: 1px solid var(--df-border);
+}
+.article-prose :not(pre) > code {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.86em;
+  background: var(--df-surface-1);
+  border: 1px solid var(--df-border);
+  border-radius: 3px;
+  padding: 0.1em 0.35em;
+}
+.article-prose pre {
+  background: var(--df-bg2);
+  border: 1px solid var(--df-border);
+  border-radius: 6px;
+  padding: 1.1em 1.2em;
+  overflow-x: auto;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+.article-prose pre code {
+  font-family: var(--font-mono), monospace;
+  display: grid; /* lets highlighted lines span the full width */
+}
+/* rehype-pretty-code emits both palettes as custom properties.
+   Pick one per theme instead of pinning the code block to a single look. */
+.article-prose pre span,
+.article-prose pre code {
+  color: var(--shiki-light);
+}
+:root[data-theme="dark"] .article-prose pre span,
+:root[data-theme="dark"] .article-prose pre code {
+  color: var(--shiki-dark);
+}
+.article-prose [data-line] {
+  padding: 0 0.2em;
+}
+.article-prose [data-highlighted-line] {
+  background: var(--df-gold-dim);
+  box-shadow: inset 2px 0 0 var(--df-gold);
+}
+/* Tables come from remark-gfm; they must scroll, not widen the page. */
+.article-prose table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.article-prose th,
+.article-prose td {
+  border: 1px solid var(--df-border);
+  padding: 0.6em 0.9em;
+  text-align: left;
+}
+.article-prose th {
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--df-muted);
+  background: var(--df-bg2);
 }
 
 /* The track renders its items twice; -50% lands exactly on the seam. */

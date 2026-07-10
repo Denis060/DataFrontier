@@ -353,6 +353,84 @@ const MENUS = [
   ),
 ];
 
+/** MDX body for the hero article — exercises every renderer feature. */
+const HERO_BODY = `
+Most teams treat an agent as a chatbot with a for-loop. It isn't. An agent is a
+system that decides *what to do next*, and the hard parts are the three
+capabilities that decision depends on.
+
+<Callout tone="warning">
+  73% of agentic proof-of-concepts never reach production. Almost none of them
+  fail because the model wasn't smart enough.
+</Callout>
+
+## The three pillars
+
+Every production agent I've reviewed converges on the same substrate: durable
+**memory**, explicit **planning**, and constrained **tool use**. Strip any one
+away and the system degrades in a characteristic way.
+
+1. Without memory, it repeats work and contradicts itself.
+2. Without planning, it thrashes — long chains of plausible, aimless calls.
+3. Without tool constraints, it hallucinates side effects it never performed.
+
+<Aside>An agent without memory is a very expensive way to ask a question twice.</Aside>
+
+### Memory is not a vector database
+
+Retrieval is one *kind* of memory. Production systems need at least three:
+
+| Kind | Lifetime | Typical store |
+|------|----------|---------------|
+| Working | one task | in-process |
+| Episodic | one session | Postgres / Redis |
+| Semantic | forever | vector index |
+
+Conflating them is the single most common architectural mistake. Here's the
+minimum viable separation:
+
+\`\`\`python
+class AgentMemory:
+    def __init__(self, working, episodic, semantic):
+        self.working = working    # cleared per task
+        self.episodic = episodic  # survives the turn
+        self.semantic = semantic  # survives the user
+
+    def recall(self, query: str) -> list[str]:
+        return self.semantic.search(query, k=5) + self.episodic.recent(n=3)
+\`\`\`
+
+## What actually predicts success
+
+Not model choice. Not framework. In the deployments that reached production,
+the teams had done one unglamorous thing: they built an **evaluation harness
+before they built the agent**.
+
+<Callout tone="tip">
+  If you cannot measure a regression, you cannot ship a change. Write the eval
+  first — even a crude one — and the architecture will tell you what it needs.
+</Callout>
+
+The gap between early adopters and everyone else isn't intelligence. It's
+instrumentation.
+`.trim();
+
+const GENERIC_BODY = (title) =>
+  `
+This piece is part of The Data Frontier's ongoing coverage. The full text of
+*${title}* is being prepared for publication.
+
+## What this covers
+
+- The practical constraints practitioners actually hit
+- Where the published benchmarks disagree with production experience
+- What we'd do differently next time
+
+<Callout tone="note">
+  Seed content. Replace this body from the admin once the editor ships.
+</Callout>
+`.trim();
+
 /** Copy for rows the migration created. Keyed by title, which is stable. */
 const RESOURCE_COPY = [
   {
@@ -453,6 +531,7 @@ async function seed() {
     featured: a.featured ?? false,
     reading_time: a.reading_time,
     published_at: a.published_at,
+    body: a.featured ? HERO_BODY : GENERIC_BODY(a.title),
   }));
   const missing = rows.filter((r) => !r.author_id || !r.category_id || !r.format_id);
   if (missing.length) die("unresolved slug reference", new Error(missing.map((m) => m.slug).join(", ")));

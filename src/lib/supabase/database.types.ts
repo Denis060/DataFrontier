@@ -77,7 +77,7 @@ export type Database = {
       articles: {
         Row: {
           author_id: string
-          body: Json | null
+          body: string | null
           canonical_url: string | null
           category_id: string | null
           cover_alt: string | null
@@ -104,7 +104,7 @@ export type Database = {
         }
         Insert: {
           author_id: string
-          body?: Json | null
+          body?: string | null
           canonical_url?: string | null
           category_id?: string | null
           cover_alt?: string | null
@@ -131,7 +131,7 @@ export type Database = {
         }
         Update: {
           author_id?: string
-          body?: Json | null
+          body?: string | null
           canonical_url?: string | null
           category_id?: string | null
           cover_alt?: string | null
@@ -472,7 +472,7 @@ export type Database = {
       }
       newsletter_issues: {
         Row: {
-          body: Json | null
+          body: string | null
           created_at: string
           id: string
           issue_number: number
@@ -484,7 +484,7 @@ export type Database = {
           title: string
         }
         Insert: {
-          body?: Json | null
+          body?: string | null
           created_at?: string
           id?: string
           issue_number: number
@@ -496,7 +496,7 @@ export type Database = {
           title: string
         }
         Update: {
-          body?: Json | null
+          body?: string | null
           created_at?: string
           id?: string
           issue_number?: number
