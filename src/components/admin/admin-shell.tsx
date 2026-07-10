@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { FileText, LayoutDashboard, Settings, Users } from "lucide-react";
+import { FileText, Inbox, LayoutDashboard, Settings, Users } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { Role } from "@/lib/auth";
 
 const NAV = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, roles: ["admin", "editor", "author"] },
   { href: "/admin/articles", label: "Articles", icon: FileText, roles: ["admin", "editor", "author"] },
+  { href: "/admin/applications", label: "Applications", icon: Inbox, roles: ["admin", "editor"] },
   { href: "/admin/users", label: "People", icon: Users, roles: ["admin"] },
   { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["admin"] },
 ] as const;
