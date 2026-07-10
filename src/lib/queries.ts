@@ -195,6 +195,16 @@ export async function getCheatSheets() {
   return data ?? [];
 }
 
+export async function getCheatSheet(slug: string) {
+  const db = await createClient();
+  const { data } = await db
+    .from("cheat_sheets")
+    .select("id, title, slug, description, image_url, download_url, category:categories(name, slug, color), author:profiles(full_name, slug)")
+    .eq("slug", slug)
+    .maybeSingle();
+  return data;
+}
+
 const EVENT_SELECT =
   "id, slug, title, summary, description, cover_image, host, location, is_online, starts_at, ends_at, timezone, register_url, is_featured, category:categories(name, slug, color)";
 

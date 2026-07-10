@@ -12,6 +12,7 @@ const PAGES = [
   { name: "author", path: "/author/ibrahim-fofanah" },
   { name: "jobs", path: "/jobs" },
   { name: "cheat-sheets", path: "/cheat-sheets" },
+  { name: "cheat-sheet-detail", path: "/cheat-sheets/pandas-data-cleaning" },
   { name: "newsletter-archive", path: "/newsletter/archive" },
   { name: "write", path: "/write" },
   { name: "events", path: "/events" },
