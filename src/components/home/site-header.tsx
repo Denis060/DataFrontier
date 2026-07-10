@@ -89,21 +89,25 @@ export function SiteHeader({ siteName, established, nav, ticker }: Props) {
 
 function Ticker({ items }: { items: HomeData["ticker"] }) {
   return (
-    <div className="flex items-center gap-4 overflow-hidden border-t border-border bg-bg2 py-[7px] pl-5 sm:pl-8 lg:pl-12">
+    <div className="flex items-center gap-4 border-t border-border bg-bg2 py-[7px] pl-5 sm:pl-8 lg:pl-12">
       <span className="shrink-0 whitespace-nowrap border-r border-border pr-4 font-mono text-[10px] uppercase tracking-[2px] text-gold">
         Latest
       </span>
-      <div className="ticker-track flex gap-12 whitespace-nowrap">
-        {/* Rendered twice so the -50% translate loops seamlessly. */}
-        {[0, 1].map((pass) => (
-          <div key={pass} className="flex shrink-0 gap-12" aria-hidden={pass === 1}>
-            {items.map((item) => (
-              <span key={`${pass}-${item.id}`} className="text-xs text-muted">
-                {item.text}
-              </span>
-            ))}
-          </div>
-        ))}
+      {/* The track gets its own clipping context. With overflow on the outer
+          flex row, items translated left slid across the "Latest" label. */}
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <div className="ticker-track flex w-max gap-12 whitespace-nowrap">
+          {/* Rendered twice so the -50% translate loops seamlessly. */}
+          {[0, 1].map((pass) => (
+            <div key={pass} className="flex shrink-0 gap-12" aria-hidden={pass === 1}>
+              {items.map((item) => (
+                <span key={`${pass}-${item.id}`} className="text-xs text-muted">
+                  {item.text}
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -106,6 +106,189 @@ export async function getHomeData() {
 
 export type HomeData = Awaited<ReturnType<typeof getHomeData>>;
 
+/**
+ * RLS already hides unpublished rows from anonymous readers, and shows them to
+ * their own author — so this deliberately does not filter on status. A draft is
+ * previewable by the person writing it, and invisible to everyone else.
+ */
+export async function getArticle(slug: string) {
+  const db = await createClient();
+  // One `author` alias only — PostgREST rejects a relationship embedded twice
+  // under the same name ("table name articles_author_1 specified more than once").
+  const { data, error } = await db
+    .from("articles")
+    .select(
+      `id, slug, title, subtitle, excerpt, kicker, body, status, category_id, author_id,
+       cover_image, cover_alt, reading_time, published_at, featured, view_count,
+       meta_title, meta_description, canonical_url, og_image,
+       author:profiles!articles_author_id_fkey (full_name, slug, title, bio, avatar_url),
+       category:categories (name, slug, color),
+       format:formats (name, slug, color)`,
+    )
+    .eq("slug", slug)
+    .maybeSingle();
+
+  // A malformed query must not masquerade as a missing article.
+  if (error) throw new Error(`getArticle(${slug}): ${error.message}`);
+  return data;
+}
+
+export type FullArticle = NonNullable<Awaited<ReturnType<typeof getArticle>>>;
+
+/** Same category, newest first, excluding the article being read. */
+export async function getRelated(articleId: string, categoryId: string | null, limit = 3) {
+  if (!categoryId) return [];
+  const db = await createClient();
+  const { data } = await db
+    .from("articles")
+    .select(ARTICLE_SELECT)
+    .eq("status", "published")
+    .eq("category_id", categoryId)
+    .neq("id", articleId)
+    .order("published_at", { ascending: false })
+    .limit(limit);
+
+  return (data ?? []) as ArticleCard[];
+}
+
+/** Other pieces by the same author, for the article rail. */
+export async function getMoreByAuthor(authorId: string, excludeId: string, limit = 3) {
+  const db = await createClient();
+  const { data } = await db
+    .from("articles")
+    .select(ARTICLE_SELECT)
+    .eq("status", "published")
+    .eq("author_id", authorId)
+    .neq("id", excludeId)
+    .order("published_at", { ascending: false })
+    .limit(limit);
+  return (data ?? []) as ArticleCard[];
+}
+
+/** Header and footer chrome, for pages that aren't the homepage. */
+export async function getChrome() {
+  const db = await createClient();
+  const [settingsRes, menusRes, tickerRes] = await Promise.all([
+    db.from("site_settings").select("*").eq("id", true).single(),
+    db.from("menu_links").select("id, location, label, url, icon, is_external, is_button").eq("is_active", true).order("sort_order"),
+    db.from("ticker_items").select("id, text, url").eq("is_active", true).order("sort_order"),
+  ]);
+  return {
+    settings: settingsRes.data,
+    menus: menusRes.data ?? [],
+    ticker: tickerRes.data ?? [],
+  };
+}
+
+export type Chrome = Awaited<ReturnType<typeof getChrome>>;
+
+export const PER_PAGE = 12;
+
+type Page<T> = { items: T[]; total: number; page: number; perPage: number };
+
+const range = (page: number, perPage: number): [number, number] => [
+  (page - 1) * perPage,
+  page * perPage - 1,
+];
+
+export async function getCategory(slug: string) {
+  const db = await createClient();
+  const { data, error } = await db
+    .from("categories")
+    .select("id, name, slug, description, color, icon")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) throw new Error(`getCategory(${slug}): ${error.message}`);
+  return data;
+}
+
+export async function getArticlesByCategory(
+  categoryId: string,
+  page = 1,
+): Promise<Page<ArticleCard>> {
+  const db = await createClient();
+
+  // PostgREST 416s when `range` starts past the last row, so the total is
+  // established first and an out-of-range page short-circuits to empty.
+  const { count } = await db
+    .from("articles")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "published")
+    .eq("category_id", categoryId);
+
+  const total = count ?? 0;
+  if ((page - 1) * PER_PAGE >= total) {
+    return { items: [], total, page, perPage: PER_PAGE };
+  }
+
+  const { data, error } = await db
+    .from("articles")
+    .select(ARTICLE_SELECT)
+    .eq("status", "published")
+    .eq("category_id", categoryId)
+    .order("published_at", { ascending: false })
+    .range(...range(page, PER_PAGE));
+
+  if (error) throw new Error(`getArticlesByCategory: ${error.message}`);
+  return { items: (data ?? []) as ArticleCard[], total, page, perPage: PER_PAGE };
+}
+
+export async function getAuthor(slug: string) {
+  const db = await createClient();
+  const { data, error } = await db
+    .from("profiles")
+    .select("id, full_name, slug, title, bio, avatar_url, socials, role")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) throw new Error(`getAuthor(${slug}): ${error.message}`);
+  return data;
+}
+
+/**
+ * An author's page must include pieces they co-wrote, not just those where
+ * they are `articles.author_id`. Co-authorship lives in a join table, so the
+ * ids are collected first and folded into a single `or` — which keeps the
+ * count and the pagination in SQL rather than in JS.
+ */
+export async function getArticlesByAuthor(
+  profileId: string,
+  page = 1,
+): Promise<Page<ArticleCard>> {
+  const db = await createClient();
+
+  const { data: coAuthored } = await db
+    .from("article_authors")
+    .select("article_id")
+    .eq("profile_id", profileId);
+
+  const ids = (coAuthored ?? []).map((r) => r.article_id);
+  const filter = ids.length
+    ? `author_id.eq.${profileId},id.in.(${ids.join(",")})`
+    : `author_id.eq.${profileId}`;
+
+  const { count } = await db
+    .from("articles")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "published")
+    .or(filter);
+
+  const total = count ?? 0;
+  if ((page - 1) * PER_PAGE >= total) {
+    return { items: [], total, page, perPage: PER_PAGE };
+  }
+
+  const { data, error } = await db
+    .from("articles")
+    .select(ARTICLE_SELECT)
+    .eq("status", "published")
+    .or(filter)
+    .order("published_at", { ascending: false })
+    .range(...range(page, PER_PAGE));
+
+  if (error) throw new Error(`getArticlesByAuthor: ${error.message}`);
+  return { items: (data ?? []) as ArticleCard[], total, page, perPage: PER_PAGE };
+}
+
 export function menuFor(menus: HomeData["menus"], location: MenuLocation) {
   return menus.filter((m) => m.location === location);
 }
