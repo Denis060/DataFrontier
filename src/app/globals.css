@@ -1,0 +1,201 @@
+@import "tailwindcss";
+
+/*
+ * Two palettes, one set of token names. Components only ever reference the
+ * semantic name (bg2, ink, muted), never a raw hex — so a theme swap is a
+ * variable swap and nothing else has to change.
+ *
+ * Dark is the default. `data-theme` on <html> is stamped before paint by the
+ * inline script in layout.tsx, so there is no flash of the wrong theme.
+ */
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --df-bg: #080a0e;
+  --df-bg2: #0f1218;
+  --df-bg3: #161b24;
+  --df-border: rgba(255, 255, 255, 0.07);
+  --df-border-strong: rgba(255, 255, 255, 0.14);
+
+  --df-gold: #d4a853;
+  --df-gold-dim: rgba(212, 168, 83, 0.15);
+  --df-teal: #2dd4bf;
+  --df-teal-dim: rgba(45, 212, 191, 0.1);
+  --df-red: #e05252;
+  --df-red-dim: rgba(224, 82, 82, 0.12);
+
+  --df-ink: #e8eaf0;
+  /* #6b7280 from the original mockup only reached 3.6:1 on bg3 and the
+     dark band gradients. This clears 4.5:1 on every dark surface. */
+  --df-muted: #7d8494;
+
+  --df-on-accent: #000000;
+  --df-noise-opacity: 0.4;
+
+  /* Translucent overlays. Light on dark, dark on light — a fixed
+     white/5 is invisible on paper, which is why these are tokens. */
+  --df-surface-1: rgba(255, 255, 255, 0.05);
+  --df-surface-2: rgba(255, 255, 255, 0.08);
+
+  /* Band gradient endpoints. Hardcoding the dark end here is what made
+     the light theme fade to black under its own text. */
+  --df-news-from: #161b24;
+  --df-news-to: #0d1420;
+  --df-spot-from: #0a1a15;
+  --df-spot-to: #080a0e;
+  --df-editor-from: #1a1200;
+  --df-editor-to: #161b24;
+}
+
+/* Warm paper, not plain white — keeps the editorial feel of the dark theme. */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --df-bg: #fbfaf7;
+  --df-bg2: #f3f1ec;
+  --df-bg3: #e9e6df;
+  --df-border: rgba(0, 0, 0, 0.09);
+  --df-border-strong: rgba(0, 0, 0, 0.18);
+
+  /* Darkened accents: the dark-theme gold/teal fail contrast on paper. */
+  --df-gold: #8a6212;
+  --df-gold-dim: rgba(138, 98, 18, 0.12);
+  --df-teal: #0f766e;
+  --df-teal-dim: rgba(15, 118, 110, 0.1);
+  --df-red: #b93030;
+  --df-red-dim: rgba(185, 48, 48, 0.1);
+
+  --df-ink: #14171c;
+  --df-muted: #5a6270;
+
+  --df-on-accent: #ffffff;
+  --df-noise-opacity: 0.14;
+
+  --df-surface-1: rgba(0, 0, 0, 0.04);
+  --df-surface-2: rgba(0, 0, 0, 0.07);
+
+  /* Same hue families as the dark theme, lifted to paper. Each pair stays
+     within a few points of luminance so `ink` text holds contrast across it. */
+  --df-news-from: #f1eee7;
+  --df-news-to: #e4e8ee;
+  --df-spot-from: #e7f2ed;
+  --df-spot-to: #fbfaf7;
+  --df-editor-from: #faf1de;
+  --df-editor-to: #ece9e2;
+}
+
+/* `inline` makes the utilities point at the vars above rather than copy their
+   values, which is what lets a single data-theme flip repaint the whole site. */
+@theme inline {
+  --color-bg: var(--df-bg);
+  --color-bg2: var(--df-bg2);
+  --color-bg3: var(--df-bg3);
+  --color-border: var(--df-border);
+  --color-border-strong: var(--df-border-strong);
+
+  --color-gold: var(--df-gold);
+  --color-gold-dim: var(--df-gold-dim);
+  --color-teal: var(--df-teal);
+  --color-teal-dim: var(--df-teal-dim);
+  --color-red: var(--df-red);
+  --color-red-dim: var(--df-red-dim);
+
+  --color-ink: var(--df-ink);
+  --color-muted: var(--df-muted);
+  --color-on-accent: var(--df-on-accent);
+
+  --color-surface-1: var(--df-surface-1);
+  --color-surface-2: var(--df-surface-2);
+
+  --color-news-from: var(--df-news-from);
+  --color-news-to: var(--df-news-to);
+  --color-spot-from: var(--df-spot-from);
+  --color-spot-to: var(--df-spot-to);
+  --color-editor-from: var(--df-editor-from);
+  --color-editor-to: var(--df-editor-to);
+
+  --font-serif: var(--font-playfair), Georgia, serif;
+  --font-sans: var(--font-dm-sans), system-ui, sans-serif;
+  --font-mono: var(--font-dm-mono), ui-monospace, monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--df-bg);
+  color: var(--df-ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  line-height: 1.6;
+  overflow-x: hidden;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+/* Film-grain overlay. Sits above the page, ignores pointer events. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: var(--df-noise-opacity);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--df-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--df-border-strong);
+  border-radius: 3px;
+}
+
+/* The track renders its items twice; -50% lands exactly on the seam. */
+@keyframes ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.ticker-track {
+  animation: ticker 40s linear infinite;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+.pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* Respect users who ask the OS to cut motion. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

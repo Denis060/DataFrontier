@@ -1,8 +1,28 @@
+# dependencies
 node_modules/
+.pnp
+.pnp.*
+
+# next.js — build output inlines NEXT_PUBLIC_* env values
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+
+# production
 build/
 dist/
 coverage/
-.DS_Store
-*.log
+
+# env — .env.local holds the service-role key and DB password
 .env*
 !.env.example
+
+# supabase cli
+.branches
+.temp
+
+# misc
+.DS_Store
+*.log
+.vercel

@@ -1,20 +1,28 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# The Data Frontier
 
-# Run and deploy your AI Studio app
+Agentic AI, Data Science, and the future of intelligent systems — written by practitioners.
 
-This contains everything you need to run your app locally.
+**Stack:** Next.js 16 (App Router) · Supabase (Postgres + Auth + Storage) · Tailwind v4 · Resend · Vercel
 
-View your app in AI Studio: https://ai.studio/apps/1c1fdf3e-a4a9-4fb5-b8fb-fe19a01b3874
+## Setup
 
-## Run Locally
+1. `npm install`
+2. `cp .env.example .env.local` and fill in the Supabase and Resend keys.
+3. Apply the schema — either paste [`supabase/migrations/20260709000000_init.sql`](supabase/migrations/20260709000000_init.sql) into the Supabase SQL Editor, or run `supabase db push` with the CLI linked.
+4. In the Supabase dashboard, enable the **Google**, **GitHub**, and **Email** auth providers.
+5. Create the storage buckets: `article-images`, `avatars`, `cheat-sheets`, `company-logos` (public) and `guidebooks` (private, served via signed URLs).
+6. `npm run db:types` to generate `src/lib/supabase/database.types.ts`.
+7. `npm run dev`
 
-**Prerequisites:**  Node.js
+## Layout
 
+```
+src/
+  app/              routes (App Router)
+  lib/supabase/     browser client, server client, generated types
+  proxy.ts          session refresh + /admin route guard
+supabase/
+  migrations/       schema, RLS policies, triggers
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+New sign-ups land as `role = 'reader'`. Promote people to `author` / `editor` / `admin` in the `profiles` table.
