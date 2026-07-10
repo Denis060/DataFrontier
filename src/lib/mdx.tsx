@@ -38,6 +38,11 @@ function Aside({ children }: { children: React.ReactNode }) {
 const components = {
   Callout,
   Aside,
+  // Body images: lazy-load and async-decode so images below the fold don't
+  // block the initial render. Plain <img> (not next/image) because MDX bodies
+  // reference arbitrary hosts. eslint-disable: alt comes from the author.
+  // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+  img: (props: React.ComponentProps<"img">) => <img {...props} loading="lazy" decoding="async" />,
   a: (props: React.ComponentProps<"a">) => (
     <a
       {...props}
