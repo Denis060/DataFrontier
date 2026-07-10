@@ -328,11 +328,10 @@ const MENUS = [
     "AI in Africa:/category/ai-in-africa",
   ]),
   ...menu("footer_resources", [
-    "Agentic AI Book:/resources",
-    "Learning Path:/resources",
-    "Open Source Tools:/resources",
+    "Cheat Sheets:/cheat-sheets",
     "Job Board:/jobs",
     "Newsletter Archive:/newsletter/archive",
+    "Write for Us:/write",
   ]),
   ...menu("footer_company", [
     "About Ibrahim:/author/ibrahim-fofanah",
@@ -440,6 +439,31 @@ const RESOURCE_COPY = [
   },
 ];
 
+/** A few cheat sheets so /cheat-sheets isn't empty. Images are Unsplash. */
+const CHEAT_SHEETS = [
+  {
+    slug: "pandas-data-cleaning",
+    title: "Pandas Data Cleaning — One-Liners",
+    description: "The vectorized one-liners that replace loops of manual cleaning.",
+    image_url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200",
+    category: "ml-data",
+  },
+  {
+    slug: "agentic-patterns",
+    title: "Agentic Design Patterns",
+    description: "Memory, planning, tool use — the building blocks of production agents.",
+    image_url: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=1200",
+    category: "agentic-ai",
+  },
+  {
+    slug: "prompt-engineering",
+    title: "Prompt Engineering Reference",
+    description: "System prompts, few-shot, and structured output at a glance.",
+    image_url: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200",
+    category: "ml-data",
+  },
+];
+
 const ISSUES = Array.from({ length: 6 }, (_, i) => ({
   issue_number: i + 1,
   title: `Issue #${i + 1}`,
@@ -500,6 +524,7 @@ async function lookup(table) {
 async function undoAll() {
   console.log("Removing seeded data…");
   await db.from("articles").delete().in("slug", ARTICLES.map((a) => a.slug));
+  await db.from("cheat_sheets").delete().in("slug", CHEAT_SHEETS.map((c) => c.slug));
   await db.from("newsletter_issues").delete().in("slug", ISSUES.map((i) => i.slug));
   await db.from("jobs").delete().in("company", JOBS.map((j) => j.company));
   await db.from("ticker_items").delete().in("text", TICKER);
@@ -576,6 +601,19 @@ async function seed() {
     die("resource copy", error);
   }
   console.log(`  ✓ ${RESOURCE_COPY.length} resource description`);
+
+  const cheatRows = CHEAT_SHEETS.map((c) => ({
+    slug: c.slug,
+    title: c.title,
+    description: c.description,
+    image_url: c.image_url,
+    category_id: categories[c.category],
+    author_id: authors["ibrahim-fofanah"],
+    published: true,
+  }));
+  const { error: csErr } = await db.from("cheat_sheets").upsert(cheatRows, { onConflict: "slug" });
+  die("cheat sheets", csErr);
+  console.log(`  ✓ ${cheatRows.length} cheat sheets`);
 
   const { data: hero, error: hErr } = await db
     .from("articles")

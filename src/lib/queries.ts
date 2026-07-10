@@ -165,6 +165,36 @@ export async function getMoreByAuthor(authorId: string, excludeId: string, limit
   return (data ?? []) as ArticleCard[];
 }
 
+export async function getJobs() {
+  const db = await createClient();
+  const { data } = await db
+    .from("jobs")
+    .select("*")
+    .eq("is_active", true)
+    .order("posted_at", { ascending: false });
+  return data ?? [];
+}
+
+export async function getNewsletterIssues() {
+  const db = await createClient();
+  const { data } = await db
+    .from("newsletter_issues")
+    .select("issue_number, title, slug, summary, sent_at, open_rate")
+    .not("sent_at", "is", null)
+    .order("issue_number", { ascending: false });
+  return data ?? [];
+}
+
+export async function getCheatSheets() {
+  const db = await createClient();
+  const { data } = await db
+    .from("cheat_sheets")
+    .select("id, title, slug, description, image_url, thumb_url, download_url, category:categories(name, color)")
+    .eq("published", true)
+    .order("created_at", { ascending: false });
+  return data ?? [];
+}
+
 /** Header and footer chrome, for pages that aren't the homepage. */
 export async function getChrome() {
   const db = await createClient();

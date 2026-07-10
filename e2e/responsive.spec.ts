@@ -10,6 +10,10 @@ const PAGES = [
   { name: "article", path: "/article/agent-revolution-is-here" },
   { name: "category", path: "/category/agentic-ai" },
   { name: "author", path: "/author/ibrahim-fofanah" },
+  { name: "jobs", path: "/jobs" },
+  { name: "cheat-sheets", path: "/cheat-sheets" },
+  { name: "newsletter-archive", path: "/newsletter/archive" },
+  { name: "write", path: "/write" },
 ];
 
 for (const { name, path } of PAGES) {
