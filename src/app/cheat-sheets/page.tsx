@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { Download } from "lucide-react";
+import Link from "next/link";
 import { Shell } from "@/components/layout/shell";
 import { Pill } from "@/components/pill";
 import { getCheatSheets } from "@/lib/queries";
@@ -36,8 +36,9 @@ export default async function CheatSheetsPage() {
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {sheets.map((s) => (
-              <div
+              <Link
                 key={s.id}
+                href={`/cheat-sheets/${s.slug}`}
                 className="group overflow-hidden rounded-md border border-border bg-bg2 transition-colors hover:border-border-strong"
               >
                 <div className="relative aspect-[16/10] overflow-hidden bg-bg3">
@@ -56,23 +57,14 @@ export default async function CheatSheetsPage() {
                       {s.category.name}
                     </Pill>
                   )}
-                  <p className="font-serif text-base leading-[1.3] font-bold">{s.title}</p>
+                  <p className="font-serif text-base leading-[1.3] font-bold group-hover:opacity-80">
+                    {s.title}
+                  </p>
                   {s.description && (
                     <p className="mt-1.5 text-[13px] leading-relaxed text-muted">{s.description}</p>
                   )}
-                  {s.download_url && (
-                    <a
-                      href={s.download_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-3 inline-flex items-center gap-1.5 text-xs text-gold hover:underline"
-                    >
-                      <Download className="size-3.5" aria-hidden />
-                      Download
-                    </a>
-                  )}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}

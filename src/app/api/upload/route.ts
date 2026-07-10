@@ -2,8 +2,17 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile, hasRole } from "@/lib/auth";
 
-const MAX_BYTES = 5 * 1024 * 1024; // must match the bucket's file_size_limit
-const ALLOWED: Record<string, string> = {
+// Per-bucket size limits (must match the storage migration) and the extra
+// types some buckets allow. Only these buckets are writable through here.
+const BUCKETS: Record<string, { maxBytes: number; extraTypes?: Record<string, string> }> = {
+  "article-images": { maxBytes: 5 * 1024 * 1024 },
+  "cheat-sheets": {
+    maxBytes: 10 * 1024 * 1024,
+    extraTypes: { "application/pdf": "pdf" },
+  },
+};
+
+const IMAGE_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
@@ -28,15 +37,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No file provided." }, { status: 400 });
   }
 
-  const ext = ALLOWED[file.type];
-  if (!ext) {
-    return NextResponse.json(
-      { error: "Unsupported type. Use JPEG, PNG, WebP, GIF, or AVIF." },
-      { status: 415 },
-    );
+  const bucketName = (form?.get("bucket") as string) || "article-images";
+  const bucket = BUCKETS[bucketName];
+  if (!bucket) {
+    return NextResponse.json({ error: "Unknown upload target." }, { status: 400 });
   }
-  if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: "Image exceeds the 5 MB limit." }, { status: 413 });
+
+  const allowed = { ...IMAGE_TYPES, ...(bucket.extraTypes ?? {}) };
+  const ext = allowed[file.type];
+  if (!ext) {
+    return NextResponse.json({ error: "Unsupported file type." }, { status: 415 });
+  }
+  if (file.size > bucket.maxBytes) {
+    return NextResponse.json(
+      { error: `File exceeds the ${bucket.maxBytes / 1024 / 1024} MB limit.` },
+      { status: 413 },
+    );
   }
 
   // Path: <uid>/<year>/<uuid>.<ext>. The uid prefix keeps one author's uploads
@@ -46,13 +62,13 @@ export async function POST(request: Request) {
 
   const db = await createClient();
   const { error } = await db.storage
-    .from("article-images")
+    .from(bucketName)
     .upload(path, file, { contentType: file.type, cacheControl: "31536000" });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const { data } = db.storage.from("article-images").getPublicUrl(path);
+  const { data } = db.storage.from(bucketName).getPublicUrl(path);
   return NextResponse.json({ url: data.publicUrl, path });
 }

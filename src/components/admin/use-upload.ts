@@ -6,12 +6,13 @@ export function useUpload() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function upload(file: File): Promise<string | null> {
+  async function upload(file: File, bucket?: string): Promise<string | null> {
     setUploading(true);
     setError(null);
     try {
       const body = new FormData();
       body.append("file", file);
+      if (bucket) body.append("bucket", bucket);
       const res = await fetch("/api/upload", { method: "POST", body });
       const json = await res.json();
       if (!res.ok) {
