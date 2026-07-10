@@ -167,7 +167,7 @@ export default async function ArticlePage({ params }: Props) {
                   </span>
                 </Link>
               )}
-              <span className="ml-auto flex items-center gap-2.5 font-mono text-[11px] text-muted">
+              <span className="flex w-full items-center gap-2.5 font-mono text-[11px] text-muted sm:ml-auto sm:w-auto">
                 {article.reading_time && <span>{article.reading_time} min read</span>}
                 {article.kicker && (
                   <>
