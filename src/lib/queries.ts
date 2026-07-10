@@ -195,6 +195,26 @@ export async function getCheatSheets() {
   return data ?? [];
 }
 
+const EVENT_SELECT =
+  "id, slug, title, summary, description, cover_image, host, location, is_online, starts_at, ends_at, timezone, register_url, is_featured, category:categories(name, slug, color)";
+
+/** Upcoming and past events, split by start time. */
+export async function getEvents() {
+  const db = await createClient();
+  const nowIso = new Date().toISOString();
+  const [upcoming, past] = await Promise.all([
+    db.from("events").select(EVENT_SELECT).eq("published", true).gte("starts_at", nowIso).order("starts_at", { ascending: true }),
+    db.from("events").select(EVENT_SELECT).eq("published", true).lt("starts_at", nowIso).order("starts_at", { ascending: false }).limit(12),
+  ]);
+  return { upcoming: upcoming.data ?? [], past: past.data ?? [] };
+}
+
+export async function getEvent(slug: string) {
+  const db = await createClient();
+  const { data } = await db.from("events").select(EVENT_SELECT).eq("slug", slug).maybeSingle();
+  return data;
+}
+
 /** Header and footer chrome, for pages that aren't the homepage. */
 export async function getChrome() {
   const db = await createClient();
