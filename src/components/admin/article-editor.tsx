@@ -7,7 +7,9 @@ import { renderPreview } from "@/app/admin/articles/preview-action";
 import { saveArticle, deleteArticle } from "@/app/admin/articles/actions";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { CoverUpload } from "@/components/admin/cover-upload";
+import { RichEditor } from "@/components/admin/rich-editor";
 import { useUpload } from "@/components/admin/use-upload";
+import { hasMdxComponents } from "@/lib/mdx-guard";
 
 type Option = { id: string; name: string };
 
@@ -44,6 +46,15 @@ export function ArticleEditor({
 }) {
   const [body, setBody] = useState(article.body);
   const [tab, setTab] = useState<"write" | "preview">("write");
+  // Rich editing is only safe for bodies without MDX components (it strips
+  // them). Start in Markdown for component-using or existing content; a blank
+  // new article defaults to Rich, which is what a non-technical writer wants.
+  const hasComponents = hasMdxComponents(body);
+  const [writeMode, setWriteMode] = useState<"rich" | "markdown">(
+    article.body.trim() === "" ? "rich" : "markdown",
+  );
+  // Remounts the rich editor when we re-enter it, so it re-reads `body`.
+  const [richKey, setRichKey] = useState(0);
   const [preview, setPreview] = useState<React.ReactNode>(null);
   const [previewErr, setPreviewErr] = useState<string | null>(null);
   const [previewing, startPreview] = useTransition();
@@ -198,7 +209,7 @@ export function ArticleEditor({
             />
           </div>
 
-          <div className="flex items-center gap-1 border-b border-border px-5 sm:px-8">
+          <div className="flex flex-wrap items-center gap-1 border-b border-border px-5 sm:px-8">
             {(["write", "preview"] as const).map((t) => (
               <button
                 key={t}
@@ -212,13 +223,56 @@ export function ArticleEditor({
                 {t === "write" ? "Write" : "Preview"}
               </button>
             ))}
+
             {tab === "write" && (
-              <label className="ml-auto inline-flex cursor-pointer items-center gap-1.5 py-2 text-[12px] text-muted transition-colors hover:text-ink">
-                {imgUploading ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  <ImagePlus className="size-3.5" />
-                )}
+              <div className="ml-auto flex items-center gap-1 py-1.5">
+                {/* Rich is disabled for MDX-component bodies — it would strip them. */}
+                <button
+                  type="button"
+                  disabled={hasComponents}
+                  title={hasComponents ? "This article uses components (Callout, Aside). Edit it in Markdown." : undefined}
+                  onClick={() => {
+                    setWriteMode("rich");
+                    setRichKey((k) => k + 1);
+                  }}
+                  className={`rounded px-2.5 py-1 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                    writeMode === "rich" ? "bg-gold-dim text-gold" : "text-muted hover:text-ink"
+                  }`}
+                >
+                  Rich
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWriteMode("markdown")}
+                  className={`rounded px-2.5 py-1 font-mono text-[11px] transition-colors ${
+                    writeMode === "markdown" ? "bg-gold-dim text-gold" : "text-muted hover:text-ink"
+                  }`}
+                >
+                  Markdown
+                </button>
+              </div>
+            )}
+            {tab === "preview" && <span className="ml-auto font-mono text-[10px] text-muted">MDX</span>}
+          </div>
+
+          {imgError && (
+            <p className="border-b border-red/30 bg-red-dim px-5 py-2 text-[12px] text-red sm:px-8">
+              {imgError}
+            </p>
+          )}
+
+          {/* Always-present hidden field: `body` is the single source of truth
+              the form submits, whichever editing surface produced it. */}
+          <textarea name="body" value={body} readOnly hidden />
+
+          {tab === "write" && writeMode === "rich" && (
+            <RichEditor key={richKey} initialMarkdown={body} onChange={setBody} />
+          )}
+
+          {tab === "write" && writeMode === "markdown" && (
+            <div className="flex flex-1 flex-col">
+              <label className="flex cursor-pointer items-center gap-1.5 self-end px-5 py-1.5 text-[12px] text-muted hover:text-ink sm:px-8">
+                {imgUploading ? <Loader2 className="size-3.5 animate-spin" /> : <ImagePlus className="size-3.5" />}
                 Insert image
                 <input
                   type="file"
@@ -230,36 +284,23 @@ export function ArticleEditor({
                   }}
                 />
               </label>
-            )}
-            {tab === "preview" && <span className="ml-auto font-mono text-[10px] text-muted">MDX</span>}
-          </div>
-
-          {imgError && (
-            <p className="border-b border-red/30 bg-red-dim px-5 py-2 text-[12px] text-red sm:px-8">
-              {imgError}
-            </p>
+              <textarea
+                ref={bodyRef}
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                onDrop={(e) => {
+                  const f = e.dataTransfer.files?.[0];
+                  if (f?.type.startsWith("image/")) {
+                    e.preventDefault();
+                    insertImage(f);
+                  }
+                }}
+                placeholder={"Write in Markdown. Embed <Callout tone=\"tip\">…</Callout>, tables, ```code``` blocks, or drag an image in."}
+                className="min-h-[45vh] flex-1 resize-none bg-transparent px-5 pb-5 font-mono text-[13.5px] leading-relaxed outline-none placeholder:text-muted sm:px-8"
+              />
+            </div>
           )}
 
-          {/* The textarea stays mounted in both tabs (hidden, not unmounted) so
-              its value is always part of the form. Unmounting it on Preview
-              dropped the body on save. */}
-          <textarea
-            ref={bodyRef}
-            name="body"
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            onDrop={(e) => {
-              const f = e.dataTransfer.files?.[0];
-              if (f?.type.startsWith("image/")) {
-                e.preventDefault();
-                insertImage(f);
-              }
-            }}
-            placeholder={"Write in Markdown. Embed <Callout tone=\"tip\">…</Callout>, tables, ```code``` blocks, or drag an image in."}
-            className={`min-h-[50vh] flex-1 resize-none bg-transparent px-5 py-5 font-mono text-[13.5px] leading-relaxed outline-none placeholder:text-muted sm:px-8 ${
-              tab === "write" ? "" : "hidden"
-            }`}
-          />
           {tab === "preview" && (
             <div className="min-h-[50vh] flex-1 px-5 py-6 sm:px-8">
               {previewing && (

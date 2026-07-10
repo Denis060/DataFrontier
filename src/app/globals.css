@@ -294,6 +294,23 @@ body::before {
   background: var(--df-bg2);
 }
 
+/* Tiptap editing surface. The content node carries .article-prose, so it
+   inherits the same typography as the published page; these just fix the
+   editable-specific bits. */
+.ProseMirror {
+  outline: none;
+}
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--df-muted);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+.ProseMirror:focus {
+  outline: none;
+}
+
 /* The track renders its items twice; -50% lands exactly on the seam. */
 @keyframes ticker {
   from {
