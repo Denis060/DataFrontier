@@ -646,28 +646,34 @@ export type Database = {
       }
       newsletter_subscribers: {
         Row: {
+          confirm_token: string
           confirmed_at: string | null
           created_at: string
           email: string
           id: string
           source: string | null
           status: Database["public"]["Enums"]["subscriber_status"]
+          unsubscribe_token: string
         }
         Insert: {
+          confirm_token?: string
           confirmed_at?: string | null
           created_at?: string
           email: string
           id?: string
           source?: string | null
           status?: Database["public"]["Enums"]["subscriber_status"]
+          unsubscribe_token?: string
         }
         Update: {
+          confirm_token?: string
           confirmed_at?: string | null
           created_at?: string
           email?: string
           id?: string
           source?: string | null
           status?: Database["public"]["Enums"]["subscriber_status"]
+          unsubscribe_token?: string
         }
         Relationships: []
       }
