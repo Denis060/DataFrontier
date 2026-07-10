@@ -187,6 +187,60 @@ export type Database = {
           },
         ]
       }
+      author_applications: {
+        Row: {
+          bio: string
+          created_at: string
+          id: string
+          profile_id: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewer_id: string | null
+          status: Database["public"]["Enums"]["application_status"]
+          topics: string
+          writing_links: string | null
+        }
+        Insert: {
+          bio: string
+          created_at?: string
+          id?: string
+          profile_id: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+          topics: string
+          writing_links?: string | null
+        }
+        Update: {
+          bio?: string
+          created_at?: string
+          id?: string
+          profile_id?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+          topics?: string
+          writing_links?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "author_applications_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "author_applications_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           color: string | null
@@ -803,6 +857,7 @@ export type Database = {
     }
     Enums: {
       accent_color: "gold" | "teal" | "red"
+      application_status: "pending" | "approved" | "rejected"
       article_status:
         | "draft"
         | "in_review"
@@ -945,6 +1000,7 @@ export const Constants = {
   public: {
     Enums: {
       accent_color: ["gold", "teal", "red"],
+      application_status: ["pending", "approved", "rejected"],
       article_status: [
         "draft",
         "in_review",
