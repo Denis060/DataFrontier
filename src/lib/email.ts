@@ -26,6 +26,35 @@ export async function sendEmail({ to, subject, html }: SendArgs) {
   return { skipped: false as const };
 }
 
+type MailArgs = {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+  headers?: Record<string, string>;
+  idempotencyKey?: string;
+};
+
+/**
+ * Single send with a plain-text alternative, custom headers (List-Unsubscribe),
+ * and a per-recipient idempotency key — so a retry can never double-deliver.
+ * Returns the provider message id. Throws on a real failure so the dispatcher
+ * marks the ledger row failed; returns a synthetic id on the no-key mock path
+ * so the engine is fully exercisable without sending anything real.
+ */
+export async function sendMail({ to, subject, html, text, headers, idempotencyKey }: MailArgs) {
+  if (!resend) {
+    console.info(`[email:skipped] no RESEND_API_KEY — would send "${subject}" to ${to}`);
+    return { id: `mock_${idempotencyKey ?? to}`, skipped: true as const };
+  }
+  const { data, error } = await resend.emails.send(
+    { from, to, subject, html, text, headers },
+    idempotencyKey ? { idempotencyKey } : undefined,
+  );
+  if (error) throw new Error(`Resend: ${error.message}`);
+  return { id: data?.id ?? "", skipped: false as const };
+}
+
 /** Batch send (Resend caps a batch at 100). Used for issue delivery. */
 export async function sendBatch(emails: SendArgs[]) {
   if (!resend) {

@@ -395,6 +395,24 @@ export type Database = {
           },
         ]
       }
+      email_suppressions: {
+        Row: {
+          created_at: string
+          email: string
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          reason: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          reason?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           category_id: string | null
@@ -666,41 +684,116 @@ export type Database = {
       newsletter_issues: {
         Row: {
           body: string | null
+          bounced_count: number
+          complained_count: number
+          content: Json
           created_at: string
+          delivered_count: number
           id: string
           issue_number: number
           open_rate: number | null
+          opened_count: number
           recipients: number | null
+          scheduled_for: string | null
           sent_at: string | null
           slug: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["issue_status"]
           summary: string | null
           title: string
         }
         Insert: {
           body?: string | null
+          bounced_count?: number
+          complained_count?: number
+          content?: Json
           created_at?: string
+          delivered_count?: number
           id?: string
           issue_number: number
           open_rate?: number | null
+          opened_count?: number
           recipients?: number | null
+          scheduled_for?: string | null
           sent_at?: string | null
           slug: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["issue_status"]
           summary?: string | null
           title: string
         }
         Update: {
           body?: string | null
+          bounced_count?: number
+          complained_count?: number
+          content?: Json
           created_at?: string
+          delivered_count?: number
           id?: string
           issue_number?: number
           open_rate?: number | null
+          opened_count?: number
           recipients?: number | null
+          scheduled_for?: string | null
           sent_at?: string | null
           slug?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["issue_status"]
           summary?: string | null
           title?: string
         }
         Relationships: []
+      }
+      newsletter_sends: {
+        Row: {
+          created_at: string
+          email: string
+          error: string | null
+          id: string
+          issue_id: string
+          resend_id: string | null
+          sent_at: string | null
+          status: string
+          subscriber_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          error?: string | null
+          id?: string
+          issue_id: string
+          resend_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subscriber_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          error?: string | null
+          id?: string
+          issue_id?: string
+          resend_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subscriber_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_sends_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_issues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_sends_subscriber_id_fkey"
+            columns: ["subscriber_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_subscribers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       newsletter_subscribers: {
         Row: {
@@ -1057,6 +1150,30 @@ export type Database = {
         Args: { p_key: string; p_limit: number; p_window_seconds: number }
         Returns: boolean
       }
+      claim_issue_for_sending: {
+        Args: { p_issue_id: string }
+        Returns: boolean
+      }
+      claim_send_batch: {
+        Args: { p_issue_id: string; p_limit: number }
+        Returns: {
+          created_at: string
+          email: string
+          error: string | null
+          id: string
+          issue_id: string
+          resend_id: string | null
+          sent_at: string | null
+          status: string
+          subscriber_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "newsletter_sends"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       current_role_is: {
         Args: { check_roles: Database["public"]["Enums"]["user_role"][] }
         Returns: boolean
@@ -1084,6 +1201,13 @@ export type Database = {
         | "changes_requested"
         | "published"
         | "archived"
+      issue_status:
+        | "draft"
+        | "scheduled"
+        | "sending"
+        | "sent"
+        | "failed"
+        | "canceled"
       menu_location:
         | "header"
         | "footer_topics"
@@ -1227,6 +1351,14 @@ export const Constants = {
         "changes_requested",
         "published",
         "archived",
+      ],
+      issue_status: [
+        "draft",
+        "scheduled",
+        "sending",
+        "sent",
+        "failed",
+        "canceled",
       ],
       menu_location: [
         "header",
