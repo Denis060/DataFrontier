@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { applyToWrite, type ApplyState } from "@/app/write/actions";
+import { Honeypot } from "@/components/honeypot";
 
 const field =
   "w-full rounded border border-border bg-surface-1 px-3.5 py-3 text-sm outline-none transition-colors focus:border-gold/40 focus:bg-surface-2";
@@ -47,6 +48,7 @@ export function WriteForm({ signedIn, isReader }: { signedIn: boolean; isReader:
 
   return (
     <form action={action} className="flex flex-col gap-5">
+      <Honeypot />
       <div>
         <label className={label} htmlFor="bio">
           About you

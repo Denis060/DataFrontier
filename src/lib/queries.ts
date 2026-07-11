@@ -151,6 +151,46 @@ export async function getRelated(articleId: string, categoryId: string | null, l
   return (data ?? []) as ArticleCard[];
 }
 
+export type CommentNode = {
+  id: string;
+  body: string;
+  parent_id: string | null;
+  profile_id: string;
+  is_approved: boolean;
+  created_at: string;
+  author: { full_name: string; slug: string | null; avatar_url: string | null } | null;
+  replies: CommentNode[];
+};
+
+/**
+ * Visible comments for an article, as a two-level tree. RLS decides visibility:
+ * everyone sees approved comments; a signed-in user also sees their own pending
+ * ones; staff see all. Returns the count of approved top-level + nested too.
+ */
+export async function getComments(articleId: string) {
+  const db = await createClient();
+  const { data } = await db
+    .from("comments")
+    .select(
+      "id, body, parent_id, profile_id, is_approved, created_at, author:profiles(full_name, slug, avatar_url)",
+    )
+    .eq("article_id", articleId)
+    .order("created_at", { ascending: true });
+
+  const rows = (data ?? []) as Omit<CommentNode, "replies">[];
+  const byId = new Map<string, CommentNode>();
+  const roots: CommentNode[] = [];
+
+  for (const r of rows) byId.set(r.id, { ...r, replies: [] });
+  for (const r of rows) {
+    const node = byId.get(r.id)!;
+    if (r.parent_id && byId.has(r.parent_id)) byId.get(r.parent_id)!.replies.push(node);
+    else roots.push(node);
+  }
+
+  return { tree: roots, count: rows.filter((r) => r.is_approved).length };
+}
+
 /** Other pieces by the same author, for the article rail. */
 export async function getMoreByAuthor(authorId: string, excludeId: string, limit = 3) {
   const db = await createClient();
