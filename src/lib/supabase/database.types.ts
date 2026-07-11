@@ -93,6 +93,7 @@ export type Database = {
           og_image: string | null
           published_at: string | null
           reading_time: number | null
+          search_tsv: unknown
           series_id: string | null
           series_order: number | null
           slug: string
@@ -120,6 +121,7 @@ export type Database = {
           og_image?: string | null
           published_at?: string | null
           reading_time?: number | null
+          search_tsv?: unknown
           series_id?: string | null
           series_order?: number | null
           slug: string
@@ -147,6 +149,7 @@ export type Database = {
           og_image?: string | null
           published_at?: string | null
           reading_time?: number | null
+          search_tsv?: unknown
           series_id?: string | null
           series_order?: number | null
           slug?: string
@@ -284,6 +287,7 @@ export type Database = {
           id: string
           image_url: string
           published: boolean
+          search_tsv: unknown
           slug: string
           thumb_url: string | null
           title: string
@@ -298,6 +302,7 @@ export type Database = {
           id?: string
           image_url: string
           published?: boolean
+          search_tsv?: unknown
           slug: string
           thumb_url?: string | null
           title: string
@@ -312,6 +317,7 @@ export type Database = {
           id?: string
           image_url?: string
           published?: boolean
+          search_tsv?: unknown
           slug?: string
           thumb_url?: string | null
           title?: string
@@ -401,6 +407,7 @@ export type Database = {
           location: string | null
           published: boolean
           register_url: string | null
+          search_tsv: unknown
           slug: string
           starts_at: string
           summary: string | null
@@ -422,6 +429,7 @@ export type Database = {
           location?: string | null
           published?: boolean
           register_url?: string | null
+          search_tsv?: unknown
           slug: string
           starts_at: string
           summary?: string | null
@@ -443,6 +451,7 @@ export type Database = {
           location?: string | null
           published?: boolean
           register_url?: string | null
+          search_tsv?: unknown
           slug?: string
           starts_at?: string
           summary?: string | null
@@ -941,6 +950,17 @@ export type Database = {
         Returns: boolean
       }
       increment_view: { Args: { article_slug: string }; Returns: undefined }
+      search_content: {
+        Args: { max_results?: number; q: string }
+        Returns: {
+          category: string
+          description: string
+          kind: string
+          rank: number
+          title: string
+          url: string
+        }[]
+      }
     }
     Enums: {
       accent_color: "gold" | "teal" | "red"
