@@ -5,6 +5,7 @@ import { ArticleBody } from "@/components/article/article-body";
 import {
   getArticle,
   getChrome,
+  getComments,
   getMoreByAuthor,
   getRelated,
   menuFor,
@@ -13,6 +14,7 @@ import {
 import { getCurrentProfile } from "@/lib/auth";
 import { Pill } from "@/components/pill";
 import { ShareBar } from "@/components/article/share-bar";
+import { Comments } from "@/components/article/comments";
 import { ViewCounter } from "@/components/article/view-counter";
 import { SiteHeader } from "@/components/home/site-header";
 import { SiteFooter } from "@/components/home/site-footer";
@@ -109,9 +111,10 @@ export default async function ArticlePage({ params }: Props) {
   ]);
   if (!article) notFound();
 
-  const [related, moreByAuthor] = await Promise.all([
+  const [related, moreByAuthor, comments] = await Promise.all([
     getRelated(article.id, article.category_id),
     getMoreByAuthor(article.author_id, article.id),
+    getComments(article.id),
   ]);
 
   const { settings } = chrome;
@@ -271,6 +274,15 @@ export default async function ArticlePage({ params }: Props) {
             </RailSection>
           </aside>
         </div>
+
+        <Comments
+          articleId={article.id}
+          slug={article.slug}
+          tree={comments.tree}
+          count={comments.count}
+          currentUserId={profile?.id ?? null}
+          signedIn={!!profile}
+        />
       </main>
 
       <SiteFooter

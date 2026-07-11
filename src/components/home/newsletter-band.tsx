@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { subscribe, type SubscribeState } from "@/app/actions/subscribe";
 import type { HomeData } from "@/lib/queries";
+import { Honeypot } from "@/components/honeypot";
 
 const compact = (n: number) =>
   n >= 1000 ? `${(n / 1000).toFixed(n >= 10_000 ? 0 : 1)}K+` : String(n);
@@ -64,6 +65,7 @@ export function NewsletterBand({
       </div>
 
       <form action={formAction} className="relative flex flex-col gap-3">
+        <Honeypot />
         <p className="text-sm text-muted">
           Join data scientists, ML engineers, and AI researchers building the frontier.
         </p>

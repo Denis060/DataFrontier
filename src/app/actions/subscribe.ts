@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/server";
 import { confirmEmail, links, sendEmail } from "@/lib/email";
+import { rateLimit, isBot } from "@/lib/rate-limit";
 
 export type SubscribeState = { ok: boolean; message: string } | null;
 
@@ -9,11 +10,18 @@ export async function subscribe(
   _prev: SubscribeState,
   formData: FormData,
 ): Promise<SubscribeState> {
+  // Bots that fill the honeypot get a success-looking response and nothing else.
+  if (isBot(formData)) return { ok: true, message: "Check your inbox to confirm." };
+
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const source = String(formData.get("source") ?? "homepage");
 
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return { ok: false, message: "Enter a valid email address." };
+  }
+
+  if (!(await rateLimit("subscribe", { limit: 5, windowSeconds: 300 }))) {
+    return { ok: false, message: "Too many attempts. Please try again shortly." };
   }
 
   // Trusted server action: bypass RLS so we can read the tokens back (anon

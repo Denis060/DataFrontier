@@ -731,6 +731,24 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          count: number
+          key: string
+          window_start: string
+        }
+        Insert: {
+          count?: number
+          key: string
+          window_start?: string
+        }
+        Update: {
+          count?: number
+          key?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       resources: {
         Row: {
           created_at: string
@@ -948,11 +966,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_rate_limit: {
+        Args: { p_key: string; p_limit: number; p_window_seconds: number }
+        Returns: boolean
+      }
       current_role_is: {
         Args: { check_roles: Database["public"]["Enums"]["user_role"][] }
         Returns: boolean
       }
       increment_view: { Args: { article_slug: string }; Returns: undefined }
+      prune_rate_limits: { Args: never; Returns: undefined }
       search_content: {
         Args: { max_results?: number; q: string }
         Returns: {
