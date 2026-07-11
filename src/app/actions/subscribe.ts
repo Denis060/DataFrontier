@@ -47,7 +47,7 @@ export async function subscribe(
   try {
     await sendEmail({
       to: email,
-      subject: "Confirm your subscription to The Data Frontier",
+      subject: "Confirm your subscription to Everyday Data Science",
       html: confirmEmail(links.confirm(data.confirm_token), links.unsubscribe(data.unsubscribe_token)),
     });
   } catch {

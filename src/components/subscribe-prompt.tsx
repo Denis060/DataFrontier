@@ -110,7 +110,7 @@ export function SubscribePrompt() {
             Free weekly newsletter
           </p>
           <p className="pr-6 font-serif text-lg leading-tight font-black">
-            Stay ahead of the frontier.
+            Stay ahead in AI &amp; data science.
           </p>
           <p className="mt-1 mb-3 text-[13px] leading-relaxed text-muted">
             AI research, agentic breakdowns, and career intelligence — once a week, no spam.

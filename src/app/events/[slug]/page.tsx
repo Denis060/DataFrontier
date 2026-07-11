@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const event = await getEvent(slug);
   if (!event) return { title: "Not found" };
-  return { title: `${event.title} — The Data Frontier`, description: event.summary ?? undefined };
+  return { title: `${event.title} — Everyday Data Science`, description: event.summary ?? undefined };
 }
 
 export default async function EventPage({ params }: Props) {

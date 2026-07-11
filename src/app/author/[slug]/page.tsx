@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!author) return { title: "Not found" };
 
   return {
-    title: `${author.full_name} — The Data Frontier`,
+    title: `${author.full_name} — Everyday Data Science`,
     description: author.bio ?? author.title ?? undefined,
     alternates: { canonical: `/author/${slug}` },
   };

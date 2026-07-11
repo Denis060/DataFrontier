@@ -5,7 +5,7 @@ import { Shell } from "@/components/layout/shell";
 import { getCurrentProfile, getEnabledProviders, safeNext } from "@/lib/auth";
 
 export const metadata: Metadata = {
-  title: "Create an account — The Data Frontier",
+  title: "Create an account — Everyday Data Science",
   robots: { index: false },
 };
 

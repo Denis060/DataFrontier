@@ -1,7 +1,7 @@
-# The Data Frontier — Build Report
+# Everyday Data Science — Build Report
 
-**Live:** https://datafrontier.vercel.app
-**Repo:** github.com/Denis060/DataFrontier
+**Live:** https://everydaydatascience.com
+**Repo:** github.com/Denis060/Everyday Data Science
 **Date:** July 2026
 
 A publication platform for AI, ML, and data science, rebuilt from an empty scaffold into a full content system — public magazine, admin newsroom, accounts and roles, newsletter, and site-wide search — deployed and reading live from its own database.

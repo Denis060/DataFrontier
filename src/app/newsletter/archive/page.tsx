@@ -4,8 +4,8 @@ import { Shell } from "@/components/layout/shell";
 import { getNewsletterIssues } from "@/lib/queries";
 
 export const metadata: Metadata = {
-  title: "Newsletter Archive — The Data Frontier",
-  description: "Past issues of the Data Frontier weekly dispatch.",
+  title: "Newsletter Archive — Everyday Data Science",
+  description: "Past issues of Everyday Data Science weekly dispatch.",
 };
 
 export const revalidate = 300;

@@ -4,7 +4,7 @@ import { JobCard } from "@/components/job-card";
 import { getJobs } from "@/lib/queries";
 
 export const metadata: Metadata = {
-  title: "AI & Data Science Jobs — The Data Frontier",
+  title: "AI & Data Science Jobs — Everyday Data Science",
   description: "Curated roles in AI and data science, screened for quality.",
 };
 
@@ -18,7 +18,7 @@ export default async function JobsPage() {
       <header className="border-b border-border px-5 py-12 sm:px-8 lg:px-12 lg:py-16">
         <div className="mx-auto w-full max-w-[1100px]">
           <h1 className="font-serif text-[clamp(30px,5vw,44px)] leading-[1.1] font-black tracking-[-1px]">
-            Frontier Careers
+            Data &amp; AI Careers
           </h1>
           <p className="mt-3 max-w-[620px] text-[15px] leading-relaxed text-muted">
             Curated roles in AI and data science — screened for quality, not volume.

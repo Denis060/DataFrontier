@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { InfoPage } from "@/components/info-page";
 
-export const metadata: Metadata = { title: "Privacy Policy — The Data Frontier" };
+export const metadata: Metadata = { title: "Privacy Policy — Everyday Data Science" };
 
 export default function PrivacyPage() {
   return (
     <InfoPage eyebrow="Legal" title="Privacy Policy" intro="Last updated July 2026.">
       <p>
-        This policy explains what data The Data Frontier collects, why, and what you can do about it.
+        This policy explains what data Everyday Data Science collects, why, and what you can do about it.
         We keep it short and plain.
       </p>
 

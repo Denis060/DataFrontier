@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { InfoPage } from "@/components/info-page";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Contact — The Data Frontier" };
+export const metadata: Metadata = { title: "Contact — Everyday Data Science" };
 export const revalidate = 3600;
 
 export default async function ContactPage() {
@@ -13,7 +13,7 @@ export default async function ContactPage() {
     .eq("id", true)
     .maybeSingle();
 
-  const email = settings?.contact_email ?? "hello@thedatafrontier.com";
+  const email = settings?.contact_email ?? "hello@everydaydatascience.com";
   const socials = Object.entries((settings?.socials ?? {}) as Record<string, unknown>).filter(
     (e): e is [string, string] => typeof e[1] === "string" && e[1].length > 0,
   );

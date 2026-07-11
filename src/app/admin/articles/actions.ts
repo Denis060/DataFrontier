@@ -8,7 +8,7 @@ import { hasRole } from "@/lib/auth";
 import { renderMarkdown } from "@/lib/markdown";
 import type { Database } from "@/lib/supabase/database.types";
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://datafrontier.vercel.app";
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://everydaydatascience.com";
 
 /**
  * When an article first goes live, notify everyone following its author or its
@@ -36,7 +36,7 @@ async function notifyFollowers(articleId: string) {
   if (recipients.size === 0) return;
 
   const authorName =
-    (article.author as { full_name: string } | null)?.full_name ?? "The Data Frontier";
+    (article.author as { full_name: string } | null)?.full_name ?? "Everyday Data Science";
 
   const rows = [...recipients].map((user_id) => ({
     user_id,

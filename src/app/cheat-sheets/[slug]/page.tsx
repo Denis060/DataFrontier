@@ -10,7 +10,7 @@ import { getCheatSheet } from "@/lib/queries";
 
 type Props = { params: Promise<{ slug: string }> };
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://datafrontier.vercel.app";
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://everydaydatascience.com";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;

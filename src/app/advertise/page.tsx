@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import { InfoPage } from "@/components/info-page";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Advertise — The Data Frontier" };
+export const metadata: Metadata = { title: "Advertise — Everyday Data Science" };
 export const revalidate = 3600;
 
 export default async function AdvertisePage() {
   const db = await createClient();
   const { data } = await db.from("site_settings").select("contact_email").eq("id", true).maybeSingle();
-  const email = data?.contact_email ?? "hello@thedatafrontier.com";
+  const email = data?.contact_email ?? "hello@everydaydatascience.com";
 
   return (
     <InfoPage
@@ -17,7 +17,7 @@ export default async function AdvertisePage() {
       intro="Reach a focused audience of data scientists, ML engineers, and AI practitioners."
     >
       <p>
-        The Data Frontier reaches practitioners who build with AI and data — the people who evaluate
+        Everyday Data Science reaches practitioners who build with AI and data — the people who evaluate
         tools, choose platforms, and influence what their teams adopt. If that&apos;s who you want
         in front of, let&apos;s talk.
       </p>

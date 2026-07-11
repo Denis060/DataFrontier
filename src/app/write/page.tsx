@@ -4,7 +4,7 @@ import { WriteForm } from "@/components/write-form";
 import { getCurrentProfile } from "@/lib/auth";
 
 export const metadata: Metadata = {
-  title: "Write for The Data Frontier",
+  title: "Write for Everyday Data Science",
   description: "Contribute articles on AI, data science, and agentic systems.",
 };
 
@@ -16,7 +16,7 @@ export default async function WritePage() {
       <div className="mx-auto w-full max-w-[680px] px-5 py-12 sm:px-8 lg:py-16">
         <p className="mb-2 font-mono text-[10px] uppercase tracking-[2px] text-gold">Write for us</p>
         <h1 className="font-serif text-[clamp(30px,5vw,44px)] leading-[1.1] font-black tracking-[-1px]">
-          Publish with the Data Frontier
+          Publish with Everyday Data Science
         </h1>
         <p className="mt-4 mb-8 text-[15px] leading-relaxed text-muted">
           We publish practitioners — people who build things and can teach what they learned. If

@@ -29,7 +29,7 @@ export function AdminShell({
     <div className="flex min-h-screen flex-col lg:flex-row">
       <aside className="flex shrink-0 flex-col border-b border-border bg-bg2 lg:w-60 lg:border-r lg:border-b-0">
         <Link href="/" className="flex h-16 items-center gap-2 px-6 font-serif text-lg font-black">
-          The Data<span className="text-gold">Frontier</span>
+          Everyday <span className="text-gold">Data Science</span>
         </Link>
         <nav className="flex gap-1 overflow-x-auto px-3 pb-3 lg:flex-col lg:overflow-visible lg:pt-2">
           {items.map((n) => (

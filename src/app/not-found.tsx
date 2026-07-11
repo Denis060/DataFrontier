@@ -8,7 +8,7 @@ export default function NotFound() {
     <main className="flex min-h-screen flex-col items-center justify-center gap-5 px-6 text-center">
       <p className="font-mono text-[11px] uppercase tracking-[3px] text-teal">Error 404</p>
       <h1 className="font-serif text-[clamp(32px,7vw,56px)] leading-[1.05] font-black tracking-[-1.5px]">
-        This page went off the frontier.
+        This page isn&apos;t in the dataset.
       </h1>
       <p className="max-w-md text-[15px] leading-relaxed text-muted">
         The page you&apos;re looking for doesn&apos;t exist, moved, or was never published. Let&apos;s

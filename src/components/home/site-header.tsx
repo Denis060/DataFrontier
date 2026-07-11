@@ -146,8 +146,8 @@ function Ticker({ items }: { items: HomeData["ticker"] }) {
   );
 }
 
-/** "The DataFrontier" -> ["The Data", "Frontier"] so the second half can be gold. */
+/** "Everyday Data Science" -> ["Everyday ", "Data Science"] so the rest can be gold. */
 function splitBrand(name: string): [string, string] {
-  const i = name.lastIndexOf("Frontier");
-  return i > 0 ? [name.slice(0, i), name.slice(i)] : [name, ""];
+  const i = name.indexOf(" ");
+  return i > 0 ? [name.slice(0, i + 1), name.slice(i + 1)] : [name, ""];
 }

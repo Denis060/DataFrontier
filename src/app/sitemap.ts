@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://datafrontier.vercel.app";
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://everydaydatascience.com";
 
 export const revalidate = 3600;
 

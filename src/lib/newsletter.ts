@@ -1,7 +1,7 @@
 import "server-only";
 
 /**
- * The Frontier Brief's fixed six-part structure, stored as one JSONB `content`
+ * The Everyday Brief's fixed six-part structure, stored as one JSONB `content`
  * object and rendered to BOTH the email and the web archive from this single
  * source. Every field is optional so a draft can be partial.
  */
@@ -102,12 +102,12 @@ export function renderIssue(
   const bodyHtml = htmlParts.join("\n");
   // Preheader = the inbox preview line. Prefer the summary, then intro, then a
   // safe default — never leak "View in browser…" into the preview.
-  const preheader = (summary || content.intro || "The Frontier Brief").slice(0, 140);
+  const preheader = (summary || content.intro || "The Everyday Brief").slice(0, 140);
   const html = shell(title, preheader, bodyHtml, unsubscribeUrl, webUrl);
 
   const text = [
     title,
-    "The Data Frontier",
+    "Everyday Data Science",
     "",
     textParts.join("").trim(),
     "",
@@ -141,14 +141,14 @@ function shell(
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#fbfaf7">
         <tr><td style="padding:24px 24px 0">
           <div style="padding:0 0 24px;border-bottom:1px solid #e5e2db">
-            <span style="font-family:Georgia,serif;font-size:20px;font-weight:900;color:#14171c">The Data<span style="color:#8a6212">Frontier</span></span>
+            <span style="font-family:Georgia,serif;font-size:20px;font-weight:900;color:#14171c">Everyday <span style="color:#8a6212">Data Science</span></span>
           </div>
           <h1 style="font-family:Georgia,serif;font-size:26px;line-height:1.15;color:#14171c;margin:24px 0 4px">${esc(title)}</h1>
         </td></tr>
         <tr><td style="padding:8px 24px 24px">${bodyHtml}</td></tr>
         <tr><td style="padding:20px 24px;border-top:1px solid #e5e2db;font-family:Georgia,serif;font-size:12px;color:#5a6270;line-height:1.6">
           <a href="${esc(webUrl)}" style="color:#5a6270">View in browser</a> ·
-          The Data Frontier · Agentic AI, Data Science, and the future of intelligent systems.<br>
+          Everyday Data Science · Practical AI, ML &amp; data science for people who build.<br>
           <a href="${esc(unsubscribeUrl)}" style="color:#5a6270">Unsubscribe</a>
         </td></tr>
       </table>
