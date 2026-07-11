@@ -225,6 +225,21 @@ export async function getNewsletterIssues() {
   return data ?? [];
 }
 
+/** One issue for the public archive, by slug. Only issues that have gone out
+ *  (sending or sent) are visible — never drafts or scheduled. Accepts the id
+ *  too, so older "view in browser" links built from the id still resolve. */
+export async function getNewsletterIssueBySlug(slugOrId: string) {
+  const db = await createClient();
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
+  const { data } = await db
+    .from("newsletter_issues")
+    .select("id, issue_number, title, slug, summary, content, sent_at, status")
+    .eq(isUuid ? "id" : "slug", slugOrId)
+    .in("status", ["sending", "sent"])
+    .maybeSingle();
+  return data;
+}
+
 export async function getCheatSheets() {
   const db = await createClient();
   const { data } = await db

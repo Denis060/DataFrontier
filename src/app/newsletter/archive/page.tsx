@@ -41,17 +41,19 @@ export default async function NewsletterArchivePage() {
         ) : (
           <ul className="divide-y divide-border border-y border-border">
             {issues.map((issue) => (
-              <li key={issue.issue_number} className="flex items-baseline gap-4 py-5">
-                <span className="shrink-0 font-mono text-[11px] text-muted">
-                  #{String(issue.issue_number).padStart(2, "0")}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="font-serif text-lg font-bold">{issue.title}</p>
-                  {issue.summary && (
-                    <p className="mt-1 text-[13px] leading-relaxed text-muted">{issue.summary}</p>
-                  )}
-                  <p className="mt-1.5 font-mono text-[11px] text-muted">{fmt(issue.sent_at)}</p>
-                </div>
+              <li key={issue.issue_number}>
+                <Link href={`/newsletter/${issue.slug}`} className="flex items-baseline gap-4 py-5 hover:opacity-80">
+                  <span className="shrink-0 font-mono text-[11px] text-muted">
+                    #{String(issue.issue_number).padStart(2, "0")}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-serif text-lg font-bold">{issue.title}</p>
+                    {issue.summary && (
+                      <p className="mt-1 text-[13px] leading-relaxed text-muted">{issue.summary}</p>
+                    )}
+                    <p className="mt-1.5 font-mono text-[11px] text-muted">{fmt(issue.sent_at)}</p>
+                  </div>
+                </Link>
               </li>
             ))}
           </ul>
