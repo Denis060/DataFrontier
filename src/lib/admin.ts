@@ -34,11 +34,6 @@ const LIST_SELECT = `
   category:categories (name)
 ` as const;
 
-/**
- * RLS already narrows this: an author only sees their own rows via the
- * "published articles are public" select policy (own + published), an editor
- * sees everything. So the same query returns the right set per role.
- */
 const STATUS_VALUES = [
   "draft",
   "in_review",
@@ -53,9 +48,16 @@ function asStatus(s: string): Database["public"]["Enums"]["article_status"] | nu
     : null;
 }
 
-export async function listArticles(status?: string) {
+/**
+ * The RLS select policy is "published OR own" — right for the public site, but
+ * it means an author would otherwise see every *published* article here too.
+ * The newsroom list must show an author only their OWN work, so we scope by
+ * author_id for non-staff-wide roles. Admins/editors see everything.
+ */
+export async function listArticles(status: string | undefined, viewer: { id: string; role: Role }) {
   const db = await createClient();
   let q = db.from("articles").select(LIST_SELECT).order("updated_at", { ascending: false });
+  if (!hasRole(viewer.role, ["admin", "editor"])) q = q.eq("author_id", viewer.id);
   const valid = status ? asStatus(status) : null;
   if (valid) q = q.eq("status", valid);
   const { data, error } = await q;
@@ -63,10 +65,18 @@ export async function listArticles(status?: string) {
   return (data ?? []) as unknown as AdminArticleRow[];
 }
 
-export async function getArticleForEdit(id: string) {
+/**
+ * Load an article for the editor. Authors may only open their own; admins and
+ * editors may open any. Returns null when an author reaches for someone else's
+ * (the page turns that into a 404).
+ */
+export async function getArticleForEdit(id: string, viewer: { id: string; role: Role }) {
   const db = await createClient();
   const { data, error } = await db.from("articles").select("*").eq("id", id).maybeSingle();
   if (error) throw new Error(`getArticleForEdit: ${error.message}`);
+  if (data && !hasRole(viewer.role, ["admin", "editor"]) && data.author_id !== viewer.id) {
+    return null;
+  }
   return data;
 }
 

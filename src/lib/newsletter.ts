@@ -18,15 +18,44 @@ export type IssueContent = {
 };
 
 type SectionKey = Exclude<keyof IssueContent, "intro">;
-type SectionDef = { key: SectionKey; label: string; hasImage?: boolean; hasUrl?: boolean };
+type SectionDef = { key: SectionKey; label: string; hint?: string; hasImage?: boolean; hasUrl?: boolean };
 
 export const SECTION_DEFS: SectionDef[] = [
-  { key: "cheat_sheet", label: "Cheat sheet of the week", hasImage: true, hasUrl: true },
-  { key: "practical_tip", label: "One practical tip" },
-  { key: "worth_reading", label: "Worth reading", hasUrl: true },
-  { key: "africa_ai", label: "Africa AI", hasUrl: true },
-  { key: "opportunity", label: "One opportunity", hasUrl: true },
-  { key: "closing_question", label: "Closing question" },
+  {
+    key: "cheat_sheet",
+    label: "Cheat sheet of the week",
+    hint: "A visual worth saving. Add the image, a link, and one line on why it's useful.",
+    hasImage: true,
+    hasUrl: true,
+  },
+  {
+    key: "practical_tip",
+    label: "One practical tip",
+    hint: "One thing a reader can apply today — concrete, not theory.",
+  },
+  {
+    key: "worth_reading",
+    label: "Worth reading",
+    hint: "The single best paper or article this week, plus why it matters.",
+    hasUrl: true,
+  },
+  {
+    key: "africa_ai",
+    label: "Africa AI",
+    hint: "An AI or data story from Africa readers won't find elsewhere.",
+    hasUrl: true,
+  },
+  {
+    key: "opportunity",
+    label: "One opportunity",
+    hint: "A job, grant, fellowship, or call for papers — with the link.",
+    hasUrl: true,
+  },
+  {
+    key: "closing_question",
+    label: "Closing question",
+    hint: "A question that invites a reply and starts a conversation.",
+  },
 ];
 
 const esc = (s: string) =>
