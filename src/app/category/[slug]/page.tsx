@@ -20,6 +20,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${category.name} — The Data Frontier`,
     description: category.description ?? `Articles on ${category.name}.`,
+    // Canonical to page 1 so ?page= variants don't split ranking.
+    alternates: { canonical: `/category/${slug}` },
   };
 }
 

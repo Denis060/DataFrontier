@@ -37,12 +37,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = article.meta_title ?? article.title;
   const description =
     article.meta_description ?? article.excerpt ?? settings?.default_meta_description ?? undefined;
-  const image = article.og_image ?? article.cover_image ?? settings?.default_og_image ?? undefined;
+  // A real cover photo wins; otherwise fall back to the generated branded card
+  // (the opengraph-image route). Defining openGraph here suppresses the file
+  // convention's auto-merge, so the fallback is referenced explicitly.
+  const cover = article.og_image || article.cover_image || null;
+  const ogImage = cover
+    ? { url: cover }
+    : { url: `${SITE_URL}/article/${article.slug}/opengraph-image`, width: 1200, height: 630 };
 
   return {
     title,
     description,
-    alternates: article.canonical_url ? { canonical: article.canonical_url } : undefined,
+    // Self-canonical to the article's own URL, unless an explicit override is set.
+    alternates: { canonical: article.canonical_url ?? `/article/${article.slug}` },
     robots: article.status === "published" ? undefined : { index: false, follow: false },
     openGraph: {
       type: "article",
@@ -51,9 +58,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: `${SITE_URL}/article/${article.slug}`,
       publishedTime: article.published_at ?? undefined,
       authors: article.author ? [article.author.full_name] : undefined,
-      images: image ? [image] : undefined,
+      images: [ogImage],
     },
-    twitter: { card: image ? "summary_large_image" : "summary", title, description },
+    twitter: { card: "summary_large_image", title, description, images: [ogImage.url] },
   };
 }
 
@@ -111,8 +118,38 @@ export default async function ArticlePage({ params }: Props) {
   const isDraft = article.status !== "published";
   const shareUrl = `${SITE_URL}/article/${article.slug}`;
 
+  // Structured data helps Google render rich results for articles.
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: article.title,
+    description: article.excerpt ?? undefined,
+    image: article.og_image ?? article.cover_image ?? undefined,
+    datePublished: article.published_at ?? undefined,
+    dateModified: article.published_at ?? undefined,
+    author: article.author
+      ? {
+          "@type": "Person",
+          name: article.author.full_name,
+          url: article.author.slug ? `${SITE_URL}/author/${article.author.slug}` : undefined,
+        }
+      : undefined,
+    publisher: {
+      "@type": "Organization",
+      name: settings?.site_name ?? "The Data Frontier",
+    },
+    mainEntityOfPage: { "@type": "WebPage", "@id": shareUrl },
+    articleSection: article.category?.name,
+  };
+
   return (
     <>
+      {!isDraft && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
       <SiteHeader
         siteName={settings?.site_name ?? "The DataFrontier"}
         established={settings?.established_year ?? null}
