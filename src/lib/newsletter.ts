@@ -91,7 +91,7 @@ export function renderIssue(
     if (def.hasImage && sec.image_url) {
       const alt = sec.text ? sec.text.slice(0, 90) : def.label;
       htmlParts.push(
-        `<img src="${esc(sec.image_url)}" alt="${esc(alt)}" width="536" style="max-width:100%;border-radius:6px;border:1px solid #e5e2db;display:block;margin:0 0 12px">`,
+        `<img src="${esc(sec.image_url)}" alt="${esc(alt)}" width="552" style="max-width:100%;height:auto;border-radius:6px;border:1px solid #e5e2db;display:block;margin:0 0 12px">`,
       );
       textParts.push(`[${def.label} — image: ${sec.image_url}]\n`);
     }
@@ -100,7 +100,10 @@ export function renderIssue(
   }
 
   const bodyHtml = htmlParts.join("\n");
-  const html = shell(title, bodyHtml, unsubscribeUrl, webUrl);
+  // Preheader = the inbox preview line. Prefer the summary, then intro, then a
+  // safe default — never leak "View in browser…" into the preview.
+  const preheader = (summary || content.intro || "The Frontier Brief").slice(0, 140);
+  const html = shell(title, preheader, bodyHtml, unsubscribeUrl, webUrl);
 
   const text = [
     title,
@@ -116,21 +119,40 @@ export function renderIssue(
   return { html, text };
 }
 
-/** Mobile-first, single column, ~600px, ≥16px body (invariant 9). */
-function shell(title: string, bodyHtml: string, unsubscribeUrl: string, webUrl: string): string {
-  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title></head>
-<body style="margin:0;background:#f3f1ec;padding:0">
-  <div style="max-width:600px;margin:0 auto;background:#fbfaf7;padding:0 20px">
-    <div style="padding:24px 0;border-bottom:1px solid #e5e2db">
-      <span style="font-family:Georgia,serif;font-size:20px;font-weight:900;color:#14171c">The Data<span style="color:#8a6212">Frontier</span></span>
-    </div>
-    <h1 style="font-family:Georgia,serif;font-size:26px;line-height:1.15;color:#14171c;margin:24px 0 4px">${esc(title)}</h1>
-    <div style="padding:8px 0 24px">${bodyHtml}</div>
-    <div style="padding:20px 0;border-top:1px solid #e5e2db;font-size:12px;color:#5a6270;line-height:1.6">
-      <a href="${esc(webUrl)}" style="color:#5a6270">View in browser</a> ·
-      The Data Frontier · Agentic AI, Data Science, and the future of intelligent systems.<br>
-      <a href="${esc(unsubscribeUrl)}" style="color:#5a6270">Unsubscribe</a>
-    </div>
-  </div>
+/**
+ * Mobile-first, single column, ~600px, ≥16px body (invariant 9). Laid out with
+ * a centered table rather than a max-width div so Outlook (Windows/Word engine,
+ * which ignores max-width on divs) renders it at a fixed 600px too. The
+ * preheader div is the hidden inbox-preview line.
+ */
+function shell(
+  title: string,
+  preheader: string,
+  bodyHtml: string,
+  unsubscribeUrl: string,
+  webUrl: string,
+): string {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${esc(title)}</title></head>
+<body style="margin:0;padding:0;background:#f3f1ec;-webkit-text-size-adjust:100%">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">${esc(preheader)}</div>
+  <div style="display:none;max-height:0;overflow:hidden">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f3f1ec">
+    <tr><td align="center" style="padding:0 12px">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#fbfaf7">
+        <tr><td style="padding:24px 24px 0">
+          <div style="padding:0 0 24px;border-bottom:1px solid #e5e2db">
+            <span style="font-family:Georgia,serif;font-size:20px;font-weight:900;color:#14171c">The Data<span style="color:#8a6212">Frontier</span></span>
+          </div>
+          <h1 style="font-family:Georgia,serif;font-size:26px;line-height:1.15;color:#14171c;margin:24px 0 4px">${esc(title)}</h1>
+        </td></tr>
+        <tr><td style="padding:8px 24px 24px">${bodyHtml}</td></tr>
+        <tr><td style="padding:20px 24px;border-top:1px solid #e5e2db;font-family:Georgia,serif;font-size:12px;color:#5a6270;line-height:1.6">
+          <a href="${esc(webUrl)}" style="color:#5a6270">View in browser</a> ·
+          The Data Frontier · Agentic AI, Data Science, and the future of intelligent systems.<br>
+          <a href="${esc(unsubscribeUrl)}" style="color:#5a6270">Unsubscribe</a>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
 </body></html>`;
 }
