@@ -142,6 +142,14 @@ export function AuthForm({
           className={input}
         />
 
+        {mode === "signin" && (
+          <div className="-mt-1 flex justify-end">
+            <Link href="/forgot-password" className="text-[12px] text-muted hover:text-gold">
+              Forgot password?
+            </Link>
+          </div>
+        )}
+
         <button
           type="submit"
           disabled={pending}

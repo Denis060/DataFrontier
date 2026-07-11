@@ -149,7 +149,7 @@ for (const t of Object.values(templates)) {
 
 const payload = {
   site_url: SITE,
-  uri_allow_list: `${SITE}/**,https://datafrontier.vercel.app/**`,
+  uri_allow_list: `${SITE}/**,https://datafrontier.vercel.app/**,http://localhost:3000/**`,
   mailer_subjects_confirmation: templates.confirmation.subject,
   mailer_templates_confirmation_content: templates.confirmation.html,
   mailer_subjects_recovery: templates.recovery.subject,
