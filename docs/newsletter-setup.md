@@ -83,6 +83,7 @@ Set these in **Vercel → Project → Settings → Environment Variables**
 | `RESEND_API_KEY` | Production key from Resend step 2.5 |
 | `RESEND_FROM_EMAIL` | `newsletter@news.thedatafrontier.com` |
 | `CRON_SECRET` | A fresh random string — generate with `openssl rand -hex 32`. Guards the send endpoint; Vercel Cron sends it automatically (step 5). |
+| `RESEND_WEBHOOK_SECRET` | The Svix signing secret (`whsec_…`) from the Resend webhook you create in step 6. Verifies delivery webhooks; without it the webhook endpoint fails closed. |
 | `NEXT_PUBLIC_SITE_URL` | `https://thedatafrontier.com` (or the live Vercel URL) — used to build unsubscribe + "view in browser" links. Must NOT be `localhost` in production. |
 
 > `RESEND_FROM_EMAIL` currently defaults to `newsletter@thedatafrontier.com` in
@@ -114,7 +115,25 @@ Set these in **Vercel → Project → Settings → Environment Variables**
 
 ---
 
-## 6. Owner go-live checklist
+## 6. Resend webhook (bounce/complaint protection + stats)
+
+Bounces and spam complaints **will** happen on issue #1, and hard bounces must
+auto-remove those addresses before the next send or your sending reputation
+decays. This must be live **before** the first real send.
+
+1. In Resend → **Webhooks → Add Endpoint**, point it at
+   `https://thedatafrontier.com/api/webhooks/resend`.
+2. Subscribe to these events: **`email.delivered`, `email.opened`,
+   `email.bounced`, `email.complained`**.
+3. Copy the endpoint's **Signing Secret** (`whsec_…`) into
+   `RESEND_WEBHOOK_SECRET` in Vercel (step 4).
+
+The endpoint verifies every webhook's signature, dedupes redelivered events, adds
+hard bounces + complaints to the suppression list (soft/transient bounces are
+counted but the subscriber is kept), and tracks real delivered/opened/bounced/
+complained counts per issue.
+
+## 7. Owner go-live checklist
 
 - [ ] Resend upgraded to Pro
 - [ ] `news.thedatafrontier.com` shows **Verified** in Resend
