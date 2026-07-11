@@ -91,65 +91,70 @@ export function SearchBar() {
           <Search className="size-4" />
         </button>
       ) : (
-        <form onSubmit={submit} className="flex items-center">
-          <div className="relative">
+        // Mobile: a full-width bar fixed over the header (out of flow, so it
+        // can't push the layout and overflow). Desktop: an inline input.
+        <form
+          onSubmit={submit}
+          className="fixed inset-x-0 top-0 z-[200] flex h-16 items-center gap-2 border-b border-border bg-bg px-4 lg:static lg:z-auto lg:h-auto lg:border-0 lg:bg-transparent lg:px-0"
+        >
+          <div className="relative flex-1 lg:w-[340px] lg:flex-none">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
             <input
               ref={inputRef}
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search articles, cheat sheets, events…"
-              className="w-[min(72vw,340px)] rounded border border-border bg-surface-1 py-2 pr-9 pl-9 text-sm outline-none focus:border-gold/40"
+              className="w-full rounded border border-border bg-surface-1 py-2 pr-9 pl-9 text-sm outline-none focus:border-gold/40"
             />
             <button
               type="button"
               onClick={() => (q ? setQ("") : setOpen(false))}
-              aria-label="Clear"
+              aria-label={q ? "Clear" : "Close search"}
               className="absolute top-1/2 right-2 -translate-y-1/2 text-muted hover:text-ink"
             >
               {loading ? <Loader2 className="size-4 animate-spin" /> : <X className="size-4" />}
             </button>
-          </div>
 
-          {q.trim().length >= 2 && (
-            <div className="absolute top-11 right-0 z-50 w-[min(92vw,420px)] overflow-hidden rounded-md border border-border bg-bg2 shadow-xl">
-              {results.length === 0 && !loading ? (
-                <p className="px-4 py-6 text-center text-[13px] text-muted">
-                  No matches for “{q.trim()}”.
-                </p>
-              ) : (
-                <>
-                  <ul className="max-h-[60vh] overflow-y-auto">
-                    {results.map((r) => (
-                      <li key={r.url}>
-                        <Link
-                          href={r.url}
-                          onClick={() => setOpen(false)}
-                          className="flex flex-col gap-0.5 border-b border-border px-4 py-3 transition-colors last:border-b-0 hover:bg-surface-1"
-                        >
-                          <span className="flex items-center gap-2">
-                            <span className="font-mono text-[9px] uppercase tracking-[1px] text-gold">
-                              {KIND_LABEL[r.kind] ?? r.kind}
+            {q.trim().length >= 2 && (
+              <div className="absolute top-full right-0 left-0 z-50 mt-2 overflow-hidden rounded-md border border-border bg-bg2 shadow-xl lg:left-auto lg:w-[420px]">
+                {results.length === 0 && !loading ? (
+                  <p className="px-4 py-6 text-center text-[13px] text-muted">
+                    No matches for “{q.trim()}”.
+                  </p>
+                ) : (
+                  <>
+                    <ul className="max-h-[60vh] overflow-y-auto">
+                      {results.map((r) => (
+                        <li key={r.url}>
+                          <Link
+                            href={r.url}
+                            onClick={() => setOpen(false)}
+                            className="flex flex-col gap-0.5 border-b border-border px-4 py-3 transition-colors last:border-b-0 hover:bg-surface-1"
+                          >
+                            <span className="flex items-center gap-2">
+                              <span className="font-mono text-[9px] uppercase tracking-[1px] text-gold">
+                                {KIND_LABEL[r.kind] ?? r.kind}
+                              </span>
+                              {r.category && (
+                                <span className="font-mono text-[9px] text-muted">· {r.category}</span>
+                              )}
                             </span>
-                            {r.category && (
-                              <span className="font-mono text-[9px] text-muted">· {r.category}</span>
-                            )}
-                          </span>
-                          <span className="font-serif text-[14px] leading-tight font-bold">{r.title}</span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    type="submit"
-                    className="block w-full bg-surface-1 px-4 py-2.5 text-center text-[12px] font-medium text-gold hover:bg-surface-2"
-                  >
-                    See all results →
-                  </button>
-                </>
-              )}
-            </div>
-          )}
+                            <span className="font-serif text-[14px] leading-tight font-bold">{r.title}</span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      type="submit"
+                      className="block w-full bg-surface-1 px-4 py-2.5 text-center text-[12px] font-medium text-gold hover:bg-surface-2"
+                    >
+                      See all results →
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </form>
       )}
     </div>
