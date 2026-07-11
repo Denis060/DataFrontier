@@ -10,6 +10,43 @@
  * To remove everything it created: npm run db:seed -- --undo
  */
 import { createClient } from "@supabase/supabase-js";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
+import remarkGfm from "remark-gfm";
+import remarkDirective from "remark-directive";
+import remarkRehype from "remark-rehype";
+import rehypeSlug from "rehype-slug";
+import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import rehypePrettyCode from "rehype-pretty-code";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
+import rehypeStringify from "rehype-stringify";
+import { visit } from "unist-util-visit";
+
+// Mirrors src/lib/markdown.ts — used to precompute body_html for seed articles.
+const TONES = { note: "callout callout-note", info: "callout callout-note", tip: "callout callout-tip", warning: "callout callout-warning", danger: "callout callout-warning" };
+function remarkCallouts() {
+  return (tree) => visit(tree, (node) => {
+    if (node.type === "containerDirective") {
+      if (node.name === "aside") { (node.data ||= {}).hName = "aside"; node.data.hProperties = { className: ["pullquote"] }; }
+      else if (TONES[node.name]) { (node.data ||= {}).hName = "aside"; node.data.hProperties = { className: TONES[node.name].split(" "), "data-callout": node.name }; }
+    }
+  });
+}
+const _schema = {
+  ...defaultSchema,
+  attributes: { ...defaultSchema.attributes,
+    "*": [...(defaultSchema.attributes?.["*"] ?? []), "className", "id"],
+    aside: ["className", "dataCallout"],
+    span: [...(defaultSchema.attributes?.span ?? []), "className", "style"],
+    pre: [...(defaultSchema.attributes?.pre ?? []), "className", "style", "tabindex"],
+    div: [...(defaultSchema.attributes?.div ?? []), "className", "dataRehypePrettyCodeFragment"] },
+  tagNames: [...(defaultSchema.tagNames ?? []), "aside"],
+};
+const _proc = unified().use(remarkParse).use(remarkGfm).use(remarkDirective).use(remarkCallouts)
+  .use(remarkRehype).use(rehypeSlug).use(rehypeAutolinkHeadings, { behavior: "wrap" })
+  .use(rehypePrettyCode, { theme: { dark: "github-dark-dimmed", light: "github-light" }, keepBackground: false })
+  .use(rehypeSanitize, _schema).use(rehypeStringify);
+const renderMarkdown = async (md) => (md?.trim() ? String(await _proc.process(md)) : null);
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -366,10 +403,10 @@ Most teams treat an agent as a chatbot with a for-loop. It isn't. An agent is a
 system that decides *what to do next*, and the hard parts are the three
 capabilities that decision depends on.
 
-<Callout tone="warning">
-  73% of agentic proof-of-concepts never reach production. Almost none of them
-  fail because the model wasn't smart enough.
-</Callout>
+:::warning
+73% of agentic proof-of-concepts never reach production. Almost none of them
+fail because the model wasn't smart enough.
+:::
 
 ## The three pillars
 
@@ -381,7 +418,9 @@ away and the system degrades in a characteristic way.
 2. Without planning, it thrashes — long chains of plausible, aimless calls.
 3. Without tool constraints, it hallucinates side effects it never performed.
 
-<Aside>An agent without memory is a very expensive way to ask a question twice.</Aside>
+:::aside
+An agent without memory is a very expensive way to ask a question twice.
+:::
 
 ### Memory is not a vector database
 
@@ -413,10 +452,10 @@ Not model choice. Not framework. In the deployments that reached production,
 the teams had done one unglamorous thing: they built an **evaluation harness
 before they built the agent**.
 
-<Callout tone="tip">
-  If you cannot measure a regression, you cannot ship a change. Write the eval
-  first — even a crude one — and the architecture will tell you what it needs.
-</Callout>
+:::tip
+If you cannot measure a regression, you cannot ship a change. Write the eval
+first — even a crude one — and the architecture will tell you what it needs.
+:::
 
 The gap between early adopters and everyone else isn't intelligence. It's
 instrumentation.
@@ -433,9 +472,9 @@ This piece is part of The Data Frontier's ongoing coverage. The full text of
 - Where the published benchmarks disagree with production experience
 - What we'd do differently next time
 
-<Callout tone="note">
-  Seed content. Replace this body from the admin once the editor ships.
-</Callout>
+:::note
+Seed content. Replace this body from the admin once the editor ships.
+:::
 `.trim();
 
 /** Copy for rows the migration created. Keyed by title, which is stable. */
@@ -602,20 +641,26 @@ async function seed() {
   const categories = await lookup("categories");
   const formats = await lookup("formats");
 
-  const rows = ARTICLES.map((a) => ({
-    slug: a.slug,
-    title: a.title,
-    excerpt: a.excerpt,
-    kicker: a.kicker ?? null,
-    author_id: authors[a.author],
-    category_id: categories[a.category],
-    format_id: formats[a.format],
-    status: "published",
-    featured: a.featured ?? false,
-    reading_time: a.reading_time,
-    published_at: a.published_at,
-    body: a.featured ? HERO_BODY : GENERIC_BODY(a.title),
-  }));
+  const rows = await Promise.all(
+    ARTICLES.map(async (a) => {
+      const body = a.featured ? HERO_BODY : GENERIC_BODY(a.title);
+      return {
+        slug: a.slug,
+        title: a.title,
+        excerpt: a.excerpt,
+        kicker: a.kicker ?? null,
+        author_id: authors[a.author],
+        category_id: categories[a.category],
+        format_id: formats[a.format],
+        status: "published",
+        featured: a.featured ?? false,
+        reading_time: a.reading_time,
+        published_at: a.published_at,
+        body,
+        body_html: await renderMarkdown(body),
+      };
+    }),
+  );
   const missing = rows.filter((r) => !r.author_id || !r.category_id || !r.format_id);
   if (missing.length) die("unresolved slug reference", new Error(missing.map((m) => m.slug).join(", ")));
 

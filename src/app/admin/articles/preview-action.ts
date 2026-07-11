@@ -1,7 +1,7 @@
 "use server";
 
 import { requireStaff } from "@/lib/admin";
-import { ArticleBody } from "@/lib/mdx";
+import { ArticleBody } from "@/components/article/article-body";
 
 /**
  * Compiles MDX with the exact renderer the public article page uses, so the

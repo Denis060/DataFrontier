@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArticleBody } from "@/lib/mdx";
+import { ArticleBody } from "@/components/article/article-body";
 import {
   getArticle,
   getChrome,
@@ -215,8 +215,8 @@ export default async function ArticlePage({ params }: Props) {
               </span>
             </div>
 
-            {article.body ? (
-              <ArticleBody source={article.body} />
+            {article.body || article.body_html ? (
+              <ArticleBody html={article.body_html} source={article.body} />
             ) : (
               <p className="text-muted">This article has no body yet.</p>
             )}

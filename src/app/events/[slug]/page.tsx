@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar, MapPin, Video } from "lucide-react";
 import { Shell } from "@/components/layout/shell";
 import { Pill } from "@/components/pill";
-import { ArticleBody } from "@/lib/mdx";
+import { ArticleBody } from "@/components/article/article-body";
 import { getEvent } from "@/lib/queries";
 
 type Props = { params: Promise<{ slug: string }> };

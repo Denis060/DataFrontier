@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireStaff } from "@/lib/admin";
 import { hasRole } from "@/lib/auth";
+import { renderMarkdown } from "@/lib/markdown";
 import type { Database } from "@/lib/supabase/database.types";
 
 type ArticleUpdate = Database["public"]["Tables"]["articles"]["Update"];
@@ -55,6 +56,10 @@ export async function saveArticle(formData: FormData): Promise<Result> {
   const rawSlug = (formData.get("slug") as string)?.trim();
   const slug = rawSlug ? slugify(rawSlug) : slugify(title);
 
+  // Compile the sanitized HTML once, here at save time, so the public page
+  // serves a cached string instead of rendering per request.
+  const bodyHtml = body ? await renderMarkdown(body) : null;
+
   const fields = {
     title,
     slug,
@@ -62,6 +67,7 @@ export async function saveArticle(formData: FormData): Promise<Result> {
     excerpt: ((formData.get("excerpt") as string) || "").trim() || null,
     kicker: ((formData.get("kicker") as string) || "").trim() || null,
     body: body || null,
+    body_html: bodyHtml,
     category_id: (formData.get("category_id") as string) || null,
     format_id: (formData.get("format_id") as string) || null,
     cover_image: ((formData.get("cover_image") as string) || "").trim() || null,

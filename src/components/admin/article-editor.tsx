@@ -9,7 +9,7 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { CoverUpload } from "@/components/admin/cover-upload";
 import { RichEditor } from "@/components/admin/rich-editor";
 import { useUpload } from "@/components/admin/use-upload";
-import { hasMdxComponents } from "@/lib/mdx-guard";
+import { hasRichIncompatibleSyntax } from "@/lib/mdx-guard";
 
 type Option = { id: string; name: string };
 
@@ -49,7 +49,7 @@ export function ArticleEditor({
   // Rich editing is only safe for bodies without MDX components (it strips
   // them). Start in Markdown for component-using or existing content; a blank
   // new article defaults to Rich, which is what a non-technical writer wants.
-  const hasComponents = hasMdxComponents(body);
+  const hasComponents = hasRichIncompatibleSyntax(body);
   const [writeMode, setWriteMode] = useState<"rich" | "markdown">(
     article.body.trim() === "" ? "rich" : "markdown",
   );
@@ -230,7 +230,7 @@ export function ArticleEditor({
                 <button
                   type="button"
                   disabled={hasComponents}
-                  title={hasComponents ? "This article uses components (Callout, Aside). Edit it in Markdown." : undefined}
+                  title={hasComponents ? "This article uses callouts (:::). Edit it in Markdown." : undefined}
                   onClick={() => {
                     setWriteMode("rich");
                     setRichKey((k) => k + 1);
@@ -295,7 +295,7 @@ export function ArticleEditor({
                     insertImage(f);
                   }
                 }}
-                placeholder={"Write in Markdown. Embed <Callout tone=\"tip\">…</Callout>, tables, ```code``` blocks, or drag an image in."}
+                placeholder={"Write in Markdown. Add callouts with :::tip … :::, plus tables, ```code``` blocks, or drag an image in."}
                 className="min-h-[45vh] flex-1 resize-none bg-transparent px-5 pb-5 font-mono text-[13.5px] leading-relaxed outline-none placeholder:text-muted sm:px-8"
               />
             </div>

@@ -294,6 +294,67 @@ body::before {
   background: var(--df-bg2);
 }
 
+/* Callouts (`:::note` / `:::tip` / `:::warning`) and `:::aside` pull-quotes,
+   rendered as sanitized <aside> elements by the safe Markdown pipeline. */
+.article-prose .callout {
+  margin: 1.6em 0;
+  border-left: 3px solid;
+  border-radius: 0 6px 6px 0;
+  padding: 14px 18px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.article-prose .callout > :first-child {
+  margin-top: 0;
+}
+.article-prose .callout > :last-child {
+  margin-bottom: 0;
+}
+.article-prose .callout::before {
+  content: attr(data-callout);
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.article-prose .callout-note {
+  border-color: var(--df-teal);
+  background: var(--df-teal-dim);
+}
+.article-prose .callout-note::before {
+  content: "Note";
+  color: var(--df-teal);
+}
+.article-prose .callout-tip {
+  border-color: var(--df-gold);
+  background: var(--df-gold-dim);
+}
+.article-prose .callout-tip::before {
+  content: "Tip";
+  color: var(--df-gold);
+}
+.article-prose .callout-warning {
+  border-color: var(--df-red);
+  background: var(--df-red-dim);
+}
+.article-prose .callout-warning::before {
+  content: "Warning";
+  color: var(--df-red);
+}
+.article-prose .pullquote {
+  margin: 1.8em 0;
+  border-left: 2px solid var(--df-gold);
+  padding-left: 1.25em;
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--df-ink);
+}
+
 /* Tiptap editing surface. The content node carries .article-prose, so it
    inherits the same typography as the published page; these just fix the
    editable-specific bits. */

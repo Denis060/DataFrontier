@@ -118,7 +118,7 @@ export async function getArticle(slug: string) {
   const { data, error } = await db
     .from("articles")
     .select(
-      `id, slug, title, subtitle, excerpt, kicker, body, status, category_id, author_id,
+      `id, slug, title, subtitle, excerpt, kicker, body, body_html, status, category_id, author_id,
        cover_image, cover_alt, reading_time, published_at, featured, view_count,
        meta_title, meta_description, canonical_url, og_image,
        author:profiles!articles_author_id_fkey (full_name, slug, title, bio, avatar_url),
