@@ -22,6 +22,7 @@ export function AuthForm({
   next: string;
 }) {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
@@ -40,7 +41,12 @@ export function AuthForm({
       const { data, error } = await db.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
+        options: {
+          // The handle_new_user trigger reads full_name from here; without it
+          // the name falls back to the email prefix.
+          data: { full_name: name.trim() },
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        },
       });
       setPending(false);
       if (error) return setError(error.message);
@@ -113,6 +119,24 @@ export function AuthForm({
       )}
 
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
+        {mode === "signup" && (
+          <>
+            <label htmlFor="name" className="sr-only">
+              Full name
+            </label>
+            <input
+              id="name"
+              type="text"
+              required
+              autoComplete="name"
+              placeholder="Full name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className={input}
+            />
+          </>
+        )}
+
         <label htmlFor="email" className="sr-only">
           Email
         </label>
