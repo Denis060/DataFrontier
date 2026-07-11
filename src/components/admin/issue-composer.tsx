@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { saveIssue, scheduleIssue, unscheduleIssue } from "@/app/admin/newsletter/issue-actions";
+import { saveIssue, scheduleIssue, unscheduleIssue, sendTestIssue } from "@/app/admin/newsletter/issue-actions";
 
 type SectionDef = { key: string; label: string; hasImage?: boolean; hasUrl?: boolean };
 
@@ -33,7 +33,10 @@ export function IssueComposer({
   const formRef = useRef<HTMLFormElement>(null);
   const [saving, startSave] = useTransition();
   const [scheduling, startSchedule] = useTransition();
+  const [testing, startTest] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [testEmail, setTestEmail] = useState("");
+  const [testMsg, setTestMsg] = useState<string | null>(null);
   const [when, setWhen] = useState(
     issue.scheduled_for ? toLocalInput(issue.scheduled_for) : "",
   );
@@ -71,6 +74,25 @@ export function IssueComposer({
       const res = await unscheduleIssue(issue.id!);
       if ("error" in res) setError(res.error);
       else router.refresh();
+    });
+  }
+
+  function onTest() {
+    if (!issue.id) {
+      setError("Save the issue first, then send a test.");
+      return;
+    }
+    setError(null);
+    setTestMsg(null);
+    startTest(async () => {
+      const res = await sendTestIssue(issue.id!, testEmail);
+      if ("error" in res) setError(res.error);
+      else
+        setTestMsg(
+          res.skipped
+            ? `Mock only — no RESEND_API_KEY set, so nothing was delivered to ${res.to}.`
+            : `Test sent to ${res.to}. Check inbox, spam, and how it renders on a phone.`,
+        );
     });
   }
 
@@ -142,6 +164,29 @@ export function IssueComposer({
           </button>
         )}
       </form>
+
+      {/* Test send — available in any state, including after sending */}
+      {issue.id && (
+        <div className="mt-8 rounded-md border border-border bg-bg2 p-5">
+          <p className={label}>Send a test</p>
+          <div className="flex flex-wrap items-end gap-3">
+            <input
+              type="email"
+              value={testEmail}
+              onChange={(e) => setTestEmail(e.target.value)}
+              placeholder="you@example.com"
+              className={`${field} w-auto min-w-[220px]`}
+            />
+            <button type="button" onClick={onTest} disabled={testing} className="rounded border border-border px-4 py-2 text-[13px] font-bold hover:border-border-strong hover:bg-surface-1 disabled:opacity-50">
+              {testing ? "Sending…" : "Send test"}
+            </button>
+          </div>
+          {testMsg && <p className="mt-2 text-[12px] text-teal">{testMsg}</p>}
+          <p className="mt-2 text-[11px] text-muted">
+            Goes only to this address — never the subscriber list. Save your latest edits first.
+          </p>
+        </div>
+      )}
 
       {/* Scheduling */}
       {issue.id && !locked && (

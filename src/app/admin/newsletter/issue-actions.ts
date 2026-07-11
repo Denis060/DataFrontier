@@ -5,8 +5,11 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireStaff } from "@/lib/admin";
 import { hasRole } from "@/lib/auth";
-import { SECTION_DEFS, type IssueContent } from "@/lib/newsletter";
+import { SECTION_DEFS, renderIssue, type IssueContent } from "@/lib/newsletter";
+import { sendMail } from "@/lib/email";
 import type { Json } from "@/lib/supabase/database.types";
+
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://datafrontier.vercel.app";
 
 function slugify(input: string): string {
   return input
@@ -81,6 +84,52 @@ export async function saveIssue(fd: FormData): Promise<{ error: string } | never
 
   revalidatePath("/admin/newsletter");
   redirect(`/admin/newsletter/${issueId}?saved=1`);
+}
+
+/**
+ * Send a single test copy of an issue to one explicit address (the composer's
+ * own inbox) — never the subscriber list, never the ledger. This is how you
+ * judge the template in a real client before any real send. Falls back to the
+ * mock path (no delivery) when RESEND_API_KEY is absent.
+ */
+export async function sendTestIssue(
+  id: string,
+  email: string,
+): Promise<{ error: string } | { ok: true; skipped: boolean; to: string }> {
+  await requireEditor();
+  const to = email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return { error: "Enter a valid email address." };
+
+  const db = await createClient();
+  const { data: issue } = await db
+    .from("newsletter_issues")
+    .select("id, title, summary, content")
+    .eq("id", id)
+    .maybeSingle();
+  if (!issue) return { error: "Issue not found." };
+
+  const content = (issue.content ?? {}) as IssueContent;
+  // A harmless placeholder unsubscribe token — no subscriber matches it, so the
+  // one-click endpoint is a safe no-op if clicked from the test.
+  const unsubscribeUrl = `${SITE}/api/newsletter/unsubscribe?token=test`;
+  const webUrl = `${SITE}/newsletter/${issue.id}`;
+  const { html, text } = renderIssue(issue.title, issue.summary, content, unsubscribeUrl, webUrl);
+
+  try {
+    const res = await sendMail({
+      to,
+      subject: `[TEST] ${issue.title}`,
+      html,
+      text,
+      headers: {
+        "List-Unsubscribe": `<${unsubscribeUrl}>`,
+        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      },
+    });
+    return { ok: true, skipped: res.skipped, to };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Test send failed." };
+  }
 }
 
 /** Schedule (or reschedule) a draft for a future time. */
