@@ -19,10 +19,10 @@ export default async function EditArticlePage({
   ]);
 
   const [row, { formats, categories }] = await Promise.all([
-    getArticleForEdit(id),
+    getArticleForEdit(id, profile),
     listFormatsAndCategories(),
   ]);
-  // RLS returns null for an author viewing someone else's article.
+  // An author reaching for someone else's article gets null → 404.
   if (!row) notFound();
 
   const article: EditorArticle = {

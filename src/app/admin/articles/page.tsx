@@ -17,7 +17,7 @@ export default async function AdminArticlesPage({
   searchParams: Promise<{ status?: string }>;
 }) {
   const [profile, { status = "all" }] = await Promise.all([requireStaff(), searchParams]);
-  const articles = await listArticles(status);
+  const articles = await listArticles(status, profile);
 
   return (
     <AdminShell role={profile.role} name={profile.full_name}>

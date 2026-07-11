@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { saveIssue, scheduleIssue, unscheduleIssue, sendTestIssue } from "@/app/admin/newsletter/issue-actions";
 
-type SectionDef = { key: string; label: string; hasImage?: boolean; hasUrl?: boolean };
+type SectionDef = { key: string; label: string; hint?: string; hasImage?: boolean; hasUrl?: boolean };
 
 export type IssueDraft = {
   id: string | null;
@@ -122,6 +122,15 @@ export function IssueComposer({
         </p>
       )}
 
+      {!locked && (
+        <div className="mb-5 rounded-md border border-gold/25 bg-gold-dim px-4 py-3 text-[12px] leading-relaxed text-gold">
+          <strong>How to fill this:</strong> the title + summary become the subject and inbox preview.
+          The intro is your hello. Then fill the six sections below — every one is optional, so use
+          what you have. Each has a tip under its label. Save a draft anytime, send a test to yourself,
+          then schedule when it&apos;s ready.
+        </div>
+      )}
+
       <form ref={formRef} onSubmit={onSave} className="flex flex-col gap-5">
         {issue.id && <input type="hidden" name="id" value={issue.id} />}
 
@@ -141,6 +150,7 @@ export function IssueComposer({
         {sections.map((def) => (
           <fieldset key={def.key} className="rounded-md border border-border p-4">
             <legend className="px-1 font-mono text-[10px] uppercase tracking-[1.5px] text-gold">{def.label}</legend>
+            {def.hint && <p className="mb-2 text-[12px] leading-relaxed text-muted">{def.hint}</p>}
             <textarea
               name={`${def.key}_text`}
               defaultValue={sec(def.key).text ?? ""}
