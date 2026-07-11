@@ -1,4 +1,4 @@
-import { getHomeData, menuFor } from "@/lib/queries";
+import { getHomeData, getUnreadCount, menuFor } from "@/lib/queries";
 import { getCurrentProfile } from "@/lib/auth";
 import { SiteHeader } from "@/components/home/site-header";
 import { Hero } from "@/components/home/hero";
@@ -16,6 +16,7 @@ export const revalidate = 60;
 
 export default async function Home() {
   const [d, profile] = await Promise.all([getHomeData(), getCurrentProfile()]);
+  const unread = await getUnreadCount(profile?.id ?? null);
   const s = d.settings;
   const siteName = s?.site_name ?? "The DataFrontier";
 
@@ -31,6 +32,7 @@ export default async function Home() {
         nav={menuFor(d.menus, "header")}
         ticker={d.ticker}
         profile={profile}
+        unread={unread}
       />
 
       <main className="flex-1">

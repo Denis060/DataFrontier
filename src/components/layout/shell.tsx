@@ -1,4 +1,4 @@
-import { getChrome, menuFor } from "@/lib/queries";
+import { getChrome, getUnreadCount, menuFor } from "@/lib/queries";
 import { getCurrentProfile } from "@/lib/auth";
 import { SiteHeader } from "@/components/home/site-header";
 import { SiteFooter } from "@/components/home/site-footer";
@@ -9,6 +9,7 @@ export async function Shell({ children }: { children: React.ReactNode }) {
     getChrome(),
     getCurrentProfile(),
   ]);
+  const unread = await getUnreadCount(profile?.id ?? null);
   const siteName = settings?.site_name ?? "The DataFrontier";
 
   return (
@@ -19,6 +20,7 @@ export async function Shell({ children }: { children: React.ReactNode }) {
         nav={menuFor(menus, "header")}
         ticker={ticker}
         profile={profile}
+        unread={unread}
       />
       <main className="flex-1">{children}</main>
       <SiteFooter

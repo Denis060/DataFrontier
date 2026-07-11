@@ -479,6 +479,52 @@ export type Database = {
           },
         ]
       }
+      follows: {
+        Row: {
+          author_id: string | null
+          category_id: string | null
+          created_at: string
+          follower_id: string
+          id: string
+        }
+        Insert: {
+          author_id?: string | null
+          category_id?: string | null
+          created_at?: string
+          follower_id: string
+          id?: string
+        }
+        Update: {
+          author_id?: string | null
+          category_id?: string | null
+          created_at?: string
+          follower_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follows_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follows_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       formats: {
         Row: {
           color: Database["public"]["Enums"]["accent_color"]
@@ -688,6 +734,47 @@ export type Database = {
           unsubscribe_token?: string
         }
         Relationships: []
+      }
+      notifications: {
+        Row: {
+          actor_name: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          title: string
+          type: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          actor_name?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          title: string
+          type: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          actor_name?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          title?: string
+          type?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

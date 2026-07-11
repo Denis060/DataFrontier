@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Shell } from "@/components/layout/shell";
 import { ArticleList, Pagination } from "@/components/article-list";
-import { getArticlesByCategory, getCategory } from "@/lib/queries";
+import { getArticlesByCategory, getCategory, getFollowState } from "@/lib/queries";
+import { getCurrentProfile } from "@/lib/auth";
+import { FollowButton } from "@/components/follow-button";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -30,8 +32,12 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const category = await getCategory(slug);
   if (!category) notFound();
 
+  const viewer = await getCurrentProfile();
   const page = toPage(sp.page);
-  const { items, total, perPage } = await getArticlesByCategory(category.id, page);
+  const [{ items, total, perPage }, follow] = await Promise.all([
+    getArticlesByCategory(category.id, page),
+    getFollowState({ categoryId: category.id }, viewer?.id ?? null),
+  ]);
 
   // Page 1 of an empty category is a valid, informative page. Page 7 of a
   // 2-page category is not — that's a broken URL, and should say so.
@@ -53,6 +59,15 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           <p className="mt-4 font-mono text-[11px] uppercase tracking-[2px] text-muted">
             {total} {total === 1 ? "article" : "articles"}
           </p>
+          <div className="mt-5">
+            <FollowButton
+              categoryId={category.id}
+              initialFollowing={follow.following}
+              initialCount={follow.count}
+              canFollow={!!viewer}
+              path={`/category/${slug}`}
+            />
+          </div>
         </div>
       </header>
 
