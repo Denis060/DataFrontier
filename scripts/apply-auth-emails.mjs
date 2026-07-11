@@ -87,9 +87,10 @@ const templates = {
       body: "Thanks for joining Everyday Data Science. Confirm your email address to activate your account and start reading.",
       buttonLabel: "Confirm your email",
       benefits: [
-        "Follow the authors and topics you care about",
+        "The latest in AI, machine learning &amp; data science",
+        "Practical breakdowns and tips from people who build",
+        "Follow your favorite authors and topics — and get notified when they post",
         "Join the conversation in the comments",
-        "Get notified when there's something new",
       ],
       note: "If you didn't create this account, you can safely ignore this email.",
     }),
