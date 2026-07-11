@@ -32,7 +32,7 @@ export async function dispatchIssue(issueId: string): Promise<{ sent: number; re
 
   const { data: issue } = await db
     .from("newsletter_issues")
-    .select("id, title, summary, content")
+    .select("id, slug, title, summary, content")
     .eq("id", issueId)
     .single();
   if (!issue) return { sent: 0, remaining: 0, done: false };
@@ -41,6 +41,7 @@ export async function dispatchIssue(issueId: string): Promise<{ sent: number; re
   await materializeLedger(issueId);
 
   const content = (issue.content ?? {}) as IssueContent;
+  const webUrl = `${SITE}/newsletter/${issue.slug ?? issue.id}`;
   let sentThisRun = 0;
 
   for (let b = 0; b < MAX_BATCHES_PER_RUN; b++) {
@@ -53,7 +54,6 @@ export async function dispatchIssue(issueId: string): Promise<{ sent: number; re
 
     for (const row of batch) {
       const unsubscribeUrl = await unsubUrl(db, row.subscriber_id);
-      const webUrl = `${SITE}/newsletter/${issue.id}`;
       const { html, text } = renderIssue(issue.title, issue.summary, content, unsubscribeUrl, webUrl);
 
       try {

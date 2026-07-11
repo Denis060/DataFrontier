@@ -103,7 +103,7 @@ export async function sendTestIssue(
   const db = await createClient();
   const { data: issue } = await db
     .from("newsletter_issues")
-    .select("id, title, summary, content")
+    .select("id, slug, title, summary, content")
     .eq("id", id)
     .maybeSingle();
   if (!issue) return { error: "Issue not found." };
@@ -112,7 +112,7 @@ export async function sendTestIssue(
   // A harmless placeholder unsubscribe token — no subscriber matches it, so the
   // one-click endpoint is a safe no-op if clicked from the test.
   const unsubscribeUrl = `${SITE}/api/newsletter/unsubscribe?token=test`;
-  const webUrl = `${SITE}/newsletter/${issue.id}`;
+  const webUrl = `${SITE}/newsletter/${issue.slug ?? issue.id}`;
   const { html, text } = renderIssue(issue.title, issue.summary, content, unsubscribeUrl, webUrl);
 
   try {
