@@ -20,6 +20,7 @@ const PAGES = [
   { name: "advertise", path: "/advertise" },
   { name: "privacy", path: "/privacy" },
   { name: "terms", path: "/terms" },
+  { name: "search", path: "/search?q=agent" },
 ];
 
 for (const { name, path } of PAGES) {

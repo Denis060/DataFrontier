@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu, type SessionProfile } from "@/components/auth/user-menu";
+import { SearchBar } from "@/components/search/search-bar";
 import type { HomeData } from "@/lib/queries";
 
 type Props = {
@@ -48,11 +49,13 @@ export function SiteHeader({ siteName, established, nav, ticker, profile = null 
               {item.label}
             </Link>
           ))}
+          <SearchBar />
           <ThemeToggle />
           <UserMenu profile={profile} />
         </nav>
 
         <div className="flex items-center gap-2 lg:hidden">
+          <SearchBar />
           <ThemeToggle />
           <button
             type="button"
