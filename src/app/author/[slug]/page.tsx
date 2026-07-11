@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { Shell } from "@/components/layout/shell";
 import { ArticleList, Pagination } from "@/components/article-list";
 import { BrandIcon } from "@/components/brand-icons";
-import { getArticlesByAuthor, getAuthor } from "@/lib/queries";
+import { getArticlesByAuthor, getAuthor, getFollowState } from "@/lib/queries";
+import { getCurrentProfile } from "@/lib/auth";
+import { FollowButton } from "@/components/follow-button";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -32,8 +34,12 @@ export default async function AuthorPage({ params, searchParams }: Props) {
   const author = await getAuthor(slug);
   if (!author) notFound();
 
+  const viewer = await getCurrentProfile();
   const page = toPage(sp.page);
-  const { items, total, perPage } = await getArticlesByAuthor(author.id, page);
+  const [{ items, total, perPage }, follow] = await Promise.all([
+    getArticlesByAuthor(author.id, page),
+    getFollowState({ authorId: author.id }, viewer?.id ?? null),
+  ]);
   if (page > 1 && items.length === 0) notFound();
 
   // `socials` is jsonb, so it arrives untyped; only keep non-empty string values.
@@ -58,6 +64,16 @@ export default async function AuthorPage({ params, searchParams }: Props) {
                 {author.bio}
               </p>
             )}
+            <div className="mt-5">
+              <FollowButton
+                authorId={author.id}
+                initialFollowing={follow.following}
+                initialCount={follow.count}
+                canFollow={!!viewer && viewer.id !== author.id}
+                path={`/author/${slug}`}
+              />
+            </div>
+
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <span className="font-mono text-[11px] uppercase tracking-[2px] text-muted">
                 {total} {total === 1 ? "article" : "articles"}

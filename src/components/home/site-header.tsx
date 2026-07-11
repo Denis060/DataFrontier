@@ -6,6 +6,7 @@ import { Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu, type SessionProfile } from "@/components/auth/user-menu";
 import { SearchBar } from "@/components/search/search-bar";
+import { NotificationBell } from "@/components/notification-bell";
 import type { HomeData } from "@/lib/queries";
 
 type Props = {
@@ -14,9 +15,10 @@ type Props = {
   nav: HomeData["menus"];
   ticker: HomeData["ticker"];
   profile?: SessionProfile;
+  unread?: number;
 };
 
-export function SiteHeader({ siteName, established, nav, ticker, profile = null }: Props) {
+export function SiteHeader({ siteName, established, nav, ticker, profile = null, unread = 0 }: Props) {
   const [open, setOpen] = useState(false);
   const [brand, accent] = splitBrand(siteName);
 
@@ -50,6 +52,7 @@ export function SiteHeader({ siteName, established, nav, ticker, profile = null 
             </Link>
           ))}
           <SearchBar />
+          {profile && <NotificationBell unread={unread} />}
           <ThemeToggle />
           <UserMenu profile={profile} />
         </nav>

@@ -7,6 +7,7 @@ import {
   getChrome,
   getComments,
   getMoreByAuthor,
+  getUnreadCount,
   getRelated,
   menuFor,
   type ArticleCard,
@@ -117,6 +118,7 @@ export default async function ArticlePage({ params }: Props) {
     getComments(article.id),
   ]);
 
+  const unread = await getUnreadCount(profile?.id ?? null);
   const { settings } = chrome;
   const isDraft = article.status !== "published";
   const shareUrl = `${SITE_URL}/article/${article.slug}`;
@@ -159,6 +161,7 @@ export default async function ArticlePage({ params }: Props) {
         nav={menuFor(chrome.menus, "header")}
         ticker={chrome.ticker}
         profile={profile}
+        unread={unread}
       />
 
       {!isDraft && <ViewCounter slug={article.slug} />}

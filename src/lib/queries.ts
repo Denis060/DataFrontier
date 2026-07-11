@@ -265,6 +265,64 @@ export async function getEvent(slug: string) {
   return data;
 }
 
+/** Follower count for an author or category, and whether the current user follows. */
+export async function getFollowState(
+  target: { authorId?: string; categoryId?: string },
+  viewerId: string | null,
+) {
+  const db = await createClient();
+  const col = target.authorId ? "author_id" : "category_id";
+  const val = target.authorId ?? target.categoryId!;
+
+  const [countRes, mineRes] = await Promise.all([
+    db.from("follows").select("id", { count: "exact", head: true }).eq(col, val),
+    viewerId
+      ? db.from("follows").select("id").eq("follower_id", viewerId).eq(col, val).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  return { count: countRes.count ?? 0, following: !!mineRes.data };
+}
+
+/** The signed-in user's unread notification count. */
+export async function getUnreadCount(viewerId: string | null): Promise<number> {
+  if (!viewerId) return 0;
+  const db = await createClient();
+  const { count } = await db
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", viewerId)
+    .eq("is_read", false);
+  return count ?? 0;
+}
+
+/** Articles from the authors and topics a user follows, newest first. */
+export async function getFollowingFeed(viewerId: string): Promise<ArticleCard[]> {
+  const db = await createClient();
+  const { data: follows } = await db
+    .from("follows")
+    .select("author_id, category_id")
+    .eq("follower_id", viewerId);
+
+  const authorIds = (follows ?? []).map((f) => f.author_id).filter(Boolean) as string[];
+  const categoryIds = (follows ?? []).map((f) => f.category_id).filter(Boolean) as string[];
+  if (authorIds.length === 0 && categoryIds.length === 0) return [];
+
+  const ors: string[] = [];
+  if (authorIds.length) ors.push(`author_id.in.(${authorIds.join(",")})`);
+  if (categoryIds.length) ors.push(`category_id.in.(${categoryIds.join(",")})`);
+
+  const { data } = await db
+    .from("articles")
+    .select(ARTICLE_SELECT)
+    .eq("status", "published")
+    .or(ors.join(","))
+    .order("published_at", { ascending: false })
+    .limit(30);
+
+  return (data ?? []) as ArticleCard[];
+}
+
 /** Header and footer chrome, for pages that aren't the homepage. */
 export async function getChrome() {
   const db = await createClient();

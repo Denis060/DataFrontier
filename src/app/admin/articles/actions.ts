@@ -2,11 +2,52 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { requireStaff } from "@/lib/admin";
 import { hasRole } from "@/lib/auth";
 import { renderMarkdown } from "@/lib/markdown";
 import type { Database } from "@/lib/supabase/database.types";
+
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://datafrontier.vercel.app";
+
+/**
+ * When an article first goes live, notify everyone following its author or its
+ * category. Uses the service role (bypasses RLS) to insert notifications for
+ * other users, and never notifies the author about their own piece.
+ */
+async function notifyFollowers(articleId: string) {
+  const db = createAdminClient();
+
+  const { data: article } = await db
+    .from("articles")
+    .select("title, slug, author_id, category_id, author:profiles!articles_author_id_fkey(full_name)")
+    .eq("id", articleId)
+    .maybeSingle();
+  if (!article) return;
+
+  const targets: string[] = [];
+  if (article.author_id) targets.push(`author_id.eq.${article.author_id}`);
+  if (article.category_id) targets.push(`category_id.eq.${article.category_id}`);
+  if (!targets.length) return;
+
+  const { data: follows } = await db.from("follows").select("follower_id").or(targets.join(","));
+  const recipients = new Set((follows ?? []).map((f) => f.follower_id));
+  recipients.delete(article.author_id); // don't notify the author of their own post
+  if (recipients.size === 0) return;
+
+  const authorName =
+    (article.author as { full_name: string } | null)?.full_name ?? "The Data Frontier";
+
+  const rows = [...recipients].map((user_id) => ({
+    user_id,
+    type: "new_article",
+    title: article.title,
+    url: `${SITE}/article/${article.slug}`,
+    actor_name: authorName,
+  }));
+
+  await db.from("notifications").insert(rows);
+}
 
 type ArticleUpdate = Database["public"]["Tables"]["articles"]["Update"];
 type ArticleStatus = Database["public"]["Enums"]["article_status"];
@@ -78,6 +119,8 @@ export async function saveArticle(formData: FormData): Promise<Result> {
   const patch: ArticleUpdate = { ...fields };
   const staff = hasRole(profile.role, ["admin", "editor"]);
 
+  let firstPublish = false;
+
   if (TRANSITIONS.has(intent)) {
     const to = intent as ArticleStatus;
     const authorMoves: ArticleStatus[] = ["in_review"];
@@ -88,7 +131,10 @@ export async function saveArticle(formData: FormData): Promise<Result> {
 
     if (to === "published" && id) {
       const { data: cur } = await db.from("articles").select("published_at").eq("id", id).single();
-      if (!cur?.published_at) patch.published_at = new Date().toISOString();
+      if (!cur?.published_at) {
+        patch.published_at = new Date().toISOString();
+        firstPublish = true;
+      }
     }
   }
 
@@ -109,6 +155,16 @@ export async function saveArticle(formData: FormData): Promise<Result> {
       .single();
     if (error) return { error: humanize(error.message) };
     articleId = data.id;
+  }
+
+  // Fan out follower notifications on the first publish. Best-effort — a
+  // notification failure must not fail the publish.
+  if (firstPublish && articleId) {
+    try {
+      await notifyFollowers(articleId);
+    } catch {
+      // swallow — the article is published either way
+    }
   }
 
   revalidatePath("/admin/articles");
