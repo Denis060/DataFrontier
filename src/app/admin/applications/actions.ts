@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireStaff } from "@/lib/admin";
+import { requireStaff, ensureProfileSlug } from "@/lib/admin";
 import { hasRole } from "@/lib/auth";
 
 /**
@@ -36,6 +36,9 @@ export async function decideApplication(
       .update({ role: "author" })
       .eq("id", app.profile_id);
     if (roleErr) return { error: roleErr.message };
+
+    // A public author needs a byline slug, or /author/[slug] 404s.
+    await ensureProfileSlug(db, app.profile_id);
   }
 
   const { error } = await db

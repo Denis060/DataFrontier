@@ -80,6 +80,41 @@ export async function getArticleForEdit(id: string, viewer: { id: string; role: 
   return data;
 }
 
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
+
+/**
+ * Give a profile a unique public slug if it doesn't have one. Called when a
+ * reader is promoted to a byline role (author/editor/admin) — without a slug
+ * their /author/[slug] page 404s. No-op if a slug already exists.
+ */
+export async function ensureProfileSlug(
+  db: Awaited<ReturnType<typeof createClient>>,
+  profileId: string,
+): Promise<void> {
+  const { data: p } = await db
+    .from("profiles")
+    .select("slug, full_name")
+    .eq("id", profileId)
+    .maybeSingle();
+  if (!p || p.slug) return;
+
+  const base = slugify(p.full_name || "") || "author";
+  const { data: taken } = await db.from("profiles").select("slug").ilike("slug", `${base}%`);
+  const used = new Set((taken ?? []).map((t) => t.slug));
+  let slug = base;
+  for (let i = 2; used.has(slug); i++) slug = `${base}-${i}`;
+
+  await db.from("profiles").update({ slug }).eq("id", profileId);
+}
+
 export async function listFormatsAndCategories() {
   const db = await createClient();
   const [formats, categories] = await Promise.all([
