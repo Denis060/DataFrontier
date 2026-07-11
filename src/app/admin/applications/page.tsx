@@ -2,7 +2,7 @@ import { requireStaff } from "@/lib/admin";
 import { hasRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { ApplicationCard } from "@/components/admin/application-card";
+import { ApplicationsList } from "@/components/admin/applications-list";
 
 export const metadata = { title: "Applications — Newsroom", robots: { index: false } };
 
@@ -10,7 +10,8 @@ export default async function ApplicationsPage() {
   const profile = await requireStaff();
   const db = await createClient();
 
-  // RLS lets staff read all applications; pending first, then most recent.
+  // RLS lets staff read all applications; most recent first. The client list
+  // handles filtering, search, collapse, and paging.
   const { data } = await db
     .from("author_applications")
     .select(
@@ -19,8 +20,6 @@ export default async function ApplicationsPage() {
     .order("created_at", { ascending: false });
 
   const apps = data ?? [];
-  const pending = apps.filter((a) => a.status === "pending");
-  const decided = apps.filter((a) => a.status !== "pending");
   const canApprove = hasRole(profile.role, ["admin"]);
 
   return (
@@ -38,26 +37,7 @@ export default async function ApplicationsPage() {
             No applications yet.
           </p>
         ) : (
-          <div className="flex flex-col gap-8">
-            {pending.length > 0 && (
-              <section className="flex flex-col gap-4">
-                <h2 className="font-mono text-[11px] uppercase tracking-[2px] text-gold">
-                  Pending ({pending.length})
-                </h2>
-                {pending.map((a) => (
-                  <ApplicationCard key={a.id} app={a} canApprove={canApprove} />
-                ))}
-              </section>
-            )}
-            {decided.length > 0 && (
-              <section className="flex flex-col gap-4">
-                <h2 className="font-mono text-[11px] uppercase tracking-[2px] text-muted">Decided</h2>
-                {decided.map((a) => (
-                  <ApplicationCard key={a.id} app={a} canApprove={canApprove} />
-                ))}
-              </section>
-            )}
-          </div>
+          <ApplicationsList apps={apps} canApprove={canApprove} />
         )}
       </div>
     </AdminShell>
