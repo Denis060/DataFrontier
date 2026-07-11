@@ -395,6 +395,27 @@ export type Database = {
           },
         ]
       }
+      email_events: {
+        Row: {
+          created_at: string
+          id: string
+          resend_id: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          resend_id?: string | null
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          resend_id?: string | null
+          type?: string
+        }
+        Relationships: []
+      }
       email_suppressions: {
         Row: {
           created_at: string
@@ -751,6 +772,7 @@ export type Database = {
           error: string | null
           id: string
           issue_id: string
+          opened_at: string | null
           resend_id: string | null
           sent_at: string | null
           status: string
@@ -762,6 +784,7 @@ export type Database = {
           error?: string | null
           id?: string
           issue_id: string
+          opened_at?: string | null
           resend_id?: string | null
           sent_at?: string | null
           status?: string
@@ -773,6 +796,7 @@ export type Database = {
           error?: string | null
           id?: string
           issue_id?: string
+          opened_at?: string | null
           resend_id?: string | null
           sent_at?: string | null
           status?: string
@@ -1162,6 +1186,7 @@ export type Database = {
           error: string | null
           id: string
           issue_id: string
+          opened_at: string | null
           resend_id: string | null
           sent_at: string | null
           status: string
@@ -1180,6 +1205,15 @@ export type Database = {
       }
       increment_view: { Args: { article_slug: string }; Returns: undefined }
       prune_rate_limits: { Args: never; Returns: undefined }
+      record_email_event: {
+        Args: {
+          p_event_id: string
+          p_hard: boolean
+          p_resend_id: string
+          p_type: string
+        }
+        Returns: boolean
+      }
       search_content: {
         Args: { max_results?: number; q: string }
         Returns: {
