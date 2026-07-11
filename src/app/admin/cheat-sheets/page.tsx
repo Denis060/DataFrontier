@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { requireStaff } from "@/lib/admin";
+import { hasRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/admin/admin-shell";
 
@@ -9,10 +10,13 @@ export const metadata = { title: "Cheat Sheets — Newsroom", robots: { index: f
 export default async function AdminCheatSheetsPage() {
   const profile = await requireStaff();
   const db = await createClient();
-  const { data } = await db
+  let q = db
     .from("cheat_sheets")
     .select("id, title, slug, published, created_at")
     .order("created_at", { ascending: false });
+  // Same as articles: authors see only their own; editors/admins see all.
+  if (!hasRole(profile.role, ["admin", "editor"])) q = q.eq("author_id", profile.id);
+  const { data } = await q;
   const sheets = data ?? [];
 
   return (

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/admin";
+import { hasRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { CheatSheetForm, type CheatSheetDraft } from "@/components/admin/cheat-sheet-form";
@@ -16,6 +17,8 @@ export default async function EditCheatSheetPage({ params }: { params: Promise<{
     db.from("categories").select("id, name").order("sort_order"),
   ]);
   if (!row) notFound();
+  // An author reaching for someone else's cheat sheet gets a 404.
+  if (!hasRole(profile.role, ["admin", "editor"]) && row.author_id !== profile.id) notFound();
 
   const sheet: CheatSheetDraft = {
     id: row.id,

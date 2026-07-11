@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireStaff } from "@/lib/admin";
+import { requireStaff, ensureProfileSlug } from "@/lib/admin";
 import { hasRole, type Role } from "@/lib/auth";
 
 const ROLES: Role[] = ["reader", "author", "editor", "admin"];
@@ -24,6 +24,9 @@ export async function setUserRole(
   const db = await createClient();
   const { error } = await db.from("profiles").update({ role: role as Role }).eq("id", userId);
   if (error) return { error: error.message };
+
+  // Promoting to a byline role? Make sure they have a public slug.
+  if (role !== "reader") await ensureProfileSlug(db, userId);
 
   revalidatePath("/admin/users");
   return { ok: true };
