@@ -78,6 +78,7 @@ export type Database = {
         Row: {
           author_id: string
           body: string | null
+          body_html: string | null
           canonical_url: string | null
           category_id: string | null
           cover_alt: string | null
@@ -106,6 +107,7 @@ export type Database = {
         Insert: {
           author_id: string
           body?: string | null
+          body_html?: string | null
           canonical_url?: string | null
           category_id?: string | null
           cover_alt?: string | null
@@ -134,6 +136,7 @@ export type Database = {
         Update: {
           author_id?: string
           body?: string | null
+          body_html?: string | null
           canonical_url?: string | null
           category_id?: string | null
           cover_alt?: string | null
