@@ -1,8 +1,25 @@
 import "server-only";
+import { appendFileSync } from "node:fs";
 import { Resend } from "resend";
 
 const apiKey = process.env.RESEND_API_KEY;
 const from = process.env.RESEND_FROM_EMAIL ?? "newsletter@thedatafrontier.com";
+
+/**
+ * Test/dev outbox. When EMAIL_OUTBOX names a file, every outgoing message is
+ * appended there as JSONL so E2E tests (running in a separate process from the
+ * server) can assert on what would be sent — subject, recipient, links — without
+ * a provider. Unset in production, so this is a strict no-op there.
+ */
+function captureMail(rec: { to: string | string[]; subject: string; html?: string; text?: string }) {
+  const outbox = process.env.EMAIL_OUTBOX;
+  if (!outbox) return;
+  try {
+    appendFileSync(outbox, JSON.stringify({ ...rec, at: new Date().toISOString() }) + "\n");
+  } catch {
+    // Best-effort: a capture failure must never break a send.
+  }
+}
 
 /** True once a Resend key is configured. */
 export const emailConfigured = !!apiKey;
@@ -17,6 +34,7 @@ type SendArgs = { to: string | string[]; subject: string; html: string };
  * and the confirm URL is printed to the server console instead of emailed.
  */
 export async function sendEmail({ to, subject, html }: SendArgs) {
+  captureMail({ to, subject, html });
   if (!resend) {
     console.info(`[email:skipped] no RESEND_API_KEY — would send "${subject}" to ${to}`);
     return { skipped: true as const };
@@ -43,6 +61,7 @@ type MailArgs = {
  * so the engine is fully exercisable without sending anything real.
  */
 export async function sendMail({ to, subject, html, text, headers, idempotencyKey }: MailArgs) {
+  captureMail({ to, subject, html, text });
   if (!resend) {
     console.info(`[email:skipped] no RESEND_API_KEY — would send "${subject}" to ${to}`);
     return { id: `mock_${idempotencyKey ?? to}`, skipped: true as const };
