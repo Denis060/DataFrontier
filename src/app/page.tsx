@@ -18,7 +18,7 @@ export default async function Home() {
   const [d, profile] = await Promise.all([getHomeData(), getCurrentProfile()]);
   const unread = await getUnreadCount(profile?.id ?? null);
   const s = d.settings;
-  const siteName = s?.site_name ?? "The DataFrontier";
+  const siteName = s?.site_name ?? "Everyday Data Science";
 
   const badges = Array.isArray(s?.editor_badges)
     ? (s.editor_badges as { label: string; color: string }[])
@@ -39,7 +39,7 @@ export default async function Home() {
         <Hero hero={d.hero} latest={d.latest} />
 
         <NewsletterBand
-          headline={s?.newsletter_headline ?? "Stay Ahead of the Data Frontier"}
+          headline={s?.newsletter_headline ?? "Stay Ahead of Everyday Data Science"}
           subtext={s?.newsletter_subtext ?? ""}
           stats={d.stats}
           showStats={s?.newsletter_show_stats ?? true}

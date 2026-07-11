@@ -141,7 +141,7 @@ export default async function ArticlePage({ params }: Props) {
       : undefined,
     publisher: {
       "@type": "Organization",
-      name: settings?.site_name ?? "The Data Frontier",
+      name: settings?.site_name ?? "Everyday Data Science",
     },
     mainEntityOfPage: { "@type": "WebPage", "@id": shareUrl },
     articleSection: article.category?.name,
@@ -156,7 +156,7 @@ export default async function ArticlePage({ params }: Props) {
         />
       )}
       <SiteHeader
-        siteName={settings?.site_name ?? "The DataFrontier"}
+        siteName={settings?.site_name ?? "Everyday Data Science"}
         established={settings?.established_year ?? null}
         nav={menuFor(chrome.menus, "header")}
         ticker={chrome.ticker}
@@ -266,7 +266,7 @@ export default async function ArticlePage({ params }: Props) {
             <RailSection title="Newsletter">
               <p className="mb-3 text-[13px] leading-relaxed text-muted">
                 {settings?.newsletter_subtext?.slice(0, 110) ??
-                  "Weekly dispatches from the Data Frontier."}
+                  "Weekly dispatches from Everyday Data Science."}
               </p>
               <Link
                 href="/newsletter"
@@ -289,7 +289,7 @@ export default async function ArticlePage({ params }: Props) {
       </main>
 
       <SiteFooter
-        siteName={settings?.site_name ?? "The DataFrontier"}
+        siteName={settings?.site_name ?? "Everyday Data Science"}
         tagline={settings?.tagline ?? null}
         menus={chrome.menus}
         year={new Date().getFullYear()}

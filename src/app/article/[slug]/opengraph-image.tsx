@@ -4,7 +4,7 @@ import { getArticle } from "@/lib/queries";
 export const runtime = "nodejs";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "The Data Frontier";
+export const alt = "Everyday Data Science";
 
 /** A branded OG card generated per article, used when no cover image is set
  *  (and as a consistent share image everywhere). */
@@ -12,7 +12,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
   const { slug } = await params;
   const article = await getArticle(slug);
 
-  const title = article?.title ?? "The Data Frontier";
+  const title = article?.title ?? "Everyday Data Science";
   const category = article?.category?.name ?? "Agentic AI · Data Science";
   const author = article?.author?.full_name;
 
@@ -31,8 +31,8 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
         }}
       >
         <div style={{ display: "flex", alignItems: "center", fontSize: 30, fontWeight: 900, color: "#e8eaf0" }}>
-          <span>The Data</span>
-          <span style={{ color: "#d4a853" }}>Frontier</span>
+          <span>Everyday&nbsp;</span>
+          <span style={{ color: "#d4a853" }}>Data Science</span>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
@@ -61,7 +61,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
         </div>
 
         <div style={{ display: "flex", alignItems: "center", color: "#8b93a3", fontSize: 26 }}>
-          <span>{author ? `By ${author}` : "datafrontier.vercel.app"}</span>
+          <span>{author ? `By ${author}` : "everydaydatascience.com"}</span>
         </div>
       </div>
     ),

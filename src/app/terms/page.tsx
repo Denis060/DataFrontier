@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { InfoPage } from "@/components/info-page";
 
-export const metadata: Metadata = { title: "Terms of Use — The Data Frontier" };
+export const metadata: Metadata = { title: "Terms of Use — Everyday Data Science" };
 
 export default function TermsPage() {
   return (
     <InfoPage eyebrow="Legal" title="Terms of Use" intro="Last updated July 2026.">
-      <p>By using The Data Frontier, you agree to these terms. If you don&apos;t, please don&apos;t use the site.</p>
+      <p>By using Everyday Data Science, you agree to these terms. If you don&apos;t, please don&apos;t use the site.</p>
 
       <h2>Using the site</h2>
       <p>
@@ -26,7 +26,7 @@ export default function TermsPage() {
 
       <h2>Our content</h2>
       <p>
-        Articles remain the property of their authors. The Data Frontier name, design, and
+        Articles remain the property of their authors. Everyday Data Science name, design, and
         compilation are ours. Don&apos;t reproduce them without permission.
       </p>
 

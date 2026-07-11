@@ -5,7 +5,7 @@ import { NewsletterBand } from "@/components/home/newsletter-band";
 import { getHomeData } from "@/lib/queries";
 
 export const metadata: Metadata = {
-  title: "Subscribe — The Data Frontier",
+  title: "Subscribe — Everyday Data Science",
   description: "Join the free weekly newsletter for AI and data science practitioners.",
 };
 
@@ -16,7 +16,7 @@ export default async function NewsletterPage() {
   return (
     <Shell>
       <NewsletterBand
-        headline={settings?.newsletter_headline ?? "Stay Ahead of the Data Frontier"}
+        headline={settings?.newsletter_headline ?? "Stay Ahead of Everyday Data Science"}
         subtext={settings?.newsletter_subtext ?? ""}
         stats={stats}
         showStats={settings?.newsletter_show_stats ?? true}

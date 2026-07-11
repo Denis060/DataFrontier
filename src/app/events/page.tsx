@@ -4,7 +4,7 @@ import { EventCard, type EventRow } from "@/components/event-card";
 import { getEvents } from "@/lib/queries";
 
 export const metadata: Metadata = {
-  title: "Events — The Data Frontier",
+  title: "Events — Everyday Data Science",
   description: "AI and data-science events worth your time — ours and the community's.",
 };
 

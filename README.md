@@ -1,4 +1,4 @@
-# The Data Frontier
+# Everyday Data Science
 
 Agentic AI, Data Science, and the future of intelligent systems — written by practitioners.
 

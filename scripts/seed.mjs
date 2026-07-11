@@ -67,7 +67,7 @@ const die = (label, error) => {
 
 const AUTHORS = [
   {
-    email: "ibrahim@thedatafrontier.com",
+    email: "ibrahim@everydaydatascience.com",
     full_name: "Ibrahim Denis Fofanah",
     slug: "ibrahim-fofanah",
     role: "admin",
@@ -76,12 +76,12 @@ const AUTHORS = [
     socials: { twitter: "", linkedin: "", github: "" },
   },
   {
-    email: "guest@thedatafrontier.com",
+    email: "guest@everydaydatascience.com",
     full_name: "Guest Contributor",
     slug: "guest-contributor",
     role: "author",
     title: "Community Contributor",
-    bio: "Practitioner essays from the Data Frontier community.",
+    bio: "Practitioner essays from Everyday Data Science community.",
     socials: {},
   },
 ];
@@ -463,7 +463,7 @@ instrumentation.
 
 const GENERIC_BODY = (title) =>
   `
-This piece is part of The Data Frontier's ongoing coverage. The full text of
+This piece is part of Everyday Data Science's ongoing coverage. The full text of
 *${title}* is being prepared for publication.
 
 ## What this covers
@@ -521,7 +521,7 @@ const EVENTS = [
     summary: "A day on building, evaluating, and shipping production agents.",
     description:
       "Practitioners from across the ecosystem share what actually works when agents leave the demo and hit production. Talks on memory architectures, evaluation harnesses, and cost control.",
-    host: "The Data Frontier",
+    host: "Everyday Data Science",
     location: "Online",
     is_online: true,
     starts_at: daysOut(21),
@@ -550,7 +550,7 @@ const EVENTS = [
     summary: "Build clear, honest charts from messy real-world data.",
     description:
       "A practical, laptop-open workshop. Bring a dataset; leave with a dashboard and the principles to make it readable.",
-    host: "The Data Frontier",
+    host: "Everyday Data Science",
     location: "Online",
     is_online: true,
     starts_at: daysOut(-14),
@@ -564,7 +564,7 @@ const ISSUES = Array.from({ length: 6 }, (_, i) => ({
   issue_number: i + 1,
   title: `Issue #${i + 1}`,
   slug: `issue-${i + 1}`,
-  summary: "Weekly dispatch from the Data Frontier.",
+  summary: "Weekly dispatch from Everyday Data Science.",
   sent_at: new Date(Date.UTC(2026, 0, 6 + i * 7)).toISOString(),
   recipients: 100 + i * 40,
   open_rate: 51 + i,
@@ -751,25 +751,25 @@ async function seed() {
       hero_article_id: hero.id,
       editor_profile_id: authors["ibrahim-fofanah"],
       established_year: 2026,
-      contact_email: "hello@thedatafrontier.com",
+      contact_email: "hello@everydaydatascience.com",
       socials: {
         twitter: "https://twitter.com",
         linkedin: "https://linkedin.com",
         github: "https://github.com",
         youtube: "https://youtube.com",
       },
-      newsletter_headline: "Stay Ahead of the Data Frontier",
+      newsletter_headline: "Stay Ahead of Everyday Data Science",
       newsletter_subtext:
         "Every week: curated AI research, agentic system breakdowns, Africa tech spotlights, and career intelligence — written by practitioners, for practitioners.",
       newsletter_show_stats: true,
       spotlight_headline:
         "Building Intelligent Systems for the World's Fastest-Growing Markets",
       spotlight_body:
-        "Africa is not just adopting AI — it's inventing new architectures for low-resource languages, unreliable infrastructure, and mobile-first contexts. The Data Frontier brings you the stories nobody else is covering.",
+        "Africa is not just adopting AI — it's inventing new architectures for low-resource languages, unreliable infrastructure, and mobile-first contexts. Everyday Data Science brings you the stories nobody else is covering.",
       spotlight_cta_url: "/category/ai-in-africa",
       editor_headline: "Why I Built This — and Who It's For",
       editor_bio:
-        "I'm a data scientist and AI researcher who got tired of reading AI news written by people who don't build things. The Data Frontier exists to bridge that gap — combining the rigor of academic research with the practical instincts of a practitioner.",
+        "I'm a data scientist and AI researcher who got tired of reading AI news written by people who don't build things. Everyday Data Science exists to bridge that gap — combining the rigor of academic research with the practical instincts of a practitioner.",
       editor_badges: [
         { label: "Agentic AI", color: "gold" },
         { label: "Africa Tech", color: "teal" },

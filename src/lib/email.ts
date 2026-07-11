@@ -3,7 +3,7 @@ import { appendFileSync } from "node:fs";
 import { Resend } from "resend";
 
 const apiKey = process.env.RESEND_API_KEY;
-const from = process.env.RESEND_FROM_EMAIL ?? "newsletter@thedatafrontier.com";
+const from = process.env.RESEND_FROM_EMAIL ?? "newsletter@news.everydaydatascience.com";
 
 /**
  * Test/dev outbox. When EMAIL_OUTBOX names a file, every outgoing message is
@@ -97,11 +97,11 @@ export function emailShell(bodyHtml: string, unsubscribeUrl?: string) {
   return `
   <div style="max-width:560px;margin:0 auto;font-family:-apple-system,Segoe UI,sans-serif;color:#14171c;line-height:1.6">
     <div style="padding:24px 0;border-bottom:1px solid #e5e2db">
-      <span style="font-family:Georgia,serif;font-size:20px;font-weight:900">The Data<span style="color:#8a6212">Frontier</span></span>
+      <span style="font-family:Georgia,serif;font-size:20px;font-weight:900">Everyday <span style="color:#8a6212">Data Science</span></span>
     </div>
     <div style="padding:24px 0;font-size:15px">${bodyHtml}</div>
     <div style="padding:20px 0;border-top:1px solid #e5e2db;font-size:12px;color:#5a6270">
-      The Data Frontier · Agentic AI, Data Science, and the future of intelligent systems.
+      Everyday Data Science · Practical AI, ML &amp; data science for people who build.
       ${unsubscribeUrl ? `<br><a href="${unsubscribeUrl}" style="color:#5a6270">Unsubscribe</a>` : ""}
     </div>
   </div>`;

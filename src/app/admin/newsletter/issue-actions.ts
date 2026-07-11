@@ -9,7 +9,7 @@ import { SECTION_DEFS, renderIssue, type IssueContent } from "@/lib/newsletter";
 import { sendMail } from "@/lib/email";
 import type { Json } from "@/lib/supabase/database.types";
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://datafrontier.vercel.app";
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://everydaydatascience.com";
 
 function slugify(input: string): string {
   return input

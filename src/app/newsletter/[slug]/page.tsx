@@ -18,8 +18,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const issue = await getNewsletterIssueBySlug(slug);
-  if (!issue) return { title: "Issue not found — The Data Frontier" };
-  const title = `${issue.title} — The Data Frontier`;
+  if (!issue) return { title: "Issue not found — Everyday Data Science" };
+  const title = `${issue.title} — Everyday Data Science`;
   return {
     title,
     description: issue.summary ?? undefined,
@@ -48,7 +48,7 @@ export default async function NewsletterIssuePage({
       <article className="mx-auto w-full max-w-[680px] px-5 py-12 sm:px-8 lg:py-16">
         <header className="border-b border-border pb-8">
           <p className="mb-3 font-mono text-[10px] uppercase tracking-[2px] text-teal">
-            The Frontier Brief · Issue #{String(issue.issue_number).padStart(2, "0")}
+            The Everyday Brief · Issue #{String(issue.issue_number).padStart(2, "0")}
           </p>
           <h1 className="font-serif text-[clamp(28px,4.5vw,40px)] leading-[1.12] font-black tracking-[-1px]">
             {issue.title}

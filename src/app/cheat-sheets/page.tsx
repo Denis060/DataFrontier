@@ -6,7 +6,7 @@ import { Pill } from "@/components/pill";
 import { getCheatSheets } from "@/lib/queries";
 
 export const metadata: Metadata = {
-  title: "Cheat Sheets — The Data Frontier",
+  title: "Cheat Sheets — Everyday Data Science",
   description: "Visual references for AI, ML, and data science — free to browse and download.",
 };
 

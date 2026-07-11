@@ -10,7 +10,7 @@ export async function Shell({ children }: { children: React.ReactNode }) {
     getCurrentProfile(),
   ]);
   const unread = await getUnreadCount(profile?.id ?? null);
-  const siteName = settings?.site_name ?? "The DataFrontier";
+  const siteName = settings?.site_name ?? "Everyday Data Science";
 
   return (
     <>

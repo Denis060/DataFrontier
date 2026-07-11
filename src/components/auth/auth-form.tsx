@@ -85,7 +85,7 @@ export function AuthForm({
       <p className="mb-8 text-sm text-muted">
         {mode === "signin"
           ? "Sign in to comment, save articles, and access the newsroom."
-          : "Join the Data Frontier to comment and follow the work."}
+          : "Join Everyday Data Science to comment and follow the work."}
       </p>
 
       {providers.length > 0 && (

@@ -67,7 +67,7 @@ export function NewsletterBand({
       <form action={formAction} className="relative flex flex-col gap-3">
         <Honeypot />
         <p className="text-sm text-muted">
-          Join data scientists, ML engineers, and AI researchers building the frontier.
+          Join data scientists, ML engineers, and AI researchers building what's next.
         </p>
         <input type="hidden" name="source" value="homepage" />
         <div className="flex flex-col sm:flex-row">

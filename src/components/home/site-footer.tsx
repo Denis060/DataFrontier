@@ -58,7 +58,10 @@ export function SiteFooter({
   editorName: string | null;
 }) {
   const socials = menuFor(menus, "social");
-  const brandIndex = siteName.lastIndexOf("Frontier");
+  // First word plain, the rest gold: "Everyday" + "Data Science".
+  const spaceIndex = siteName.indexOf(" ");
+  const brandHead = spaceIndex > 0 ? siteName.slice(0, spaceIndex + 1) : siteName;
+  const brandTail = spaceIndex > 0 ? siteName.slice(spaceIndex + 1) : "";
 
   return (
     <footer className="border-t border-border bg-bg2 px-5 py-12 sm:px-8 lg:px-12">
@@ -66,10 +69,8 @@ export function SiteFooter({
       <div className="mx-auto grid w-full max-w-[1440px] grid-cols-2 gap-x-6 gap-y-9 lg:grid-cols-[220px_1fr_1fr_1fr] lg:gap-12">
         <div className="col-span-2 lg:col-span-1">
           <p className="mb-2.5 font-serif text-lg font-black">
-            {brandIndex > 0 ? siteName.slice(0, brandIndex) : siteName}
-            <span className="text-gold">
-              {brandIndex > 0 ? siteName.slice(brandIndex) : ""}
-            </span>
+            {brandHead}
+            <span className="text-gold">{brandTail}</span>
           </p>
           {tagline && <p className="mb-4 text-[13px] leading-relaxed text-muted">{tagline}</p>}
           <SocialRow links={socials} />

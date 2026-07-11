@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { sendMail } from "@/lib/email";
 import { renderIssue, type IssueContent } from "@/lib/newsletter";
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://datafrontier.vercel.app";
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://everydaydatascience.com";
 
 // Bounded work per invocation so a run never risks the function timeout; the
 // remaining rows stay 'pending' and the next tick (or re-run) drains them.

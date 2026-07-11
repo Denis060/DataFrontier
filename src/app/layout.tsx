@@ -23,19 +23,19 @@ const dmMono = DM_Mono({
   weight: ["400", "500"],
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://datafrontier.vercel.app";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://everydaydatascience.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "The Data Frontier — AI, ML & Agentic Intelligence",
-    template: "%s — The Data Frontier",
+    default: "Everyday Data Science — AI, ML & Agentic Intelligence",
+    template: "%s — Everyday Data Science",
   },
   description:
     "Agentic AI, Data Science, and the future of intelligent systems — written by practitioners.",
   openGraph: {
     type: "website",
-    siteName: "The Data Frontier",
+    siteName: "Everyday Data Science",
     url: SITE_URL,
   },
 };

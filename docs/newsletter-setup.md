@@ -13,8 +13,8 @@ minutes to 48 hours — so start now.
 
 ## 1. Use a dedicated sending subdomain (strongly recommended)
 
-Send newsletters from **`news.thedatafrontier.com`**, not the root
-`thedatafrontier.com`.
+Send newsletters from **`news.everydaydatascience.com`**, not the root
+`everydaydatascience.com`.
 
 **Why:** email reputation is per-sending-domain. If a newsletter ever triggers
 spam complaints, that damage is quarantined to `news.` and can never degrade the
@@ -22,7 +22,7 @@ root domain's ability to deliver the things you can't afford to lose —
 password resets, login links, transactional mail. Google/Yahoo bulk-sender rules
 also treat a clean, dedicated subdomain more favorably.
 
-You will send **from:** `newsletter@news.thedatafrontier.com`.
+You will send **from:** `newsletter@news.everydaydatascience.com`.
 
 ---
 
@@ -31,7 +31,7 @@ You will send **from:** `newsletter@news.thedatafrontier.com`.
 1. **Upgrade to Resend Pro (~$20/mo).** The free tier caps at 100 emails/day,
    which makes a real issue send impossible. Do this first.
 2. In the Resend dashboard → **Domains → Add Domain**, enter
-   `news.thedatafrontier.com`.
+   `news.everydaydatascience.com`.
 3. Resend will generate a set of DNS records **specific to your account** — a
    DKIM key, an SPF include, and a bounce/return-path record. **Copy them
    verbatim** into your DNS provider. Do not hand-type the DKIM value; it's long
@@ -45,16 +45,16 @@ You will send **from:** `newsletter@news.thedatafrontier.com`.
 
 ## 3. DNS records
 
-Add these at your DNS provider (wherever `thedatafrontier.com`'s nameservers
+Add these at your DNS provider (wherever `everydaydatascience.com`'s nameservers
 live). The exact SPF/DKIM values come from Resend in step 2 — the table shows
 the **shape** so you know what you're pasting where.
 
 | Type  | Name (host)                          | Value                                  | Notes |
 |-------|--------------------------------------|----------------------------------------|-------|
-| TXT   | `news.thedatafrontier.com`           | `v=spf1 include:<resend-spf> -all`     | SPF — authorizes Resend to send. Value from Resend. |
+| TXT   | `news.everydaydatascience.com`           | `v=spf1 include:<resend-spf> -all`     | SPF — authorizes Resend to send. Value from Resend. |
 | CNAME/TXT | `resend._domainkey.news…` (Resend tells you exact host) | `<long DKIM key from Resend>` | DKIM — cryptographic signature. **Paste verbatim.** |
 | MX / TXT | bounce host from Resend            | `<from Resend>`                        | Return-path / bounce handling. |
-| TXT   | `_dmarc.news.thedatafrontier.com`    | `v=DMARC1; p=none; rua=mailto:dmarc@thedatafrontier.com` | DMARC — see below. |
+| TXT   | `_dmarc.news.everydaydatascience.com`    | `v=DMARC1; p=none; rua=mailto:dmarc@everydaydatascience.com` | DMARC — see below. |
 
 ### DMARC — start in monitor mode, then tighten
 
@@ -66,7 +66,7 @@ After the first successful send confirms SPF + DKIM pass in the DMARC reports
 (usually a week of data), tighten to:
 
 ```
-v=DMARC1; p=quarantine; rua=mailto:dmarc@thedatafrontier.com; pct=100; adkim=s; aspf=s
+v=DMARC1; p=quarantine; rua=mailto:dmarc@everydaydatascience.com; pct=100; adkim=s; aspf=s
 ```
 
 Don't jump straight to `p=reject` — quarantine first, watch reports, then reject.
@@ -81,12 +81,12 @@ Set these in **Vercel → Project → Settings → Environment Variables**
 | Variable | Value |
 |----------|-------|
 | `RESEND_API_KEY` | Production key from Resend step 2.5 |
-| `RESEND_FROM_EMAIL` | `newsletter@news.thedatafrontier.com` |
+| `RESEND_FROM_EMAIL` | `newsletter@news.everydaydatascience.com` |
 | `CRON_SECRET` | A fresh random string — generate with `openssl rand -hex 32`. Guards the send endpoint; Vercel Cron sends it automatically (step 5). |
 | `RESEND_WEBHOOK_SECRET` | The Svix signing secret (`whsec_…`) from the Resend webhook you create in step 6. Verifies delivery webhooks; without it the webhook endpoint fails closed. |
-| `NEXT_PUBLIC_SITE_URL` | `https://thedatafrontier.com` (or the live Vercel URL) — used to build unsubscribe + "view in browser" links. Must NOT be `localhost` in production. |
+| `NEXT_PUBLIC_SITE_URL` | `https://everydaydatascience.com` (or the live Vercel URL) — used to build unsubscribe + "view in browser" links. Must NOT be `localhost` in production. |
 
-> `RESEND_FROM_EMAIL` currently defaults to `newsletter@thedatafrontier.com` in
+> `RESEND_FROM_EMAIL` currently defaults to `newsletter@news.everydaydatascience.com` in
 > `.env.example`; update it to the `news.` subdomain once verified.
 
 ---
@@ -122,7 +122,7 @@ auto-remove those addresses before the next send or your sending reputation
 decays. This must be live **before** the first real send.
 
 1. In Resend → **Webhooks → Add Endpoint**, point it at
-   `https://thedatafrontier.com/api/webhooks/resend`.
+   `https://everydaydatascience.com/api/webhooks/resend`.
 2. Subscribe to these events: **`email.delivered`, `email.opened`,
    `email.bounced`, `email.complained`**.
 3. Copy the endpoint's **Signing Secret** (`whsec_…`) into
@@ -136,7 +136,7 @@ complained counts per issue.
 ## 7. Owner go-live checklist
 
 - [ ] Resend upgraded to Pro
-- [ ] `news.thedatafrontier.com` shows **Verified** in Resend
+- [ ] `news.everydaydatascience.com` shows **Verified** in Resend
 - [ ] SPF, DKIM, DMARC (`p=none`) records live in DNS
 - [ ] `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `CRON_SECRET`, `NEXT_PUBLIC_SITE_URL`
       set in Vercel Production

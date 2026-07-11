@@ -4,7 +4,7 @@ import { Shell } from "@/components/layout/shell";
 import { createClient } from "@/lib/supabase/server";
 import type { SearchResult } from "@/components/search/search-bar";
 
-export const metadata: Metadata = { title: "Search — The Data Frontier", robots: { index: false } };
+export const metadata: Metadata = { title: "Search — Everyday Data Science", robots: { index: false } };
 
 const KIND_LABEL: Record<string, string> = {
   article: "Article",
