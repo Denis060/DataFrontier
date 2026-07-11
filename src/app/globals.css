@@ -294,6 +294,21 @@ body::before {
   background: var(--df-bg2);
 }
 
+/* Newsletter nudge: slides up into view when it first appears. */
+@keyframes subscribe-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.subscribe-prompt {
+  animation: subscribe-in 0.35s ease both;
+}
+
 /* Callouts (`:::note` / `:::tip` / `:::warning`) and `:::aside` pull-quotes,
    rendered as sanitized <aside> elements by the safe Markdown pipeline. */
 .article-prose .callout {

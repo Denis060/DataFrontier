@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Mono, DM_Sans, Playfair_Display } from "next/font/google";
 import { themeInitScript } from "@/lib/theme";
+import { SubscribePrompt } from "@/components/subscribe-prompt";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -61,7 +62,10 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <SubscribePrompt />
+      </body>
     </html>
   );
 }
