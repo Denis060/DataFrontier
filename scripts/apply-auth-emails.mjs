@@ -27,8 +27,22 @@ if (!TOKEN) {
 
 const TAGLINE = "Practical AI, ML &amp; data science for people who build.";
 
+/** A compact "here's what you get" list — gold ticks, tight rows, email-safe. */
+function benefitList(items) {
+  if (!items || !items.length) return "";
+  const rows = items
+    .map(
+      (t) =>
+        `<tr><td valign="top" style="padding:3px 8px 3px 0;color:#8a6212;font-weight:700">&#10003;</td>` +
+        `<td style="padding:3px 0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:14px;line-height:1.5;color:#14171c">${t}</td></tr>`,
+    )
+    .join("");
+  return `<p style="margin:0 0 4px;font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:#5a6270;font-weight:700">Once you're in</p>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 20px">${rows}</table>`;
+}
+
 /** Outlook-safe, centered, ~520px shell with the Everyday Data Science wordmark. */
-function shell({ preheader, heading, body, buttonLabel, note }) {
+function shell({ preheader, heading, body, buttonLabel, note, benefits }) {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"></head>
 <body style="margin:0;padding:0;background:#f3f1ec;-webkit-text-size-adjust:100%">
@@ -45,6 +59,7 @@ function shell({ preheader, heading, body, buttonLabel, note }) {
           <p style="margin:0 0 22px">
             <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#8a6212;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 26px;border-radius:6px;font-family:-apple-system,Segoe UI,Roboto,sans-serif">${buttonLabel} &rarr;</a>
           </p>
+          ${benefitList(benefits)}
           <p style="margin:0 0 6px;font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:12px;line-height:1.6;color:#5a6270">
             If the button doesn't work, copy and paste this link:
           </p>
@@ -71,6 +86,11 @@ const templates = {
       heading: "Confirm your email",
       body: "Thanks for joining Everyday Data Science. Confirm your email address to activate your account and start reading.",
       buttonLabel: "Confirm your email",
+      benefits: [
+        "Follow the authors and topics you care about",
+        "Join the conversation in the comments",
+        "Get notified when there's something new",
+      ],
       note: "If you didn't create this account, you can safely ignore this email.",
     }),
   },

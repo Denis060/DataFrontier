@@ -92,30 +92,62 @@ export async function sendBatch(emails: SendArgs[]) {
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
-/** Wraps content in the brand shell, with a required unsubscribe footer. */
-export function emailShell(bodyHtml: string, unsubscribeUrl?: string) {
-  return `
-  <div style="max-width:560px;margin:0 auto;font-family:-apple-system,Segoe UI,sans-serif;color:#14171c;line-height:1.6">
-    <div style="padding:24px 0;border-bottom:1px solid #e5e2db">
-      <span style="font-family:Georgia,serif;font-size:20px;font-weight:900">Everyday <span style="color:#8a6212">Data Science</span></span>
-    </div>
-    <div style="padding:24px 0;font-size:15px">${bodyHtml}</div>
-    <div style="padding:20px 0;border-top:1px solid #e5e2db;font-size:12px;color:#5a6270">
-      Everyday Data Science · Practical AI, ML &amp; data science for people who build.
-      ${unsubscribeUrl ? `<br><a href="${unsubscribeUrl}" style="color:#5a6270">Unsubscribe</a>` : ""}
-    </div>
-  </div>`;
+/** Outlook-safe, centered ~520px brand shell with the wordmark and an optional
+ *  unsubscribe footer. `preheader` sets the inbox preview line. */
+export function emailShell(bodyHtml: string, unsubscribeUrl?: string, preheader?: string) {
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"></head>
+<body style="margin:0;padding:0;background:#f3f1ec;-webkit-text-size-adjust:100%">
+  ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">${preheader}</div>` : ""}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f3f1ec">
+    <tr><td align="center" style="padding:24px 12px">
+      <table role="presentation" width="520" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:520px;background:#fbfaf7;border:1px solid #e5e2db;border-radius:10px">
+        <tr><td style="padding:26px 30px 4px;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#14171c;line-height:1.6">
+          <div style="padding-bottom:20px;border-bottom:1px solid #e5e2db">
+            <span style="font-family:Georgia,serif;font-size:20px;font-weight:900;color:#14171c">Everyday <span style="color:#8a6212">Data Science</span></span>
+          </div>
+          <div style="padding-top:22px;font-size:15px">${bodyHtml}</div>
+        </td></tr>
+        <tr><td style="padding:18px 30px;border-top:1px solid #e5e2db;font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:12px;color:#5a6270;line-height:1.6">
+          Everyday Data Science · Practical AI, ML &amp; data science for people who build.
+          ${unsubscribeUrl ? `<br><a href="${unsubscribeUrl}" style="color:#5a6270">Unsubscribe</a>` : ""}
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+}
+
+/** A compact "here's what you get" list — gold ticks, tight rows, email-safe. */
+function benefitList(items: string[]): string {
+  const rows = items
+    .map(
+      (t) =>
+        `<tr><td valign="top" style="padding:3px 8px 3px 0;color:#8a6212;font-weight:700">&#10003;</td>` +
+        `<td style="padding:3px 0;font-size:14px;line-height:1.5;color:#14171c">${t}</td></tr>`,
+    )
+    .join("");
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 18px">${rows}</table>`;
 }
 
 export function confirmEmail(confirmUrl: string, unsubscribeUrl: string) {
   return emailShell(
     `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 12px">Confirm your subscription</h1>
-     <p>Tap the button to start receiving the weekly dispatch.</p>
-     <p style="margin:20px 0">
-       <a href="${confirmUrl}" style="background:#8a6212;color:#fff;text-decoration:none;padding:12px 22px;border-radius:4px;font-weight:700">Confirm subscription →</a>
+     <p style="margin:0 0 18px">You're one tap from <strong>The Everyday Brief</strong> — a free weekly dispatch on AI, ML, and data science for people who actually build things.</p>
+     <p style="margin:0 0 22px">
+       <a href="${confirmUrl}" style="display:inline-block;background:#8a6212;color:#fff;text-decoration:none;padding:13px 26px;border-radius:6px;font-weight:700;font-size:15px">Confirm subscription &rarr;</a>
      </p>
-     <p style="font-size:13px;color:#5a6270">If you didn't request this, ignore this email.</p>`,
+     <p style="margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:#5a6270;font-weight:700">Every Tuesday, you'll get</p>
+     ${benefitList([
+       "A cheat sheet worth saving",
+       "One practical tip you can use that day",
+       "The one thing worth reading this week",
+       "An African AI story you won't find elsewhere",
+       "An opportunity — a job, grant, or call",
+     ])}
+     <p style="font-size:13px;color:#5a6270;margin:0">If you didn't request this, you can safely ignore this email.</p>`,
     unsubscribeUrl,
+    "Confirm your subscription to The Everyday Brief — practical AI, ML & data science, weekly.",
   );
 }
 
