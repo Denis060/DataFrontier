@@ -256,7 +256,7 @@ export function Comments({
   const hidden = tree.length - visible.length;
 
   return (
-    <section className="mt-10 border-t border-border pt-8" id="comments">
+    <section className="mt-10 scroll-mt-24 border-t border-border pt-8" id="comments">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h2 className="flex items-center gap-2.5 font-serif text-2xl font-black tracking-[-0.5px]">
           <MessageSquare className="size-5 text-gold" aria-hidden />
