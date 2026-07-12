@@ -1,9 +1,9 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import Link from "next/link";
-import { Loader2, MessageSquare } from "lucide-react";
-import { postComment, deleteOwnComment, type CommentState } from "@/app/article/[slug]/comment-actions";
+import { Heart, Loader2, MessageSquare } from "lucide-react";
+import { postComment, deleteOwnComment, toggleCommentLike, type CommentState } from "@/app/article/[slug]/comment-actions";
 import { Honeypot } from "@/components/honeypot";
 import type { CommentNode } from "@/lib/queries";
 
@@ -65,6 +65,54 @@ function CommentForm({
   );
 }
 
+function LikeButton({
+  commentId,
+  initialCount,
+  initialLiked,
+  canLike,
+}: {
+  commentId: string;
+  initialCount: number;
+  initialLiked: boolean;
+  canLike: boolean;
+}) {
+  const [liked, setLiked] = useState(initialLiked);
+  const [count, setCount] = useState(initialCount);
+  const [pending, start] = useTransition();
+
+  function toggle() {
+    if (!canLike) return;
+    const prevLiked = liked;
+    const prevCount = count;
+    const next = !liked;
+    setLiked(next);
+    setCount((c) => c + (next ? 1 : -1));
+    start(async () => {
+      const res = await toggleCommentLike(commentId);
+      if ("error" in res) {
+        setLiked(prevLiked);
+        setCount(prevCount);
+      } else {
+        setLiked(res.liked);
+      }
+    });
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      disabled={!canLike || pending}
+      aria-pressed={liked}
+      title={canLike ? (liked ? "Unlike" : "Like") : "Sign in to like"}
+      className={`flex items-center gap-1 transition-colors ${liked ? "text-gold" : "hover:text-ink"} ${canLike ? "" : "cursor-default"}`}
+    >
+      <Heart className={`size-3.5 ${liked ? "fill-current" : ""}`} aria-hidden />
+      {count > 0 && <span>{count}</span>}
+    </button>
+  );
+}
+
 function Comment({
   node,
   articleId,
@@ -107,6 +155,12 @@ function Comment({
           <p className="mt-1 text-[14px] leading-relaxed whitespace-pre-wrap">{node.body}</p>
 
           <div className="mt-1.5 flex items-center gap-3 text-[11px] text-muted">
+            <LikeButton
+              commentId={node.id}
+              initialCount={node.like_count}
+              initialLiked={node.liked}
+              canLike={!!currentUserId}
+            />
             {currentUserId && !node.parent_id && (
               <button type="button" onClick={() => setReplying((v) => !v)} className="hover:text-ink">
                 {replying ? "Cancel" : "Reply"}

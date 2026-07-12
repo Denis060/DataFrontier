@@ -159,6 +159,8 @@ export type CommentNode = {
   is_approved: boolean;
   created_at: string;
   author: { full_name: string; slug: string | null; avatar_url: string | null } | null;
+  like_count: number;
+  liked: boolean;
   replies: CommentNode[];
 };
 
@@ -169,26 +171,50 @@ export type CommentNode = {
  */
 export async function getComments(articleId: string) {
   const db = await createClient();
-  const { data } = await db
-    .from("comments")
-    .select(
-      "id, body, parent_id, profile_id, is_approved, created_at, author:profiles(full_name, slug, avatar_url)",
-    )
-    .eq("article_id", articleId)
-    .order("created_at", { ascending: true });
+  const [{ data }, { data: auth }] = await Promise.all([
+    db
+      .from("comments")
+      .select(
+        "id, body, parent_id, profile_id, is_approved, created_at, author:profiles(full_name, slug, avatar_url), likes:comment_likes(count)",
+      )
+      .eq("article_id", articleId)
+      .order("created_at", { ascending: true }),
+    db.auth.getUser(),
+  ]);
 
-  const rows = (data ?? []) as Omit<CommentNode, "replies">[];
+  type Raw = Omit<CommentNode, "replies" | "like_count" | "liked"> & { likes: { count: number }[] };
+  const raw = (data ?? []) as unknown as Raw[];
+
+  // Which of these comments the signed-in reader has liked.
+  const me = auth.user?.id ?? null;
+  const likedSet = new Set<string>();
+  if (me && raw.length) {
+    const { data: mine } = await db
+      .from("comment_likes")
+      .select("comment_id")
+      .eq("profile_id", me)
+      .in("comment_id", raw.map((r) => r.id));
+    for (const l of mine ?? []) likedSet.add(l.comment_id);
+  }
+
   const byId = new Map<string, CommentNode>();
   const roots: CommentNode[] = [];
 
-  for (const r of rows) byId.set(r.id, { ...r, replies: [] });
-  for (const r of rows) {
+  for (const r of raw) {
+    byId.set(r.id, {
+      ...r,
+      like_count: r.likes?.[0]?.count ?? 0,
+      liked: likedSet.has(r.id),
+      replies: [],
+    });
+  }
+  for (const r of raw) {
     const node = byId.get(r.id)!;
     if (r.parent_id && byId.has(r.parent_id)) byId.get(r.parent_id)!.replies.push(node);
     else roots.push(node);
   }
 
-  return { tree: roots, count: rows.filter((r) => r.is_approved).length };
+  return { tree: roots, count: raw.filter((r) => r.is_approved).length };
 }
 
 /** Other pieces by the same author, for the article rail. */
