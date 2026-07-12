@@ -4,20 +4,9 @@ import { requireStaff } from "@/lib/admin";
 import { createClient } from "@/lib/supabase/server";
 import { emailConfigured } from "@/lib/email";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { NewsletterList } from "@/components/admin/newsletter-list";
 
 export const metadata = { title: "Newsletter — Newsroom", robots: { index: false } };
-
-const fmt = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
-
-const STATUS_STYLE: Record<string, string> = {
-  draft: "bg-surface-2 text-muted",
-  scheduled: "bg-gold-dim text-gold",
-  sending: "bg-teal-dim text-teal",
-  sent: "bg-teal-dim text-teal",
-  failed: "bg-red-dim text-red",
-  canceled: "bg-surface-1 text-muted line-through",
-};
 
 export default async function AdminNewsletterPage() {
   const profile = await requireStaff();
@@ -59,25 +48,7 @@ export default async function AdminNewsletterPage() {
             <Link href="/admin/newsletter/new" className="text-gold hover:underline">Compose the first →</Link>
           </p>
         ) : (
-          <ul className="divide-y divide-border border-y border-border">
-            {issues.map((i) => (
-              <li key={i.id}>
-                <Link href={`/admin/newsletter/${i.id}`} className="flex flex-wrap items-center gap-3 py-4 hover:bg-surface-1">
-                  <span className="font-mono text-[11px] text-muted">#{String(i.issue_number).padStart(2, "0")}</span>
-                  <span className="min-w-0 flex-1 truncate font-serif text-[15px] font-bold">{i.title}</span>
-                  {i.status === "scheduled" && (
-                    <span className="font-mono text-[11px] text-muted">for {fmt(i.scheduled_for)}</span>
-                  )}
-                  {i.status === "sent" && (
-                    <span className="font-mono text-[11px] text-muted">{i.recipients ?? 0} sent</span>
-                  )}
-                  <span className={`rounded-[3px] px-2 py-0.5 font-mono text-[10px] uppercase tracking-[1.5px] ${STATUS_STYLE[i.status] ?? STATUS_STYLE.draft}`}>
-                    {i.status}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <NewsletterList issues={issues} />
         )}
       </div>
     </AdminShell>
