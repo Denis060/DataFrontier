@@ -3,7 +3,8 @@ import { appendFileSync } from "node:fs";
 import { Resend } from "resend";
 
 const apiKey = process.env.RESEND_API_KEY;
-const from = process.env.RESEND_FROM_EMAIL ?? "newsletter@news.everydaydatascience.com";
+// Include a display name so inboxes show "Everyday Data Science", not "newsletter".
+const from = process.env.RESEND_FROM_EMAIL ?? "Everyday Data Science <newsletter@news.everydaydatascience.com>";
 
 /**
  * Test/dev outbox. When EMAIL_OUTBOX names a file, every outgoing message is
@@ -148,6 +149,31 @@ export function confirmEmail(confirmUrl: string, unsubscribeUrl: string) {
      <p style="font-size:13px;color:#5a6270;margin:0">If you didn't request this, you can safely ignore this email.</p>`,
     unsubscribeUrl,
     "Confirm your subscription to The Everyday Brief — practical AI, ML & data science, weekly.",
+  );
+}
+
+/**
+ * Sent once, right after someone confirms — the warm "you're in, here's what to
+ * expect" note. Personal, signed, and invites a reply.
+ */
+export function welcomeEmail(unsubscribeUrl: string) {
+  return emailShell(
+    `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 14px">You're in — welcome 👋</h1>
+     <p style="margin:0 0 14px">Thanks for subscribing to <strong>The Everyday Brief</strong>. It's for people who want to get better at AI, ML, and data science — without the hype, the fake gurus, or unrealistic promises.</p>
+     <p style="margin:0 0 14px">I'm Ibrahim, a data scientist and AI researcher. I got tired of AI news written by people who don't build things, so each week I send one short issue of things actually worth your time.</p>
+     <p style="margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:#5a6270;font-weight:700">What to expect every Tuesday</p>
+     ${benefitList([
+       "A cheat sheet worth saving",
+       "One practical tip you can use that day",
+       "The one thing worth reading this week",
+       "An African AI story you won't find elsewhere",
+       "An opportunity — a job, grant, or call",
+     ])}
+     <p style="margin:0 0 14px">Got a question or a topic you want covered? Just hit reply — I read every email.</p>
+     <p style="margin:0 0 4px">Glad you're here,</p>
+     <p style="margin:0;font-weight:700">Ibrahim · Everyday Data Science</p>`,
+    unsubscribeUrl,
+    "You're in — here's what to expect from The Everyday Brief.",
   );
 }
 
