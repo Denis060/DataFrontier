@@ -47,6 +47,33 @@ export async function postComment(_prev: CommentState, formData: FormData): Prom
   return { ok: true, message: "Thanks — your comment is awaiting review." };
 }
 
+/**
+ * Toggle a like on a comment. Returns the resulting liked state so the client
+ * can reconcile its optimistic update. No revalidate — the UI updates in place.
+ */
+export async function toggleCommentLike(
+  commentId: string,
+): Promise<{ liked: boolean } | { error: string }> {
+  const profile = await getCurrentProfile();
+  if (!profile) return { error: "Sign in to like comments." };
+
+  const db = await createClient();
+  const { data: existing } = await db
+    .from("comment_likes")
+    .select("comment_id")
+    .eq("comment_id", commentId)
+    .eq("profile_id", profile.id)
+    .maybeSingle();
+
+  if (existing) {
+    await db.from("comment_likes").delete().eq("comment_id", commentId).eq("profile_id", profile.id);
+    return { liked: false };
+  }
+  const { error } = await db.from("comment_likes").insert({ comment_id: commentId, profile_id: profile.id });
+  if (error) return { error: "Could not register your like." };
+  return { liked: true };
+}
+
 /** Delete your own comment. */
 export async function deleteOwnComment(id: string, slug: string): Promise<void> {
   const profile = await getCurrentProfile();
