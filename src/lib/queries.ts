@@ -9,7 +9,8 @@ const ARTICLE_SELECT = `
   id, slug, title, excerpt, kicker, reading_time, published_at, featured,
   author:profiles!articles_author_id_fkey (full_name, slug, title),
   category:categories (name, slug, color),
-  format:formats (name, slug, color)
+  format:formats (name, slug, color),
+  reactions:article_reactions(count)
 ` as const;
 
 export type ArticleCard = {
@@ -24,7 +25,11 @@ export type ArticleCard = {
   author: { full_name: string; slug: string | null; title: string | null } | null;
   category: { name: string; slug: string; color: string | null } | null;
   format: { name: string; slug: string; color: Accent } | null;
+  reactions?: { count: number }[];
 };
+
+/** Flatten the embedded aggregate to a plain number. */
+export const reactionCount = (a: Pick<ArticleCard, "reactions">) => a.reactions?.[0]?.count ?? 0;
 
 /**
  * The homepage reads from nine tables. Every query is independent, so they all
@@ -215,6 +220,26 @@ export async function getComments(articleId: string) {
   }
 
   return { tree: roots, count: raw.filter((r) => r.is_approved).length };
+}
+
+/** Reaction count for an article + whether the signed-in reader has reacted. */
+export async function getArticleReactions(articleId: string) {
+  const db = await createClient();
+  const [{ count }, { data: auth }] = await Promise.all([
+    db.from("article_reactions").select("*", { count: "exact", head: true }).eq("article_id", articleId),
+    db.auth.getUser(),
+  ]);
+  let reacted = false;
+  if (auth.user) {
+    const { data } = await db
+      .from("article_reactions")
+      .select("article_id")
+      .eq("article_id", articleId)
+      .eq("profile_id", auth.user.id)
+      .maybeSingle();
+    reacted = !!data;
+  }
+  return { count: count ?? 0, reacted };
 }
 
 /** Other pieces by the same author, for the article rail. */

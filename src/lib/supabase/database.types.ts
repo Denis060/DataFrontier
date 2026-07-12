@@ -44,6 +44,39 @@ export type Database = {
           },
         ]
       }
+      article_reactions: {
+        Row: {
+          article_id: string
+          created_at: string
+          profile_id: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          profile_id: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_reactions_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_reactions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       article_tags: {
         Row: {
           article_id: string
