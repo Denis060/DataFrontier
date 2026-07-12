@@ -57,7 +57,7 @@ export async function getHomeData() {
       db.from("jobs").select("*").eq("is_active", true).order("posted_at", { ascending: false }).limit(3),
       db.from("jobs").select("id", { count: "exact", head: true }).eq("is_active", true),
       db.from("resources").select("*").eq("is_active", true).order("sort_order"),
-      db.from("newsletter_issues").select("open_rate").not("sent_at", "is", null),
+      db.from("newsletter_issues").select("delivered_count, opened_count").not("sent_at", "is", null),
       db.from("newsletter_subscribers").select("id", { count: "exact", head: true }).eq("status", "confirmed"),
     ]);
 
@@ -86,7 +86,13 @@ export async function getHomeData() {
   const counts = await Promise.all(categories.map((c) => countIn(c.id)));
 
   const issues = issuesRes.data ?? [];
-  const rates = issues.map((i) => i.open_rate).filter((r): r is number => r != null);
+  // Real open rate = opened ÷ delivered, from webhook counts. Only shown once
+  // there's enough delivered volume to be meaningful — below that a tiny test
+  // send would publish a misleading number, so the tile stays hidden.
+  const OPEN_RATE_MIN_DELIVERED = 50;
+  const delivered = issues.reduce((s, i) => s + (i.delivered_count ?? 0), 0);
+  const opened = issues.reduce((s, i) => s + (i.opened_count ?? 0), 0);
+  const openRate = delivered >= OPEN_RATE_MIN_DELIVERED ? Math.round((opened / delivered) * 100) : null;
 
   return {
     settings,
@@ -104,7 +110,7 @@ export async function getHomeData() {
     stats: {
       subscribers: subsRes.count ?? 0,
       issues: issues.length,
-      openRate: rates.length ? Math.round(rates.reduce((a, b) => a + b, 0) / rates.length) : null,
+      openRate,
     },
   };
 }
@@ -329,7 +335,7 @@ export async function getNewsletterIssues() {
   const db = await createClient();
   const { data } = await db
     .from("newsletter_issues")
-    .select("issue_number, title, slug, summary, sent_at, open_rate")
+    .select("issue_number, title, slug, summary, sent_at")
     .not("sent_at", "is", null)
     .order("issue_number", { ascending: false });
   return data ?? [];

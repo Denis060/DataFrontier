@@ -567,7 +567,6 @@ const ISSUES = Array.from({ length: 6 }, (_, i) => ({
   summary: "Weekly dispatch from Everyday Data Science.",
   sent_at: new Date(Date.UTC(2026, 0, 6 + i * 7)).toISOString(),
   recipients: 100 + i * 40,
-  open_rate: 51 + i,
 }));
 
 // ─────────────────────────────────────────────────────────────
