@@ -803,7 +803,6 @@ export type Database = {
       }
       newsletter_issues: {
         Row: {
-          body: string | null
           bounced_count: number
           complained_count: number
           content: Json
@@ -811,7 +810,6 @@ export type Database = {
           delivered_count: number
           id: string
           issue_number: number
-          open_rate: number | null
           opened_count: number
           recipients: number | null
           scheduled_for: string | null
@@ -823,7 +821,6 @@ export type Database = {
           title: string
         }
         Insert: {
-          body?: string | null
           bounced_count?: number
           complained_count?: number
           content?: Json
@@ -831,7 +828,6 @@ export type Database = {
           delivered_count?: number
           id?: string
           issue_number: number
-          open_rate?: number | null
           opened_count?: number
           recipients?: number | null
           scheduled_for?: string | null
@@ -843,7 +839,6 @@ export type Database = {
           title: string
         }
         Update: {
-          body?: string | null
           bounced_count?: number
           complained_count?: number
           content?: Json
@@ -851,7 +846,6 @@ export type Database = {
           delivered_count?: number
           id?: string
           issue_number?: number
-          open_rate?: number | null
           opened_count?: number
           recipients?: number | null
           scheduled_for?: string | null
