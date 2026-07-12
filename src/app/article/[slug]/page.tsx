@@ -19,7 +19,7 @@ import { Pill } from "@/components/pill";
 import { ShareBar } from "@/components/article/share-bar";
 import { ReactionButton } from "@/components/article/reaction-button";
 import { BookmarkButton } from "@/components/article/bookmark-button";
-import { CommentButton } from "@/components/article/comment-button";
+import { CommentsProvider, CommentButton, CommentsReveal } from "@/components/article/comments-disclosure";
 import { Comments } from "@/components/article/comments";
 import { ViewCounter } from "@/components/article/view-counter";
 import { SiteHeader } from "@/components/home/site-header";
@@ -174,6 +174,7 @@ export default async function ArticlePage({ params }: Props) {
       {!isDraft && <ViewCounter slug={article.slug} />}
 
       <main className="flex-1">
+       <CommentsProvider>
         <div className="mx-auto grid w-full max-w-[1240px] gap-12 px-5 py-12 sm:px-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:px-12 lg:py-16">
           <article className="min-w-0 max-w-[760px] lg:col-start-1 lg:row-start-1">
             {isDraft && (
@@ -264,14 +265,16 @@ export default async function ArticlePage({ params }: Props) {
               the discovery rail, so a reader who just finished can jump straight
               to the discussion instead of scrolling past related posts. */}
           <div className="min-w-0 lg:col-start-1 lg:row-start-2 lg:max-w-[760px]">
-            <Comments
-              articleId={article.id}
-              slug={article.slug}
-              tree={comments.tree}
-              count={comments.count}
-              currentUserId={profile?.id ?? null}
-              signedIn={!!profile}
-            />
+            <CommentsReveal>
+              <Comments
+                articleId={article.id}
+                slug={article.slug}
+                tree={comments.tree}
+                count={comments.count}
+                currentUserId={profile?.id ?? null}
+                signedIn={!!profile}
+              />
+            </CommentsReveal>
           </div>
 
           {/* Sticky on desktop; stacks under the comments on mobile.
@@ -314,6 +317,7 @@ export default async function ArticlePage({ params }: Props) {
             </RailSection>
           </aside>
         </div>
+       </CommentsProvider>
       </main>
 
       <SiteFooter
