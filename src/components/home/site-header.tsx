@@ -99,6 +99,9 @@ export function SiteHeader({ siteName, established, nav, ticker, profile = null,
                       Newsroom
                     </Link>
                   )}
+                  <Link href="/account" className="text-[13px] text-muted" onClick={() => setOpen(false)}>
+                    Account
+                  </Link>
                   <form action="/auth/signout" method="post">
                     <button type="submit" className="text-[13px] text-muted">
                       Sign out

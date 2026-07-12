@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LogOut, PenLine, Rss, User } from "lucide-react";
+import { LogOut, PenLine, Rss, Settings, User } from "lucide-react";
 import type { Role } from "@/lib/auth";
 
 export type SessionProfile = {
@@ -76,6 +76,14 @@ export function UserMenu({ profile }: { profile: SessionProfile }) {
             My profile
           </Link>
         )}
+
+        <Link
+          href="/account"
+          className="flex items-center gap-2.5 rounded px-3 py-2.5 text-[13px] text-muted transition-colors hover:bg-surface-1 hover:text-ink"
+        >
+          <Settings className="size-4" aria-hidden />
+          Account settings
+        </Link>
 
         <form action="/auth/signout" method="post">
           <button
