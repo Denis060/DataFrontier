@@ -1,11 +1,13 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
-import { approveComment, hideComment, removeComment } from "@/app/admin/comments/actions";
+import { approveComment, hideComment, removeComment, replyToComment } from "@/app/admin/comments/actions";
 
 type Row = {
   id: string;
+  article_id: string;
+  parent_id: string | null;
   body: string;
   is_approved: boolean;
   created_at: string;
@@ -18,6 +20,23 @@ const fmt = (iso: string) =>
 
 export function CommentRow({ row }: { row: Row }) {
   const [pending, start] = useTransition();
+  const [replying, setReplying] = useState(false);
+  const [reply, setReply] = useState("");
+  const [replyPending, startReply] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function sendReply() {
+    if (!row.article) return;
+    setError(null);
+    startReply(async () => {
+      const res = await replyToComment(row.article_id, row.id, row.article!.slug, reply);
+      if ("error" in res) setError(res.error);
+      else {
+        setReply("");
+        setReplying(false);
+      }
+    });
+  }
 
   return (
     <div className="border-t border-border py-4 first:border-t-0">
@@ -63,6 +82,14 @@ export function CommentRow({ row }: { row: Row }) {
         <button
           type="button"
           disabled={pending}
+          onClick={() => setReplying((v) => !v)}
+          className="rounded border border-border px-3 py-1.5 text-[12px] transition-colors hover:border-border-strong hover:bg-surface-1"
+        >
+          {replying ? "Cancel" : "Reply"}
+        </button>
+        <button
+          type="button"
+          disabled={pending}
           onClick={() => {
             if (confirm("Delete this comment permanently?")) start(() => removeComment(row.id));
           }}
@@ -71,6 +98,30 @@ export function CommentRow({ row }: { row: Row }) {
           Delete
         </button>
       </div>
+
+      {replying && (
+        <div className="mt-3 flex flex-col gap-2">
+          <textarea
+            value={reply}
+            onChange={(e) => setReply(e.target.value)}
+            rows={2}
+            maxLength={2000}
+            placeholder="Write a public reply…"
+            className="w-full rounded border border-border bg-surface-1 px-3 py-2 text-[13px] outline-none focus:border-gold/40"
+          />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={replyPending || reply.trim().length < 2}
+              onClick={sendReply}
+              className="rounded bg-gold px-3.5 py-1.5 text-[12px] font-bold text-on-accent hover:opacity-85 disabled:opacity-50"
+            >
+              {replyPending ? "Posting…" : "Post reply"}
+            </button>
+            {error && <span className="text-[12px] text-red">{error}</span>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
