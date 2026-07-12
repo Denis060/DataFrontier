@@ -134,6 +134,9 @@ export function SiteHeader({ siteName, established, nav, ticker, profile = null,
                       Newsroom
                     </Link>
                   )}
+                  <Link href="/library" className="text-[13px] text-muted" onClick={() => setOpen(false)}>
+                    Library
+                  </Link>
                   <Link href="/account" className="text-[13px] text-muted" onClick={() => setOpen(false)}>
                     Account
                   </Link>

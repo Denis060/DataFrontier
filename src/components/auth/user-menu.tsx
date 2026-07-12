@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LogOut, PenLine, Rss, Settings, User } from "lucide-react";
+import { Bookmark, LogOut, PenLine, Rss, Settings, User } from "lucide-react";
 import type { Role } from "@/lib/auth";
 
 export type SessionProfile = {
@@ -65,6 +65,14 @@ export function UserMenu({ profile }: { profile: SessionProfile }) {
         >
           <Rss className="size-4" aria-hidden />
           Your feed
+        </Link>
+
+        <Link
+          href="/library"
+          className="flex items-center gap-2.5 rounded px-3 py-2.5 text-[13px] text-muted transition-colors hover:bg-surface-1 hover:text-ink"
+        >
+          <Bookmark className="size-4" aria-hidden />
+          Library
         </Link>
 
         {profile.slug && (

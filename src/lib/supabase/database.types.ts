@@ -280,6 +280,39 @@ export type Database = {
           },
         ]
       }
+      bookmarks: {
+        Row: {
+          article_id: string
+          created_at: string
+          profile_id: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          profile_id: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookmarks_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookmarks_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           color: string | null

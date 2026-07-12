@@ -242,6 +242,33 @@ export async function getArticleReactions(articleId: string) {
   return { count: count ?? 0, reacted };
 }
 
+/** Whether the signed-in reader has saved this article. */
+export async function isBookmarked(articleId: string): Promise<boolean> {
+  const db = await createClient();
+  const { data: auth } = await db.auth.getUser();
+  if (!auth.user) return false;
+  const { data } = await db
+    .from("bookmarks")
+    .select("article_id")
+    .eq("article_id", articleId)
+    .eq("profile_id", auth.user.id)
+    .maybeSingle();
+  return !!data;
+}
+
+/** The signed-in reader's saved articles (their Library), newest first. */
+export async function getLibrary(profileId: string): Promise<ArticleCard[]> {
+  const db = await createClient();
+  const { data } = await db
+    .from("bookmarks")
+    .select(`created_at, article:articles(${ARTICLE_SELECT})`)
+    .eq("profile_id", profileId)
+    .order("created_at", { ascending: false });
+  return (data ?? [])
+    .map((row) => (row as unknown as { article: ArticleCard | null }).article)
+    .filter((a): a is ArticleCard => !!a);
+}
+
 /** Other pieces by the same author, for the article rail. */
 export async function getMoreByAuthor(authorId: string, excludeId: string, limit = 3) {
   const db = await createClient();
