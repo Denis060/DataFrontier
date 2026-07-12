@@ -85,6 +85,15 @@
   --df-editor-to: #ece9e2;
 }
 
+/* Native <select> options render in an OS popup. Our field background is a
+   translucent surface token, which composites to near-white there and leaves
+   the light option text nearly invisible. Give options a solid ground + text
+   colour so they stay legible in both themes. */
+option {
+  background-color: var(--df-bg2);
+  color: var(--df-ink);
+}
+
 /* `inline` makes the utilities point at the vars above rather than copy their
    values, which is what lets a single data-theme flip repaint the whole site. */
 @theme inline {
