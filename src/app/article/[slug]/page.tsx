@@ -168,7 +168,7 @@ export default async function ArticlePage({ params }: Props) {
 
       <main className="flex-1">
         <div className="mx-auto grid w-full max-w-[1240px] gap-12 px-5 py-12 sm:px-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:px-12 lg:py-16">
-          <article className="min-w-0 max-w-[760px]">
+          <article className="min-w-0 max-w-[760px] lg:col-start-1 lg:row-start-1">
             {isDraft && (
               <p className="mb-6 rounded border border-gold/30 bg-gold-dim px-3 py-2 font-mono text-[11px] uppercase tracking-[1.5px] text-gold">
                 Preview — status: {article.status.replace("_", " ")}
@@ -237,10 +237,24 @@ export default async function ArticlePage({ params }: Props) {
             </div>
           </article>
 
-          {/* Sticky on desktop; stacks under the article on mobile.
+          {/* Comments sit right under the article — on mobile that means before
+              the discovery rail, so a reader who just finished can jump straight
+              to the discussion instead of scrolling past related posts. */}
+          <div className="min-w-0 lg:col-start-1 lg:row-start-2 lg:max-w-[760px]">
+            <Comments
+              articleId={article.id}
+              slug={article.slug}
+              tree={comments.tree}
+              count={comments.count}
+              currentUserId={profile?.id ?? null}
+              signedIn={!!profile}
+            />
+          </div>
+
+          {/* Sticky on desktop; stacks under the comments on mobile.
               A rail taller than the viewport can never hold its sticky
               position, so it scrolls within itself instead. */}
-          <aside className="flex flex-col gap-9 lg:sticky lg:top-28 lg:max-h-[calc(100vh-8rem)] lg:self-start lg:overflow-y-auto lg:pr-1">
+          <aside className="flex flex-col gap-9 lg:col-start-2 lg:row-start-1 lg:sticky lg:top-28 lg:max-h-[calc(100vh-8rem)] lg:self-start lg:overflow-y-auto lg:pr-1">
             {/* Desktop only. On mobile the rail stacks beneath the article, so
                 this would sit immediately under the in-article share bar. */}
             <RailSection title="Share" className="hidden lg:block">
@@ -277,15 +291,6 @@ export default async function ArticlePage({ params }: Props) {
             </RailSection>
           </aside>
         </div>
-
-        <Comments
-          articleId={article.id}
-          slug={article.slug}
-          tree={comments.tree}
-          count={comments.count}
-          currentUserId={profile?.id ?? null}
-          signedIn={!!profile}
-        />
       </main>
 
       <SiteFooter

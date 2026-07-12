@@ -144,6 +144,39 @@ function Comment({
   );
 }
 
+/** Unique people in the thread (top-level + replies), for the avatar bubbles. */
+function uniqueAuthors(tree: CommentNode[]): string[] {
+  const seen = new Map<string, string>();
+  const walk = (nodes: CommentNode[]) => {
+    for (const n of nodes) {
+      const name = n.author?.full_name;
+      if (name) seen.set(n.profile_id ?? name, name);
+      walk(n.replies);
+    }
+  };
+  walk(tree);
+  return [...seen.values()];
+}
+
+function AvatarBubbles({ names, extra }: { names: string[]; extra: number }) {
+  return (
+    <div className="flex items-center">
+      {names.map((name, i) => (
+        <span
+          key={i}
+          title={name}
+          className={`flex size-7 items-center justify-center rounded-full border-2 border-bg bg-linear-135 from-gold to-[#8B6914] font-serif text-[10px] font-bold text-on-accent ${i ? "-ml-2" : ""}`}
+        >
+          {initials(name)}
+        </span>
+      ))}
+      {extra > 0 && <span className="ml-2 text-[12px] text-muted">+{extra}</span>}
+    </div>
+  );
+}
+
+const PREVIEW = 2;
+
 export function Comments({
   articleId,
   slug,
@@ -159,37 +192,57 @@ export function Comments({
   currentUserId: string | null;
   signedIn: boolean;
 }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const people = uniqueAuthors(tree);
+  const bubbles = people.slice(0, 5);
+  // Long threads collapse to a preview so 1,000 comments aren't a wall of text.
+  const collapsible = tree.length > PREVIEW;
+  const visible = expanded || !collapsible ? tree : tree.slice(0, PREVIEW);
+  const hidden = tree.length - visible.length;
+
   return (
-    <section className="border-t border-border bg-bg2 px-5 py-12 sm:px-8 lg:px-12" id="comments">
-      <div className="mx-auto w-full max-w-[760px]">
-        <h2 className="mb-6 flex items-center gap-2.5 font-serif text-2xl font-black tracking-[-0.5px]">
+    <section className="mt-10 border-t border-border pt-8" id="comments">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2.5 font-serif text-2xl font-black tracking-[-0.5px]">
           <MessageSquare className="size-5 text-gold" aria-hidden />
           {count} {count === 1 ? "Comment" : "Comments"}
         </h2>
-
-        {signedIn ? (
-          <div className="mb-8">
-            <CommentForm articleId={articleId} slug={slug} />
-          </div>
-        ) : (
-          <p className="mb-8 rounded border border-border bg-surface-1 px-4 py-4 text-sm text-muted">
-            <Link href={`/login?next=/article/${slug}`} className="text-gold hover:underline">
-              Sign in
-            </Link>{" "}
-            to join the discussion.
-          </p>
-        )}
-
-        {tree.length === 0 ? (
-          <p className="text-sm text-muted">No comments yet. Be the first.</p>
-        ) : (
-          <div>
-            {tree.map((node) => (
-              <Comment key={node.id} node={node} articleId={articleId} slug={slug} currentUserId={currentUserId} />
-            ))}
-          </div>
-        )}
+        {bubbles.length > 0 && <AvatarBubbles names={bubbles} extra={people.length - bubbles.length} />}
       </div>
+
+      {signedIn ? (
+        <div className="mb-8">
+          <CommentForm articleId={articleId} slug={slug} />
+        </div>
+      ) : (
+        <p className="mb-8 rounded border border-border bg-surface-1 px-4 py-4 text-sm text-muted">
+          <Link href={`/login?next=/article/${slug}`} className="text-gold hover:underline">
+            Sign in
+          </Link>{" "}
+          to join the discussion.
+        </p>
+      )}
+
+      {tree.length === 0 ? (
+        <p className="text-sm text-muted">No comments yet. Be the first.</p>
+      ) : (
+        <div>
+          {visible.map((node) => (
+            <Comment key={node.id} node={node} articleId={articleId} slug={slug} currentUserId={currentUserId} />
+          ))}
+
+          {collapsible && (
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              className="mt-4 w-full rounded border border-border py-2.5 text-[13px] font-semibold text-muted transition-colors hover:border-border-strong hover:bg-surface-1 hover:text-ink"
+            >
+              {expanded ? "Show fewer comments" : `View all ${count} comments →`}
+            </button>
+          )}
+        </div>
+      )}
     </section>
   );
 }
