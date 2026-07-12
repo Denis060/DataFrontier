@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentProfile } from "@/lib/auth";
+import { getCurrentProfile, hasRole } from "@/lib/auth";
 import { rateLimit, isBot } from "@/lib/rate-limit";
 
 export type CommentState = { ok: boolean; message: string } | null;
@@ -32,19 +32,26 @@ export async function postComment(_prev: CommentState, formData: FormData): Prom
     return { ok: false, message: "You're commenting too fast. Try again in a few minutes." };
   }
 
+  // Staff (author/editor/admin) are trusted — their comments and replies post
+  // live instead of waiting in the moderation queue.
+  const isStaff = hasRole(profile.role, ["admin", "editor", "author"]);
+
   const db = await createClient();
   const { error } = await db.from("comments").insert({
     article_id: articleId,
     profile_id: profile.id,
     parent_id: parentRaw || null,
     body,
-    is_approved: false,
+    is_approved: isStaff,
   });
 
   if (error) return { ok: false, message: "Could not post your comment. Try again." };
 
   revalidatePath(`/article/${slug}`);
-  return { ok: true, message: "Thanks — your comment is awaiting review." };
+  return {
+    ok: true,
+    message: isStaff ? "Posted." : "Thanks — your comment is awaiting review.",
+  };
 }
 
 /**

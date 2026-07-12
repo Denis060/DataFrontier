@@ -15,7 +15,7 @@ export default async function AdminCommentsPage() {
   // Staff read all comments (RLS). Pending first, then most recent.
   const { data } = await db
     .from("comments")
-    .select("id, body, is_approved, created_at, author:profiles(full_name), article:articles(title, slug)")
+    .select("id, article_id, parent_id, body, is_approved, created_at, author:profiles(full_name), article:articles(title, slug)")
     .order("created_at", { ascending: false });
 
   const rows = data ?? [];

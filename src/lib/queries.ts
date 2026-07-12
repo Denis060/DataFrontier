@@ -163,7 +163,7 @@ export type CommentNode = {
   profile_id: string;
   is_approved: boolean;
   created_at: string;
-  author: { full_name: string; slug: string | null; avatar_url: string | null } | null;
+  author: { full_name: string; slug: string | null; avatar_url: string | null; role: string } | null;
   like_count: number;
   liked: boolean;
   replies: CommentNode[];
@@ -180,7 +180,7 @@ export async function getComments(articleId: string) {
     db
       .from("comments")
       .select(
-        "id, body, parent_id, profile_id, is_approved, created_at, author:profiles(full_name, slug, avatar_url), likes:comment_likes(count)",
+        "id, body, parent_id, profile_id, is_approved, created_at, author:profiles(full_name, slug, avatar_url, role), likes:comment_likes(count)",
       )
       .eq("article_id", articleId)
       .order("created_at", { ascending: true }),

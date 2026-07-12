@@ -145,6 +145,11 @@ function Comment({
                 node.author?.full_name ?? "Unknown"
               )}
             </span>
+            {node.author && ["author", "editor", "admin"].includes(node.author.role) && (
+              <span className="rounded-[3px] bg-teal-dim px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[1px] text-teal">
+                Author
+              </span>
+            )}
             <span className="text-[11px] text-muted">{fmt(node.created_at)}</span>
             {pending && (
               <span className="rounded-[3px] bg-gold-dim px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[1px] text-gold">
