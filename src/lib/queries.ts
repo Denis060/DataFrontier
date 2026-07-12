@@ -57,7 +57,7 @@ export async function getHomeData() {
       db.from("jobs").select("*").eq("is_active", true).order("posted_at", { ascending: false }).limit(3),
       db.from("jobs").select("id", { count: "exact", head: true }).eq("is_active", true),
       db.from("resources").select("*").eq("is_active", true).order("sort_order"),
-      db.from("newsletter_issues").select("delivered_count, opened_count").not("sent_at", "is", null),
+      db.from("newsletter_issues").select("delivered_count, opened_count").eq("status", "sent"),
       db.from("newsletter_subscribers").select("id", { count: "exact", head: true }).eq("status", "confirmed"),
     ]);
 
@@ -336,7 +336,7 @@ export async function getNewsletterIssues() {
   const { data } = await db
     .from("newsletter_issues")
     .select("issue_number, title, slug, summary, sent_at")
-    .not("sent_at", "is", null)
+    .eq("status", "sent")
     .order("issue_number", { ascending: false });
   return data ?? [];
 }
