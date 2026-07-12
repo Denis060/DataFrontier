@@ -33,13 +33,15 @@ function shouldSuppress(): boolean {
  * dismissal for 30 days (or forever once they subscribe). Reuses the real
  * double-opt-in subscribe action.
  */
-export function SubscribePrompt() {
+export function SubscribePrompt({ signedIn = false }: { signedIn?: boolean }) {
   const pathname = usePathname();
   const [show, setShow] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [state, action, pending] = useActionState<SubscribeState, FormData>(subscribe, null);
 
-  const skip = SKIP_PREFIXES.some((p) => pathname.startsWith(p));
+  // Never nudge someone who's signed in (they're already engaged), on a
+  // conversion page, or who has already subscribed/dismissed.
+  const skip = signedIn || SKIP_PREFIXES.some((p) => pathname.startsWith(p));
 
   useEffect(() => {
     if (skip || shouldSuppress()) return;

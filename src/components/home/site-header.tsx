@@ -2,12 +2,22 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu, type SessionProfile } from "@/components/auth/user-menu";
 import { SearchBar } from "@/components/search/search-bar";
 import { NotificationBell } from "@/components/notification-bell";
 import type { HomeData } from "@/lib/queries";
+
+// Secondary destinations, tucked under a "More" dropdown so the top bar stays clean.
+const MORE_LINKS = [
+  { label: "Events", url: "/events" },
+  { label: "Careers", url: "/jobs" },
+  { label: "Cheat Sheets", url: "/cheat-sheets" },
+  { label: "Newsletter Archive", url: "/newsletter/archive" },
+  { label: "Advertise", url: "/advertise" },
+  { label: "Contact", url: "/contact" },
+];
 
 type Props = {
   siteName: string;
@@ -25,32 +35,41 @@ export function SiteHeader({ siteName, established, nav, ticker, profile = null,
   return (
     <header className="sticky top-0 z-100 border-b border-border bg-bg/90 backdrop-blur-xl">
       <div className="mx-auto flex h-16 w-full max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-12">
-        <Link href="/" className="flex items-baseline gap-2.5">
-          <span className="font-serif text-[22px] font-black tracking-[-0.5px]">
+        <Link href="/" className="flex shrink-0 items-baseline gap-2.5">
+          <span className="font-serif text-[22px] font-black tracking-[-0.5px] whitespace-nowrap">
             {brand}
             <span className="text-gold">{accent}</span>
           </span>
           {established && (
-            <span className="hidden rounded-[3px] border border-teal-dim px-[7px] py-0.5 font-mono text-[10px] uppercase tracking-[2px] text-teal sm:inline">
+            <span className="hidden rounded-[3px] border border-teal-dim px-[7px] py-0.5 font-mono text-[10px] uppercase tracking-[2px] text-teal xl:inline">
               est. {established}
             </span>
           )}
         </Link>
 
-        <nav className="hidden items-center gap-8 lg:flex">
-          {nav.map((item) => (
+        <nav className="hidden items-center gap-5 lg:flex xl:gap-6">
+          {nav.filter((i) => !i.is_button).map((item) => (
             <Link
               key={item.id}
               href={item.url}
-              className={
-                item.is_button
-                  ? "rounded bg-gold px-[18px] py-2 text-[13px] font-semibold text-on-accent transition-opacity hover:opacity-85"
-                  : "text-[13px] font-medium tracking-[0.3px] text-muted transition-colors hover:text-ink"
-              }
+              className="whitespace-nowrap text-[13px] font-medium tracking-[0.3px] text-muted transition-colors hover:text-ink"
             >
               {item.label}
             </Link>
           ))}
+
+          <MoreMenu />
+
+          {nav.filter((i) => i.is_button).map((item) => (
+            <Link
+              key={item.id}
+              href={item.url}
+              className="whitespace-nowrap rounded bg-gold px-[18px] py-2 text-[13px] font-semibold text-on-accent transition-opacity hover:opacity-85"
+            >
+              {item.label}
+            </Link>
+          ))}
+
           <SearchBar />
           {profile && <NotificationBell unread={unread} />}
           <ThemeToggle />
@@ -74,16 +93,32 @@ export function SiteHeader({ siteName, established, nav, ticker, profile = null,
 
       {open && (
         <nav className="flex flex-col gap-1 border-t border-border px-5 py-3 lg:hidden">
-          {nav.map((item) => (
+          {nav.filter((i) => !i.is_button).map((item) => (
             <Link
               key={item.id}
               href={item.url}
               onClick={() => setOpen(false)}
-              className={
-                item.is_button
-                  ? "mt-2 rounded bg-gold px-4 py-2.5 text-center text-[13px] font-semibold text-on-accent"
-                  : "py-2.5 text-sm text-muted"
-              }
+              className="py-2.5 text-sm text-muted"
+            >
+              {item.label}
+            </Link>
+          ))}
+          {MORE_LINKS.map((l) => (
+            <Link
+              key={l.url}
+              href={l.url}
+              onClick={() => setOpen(false)}
+              className="py-2.5 text-sm text-muted"
+            >
+              {l.label}
+            </Link>
+          ))}
+          {nav.filter((i) => i.is_button).map((item) => (
+            <Link
+              key={item.id}
+              href={item.url}
+              onClick={() => setOpen(false)}
+              className="mt-2 rounded bg-gold px-4 py-2.5 text-center text-[13px] font-semibold text-on-accent"
             >
               {item.label}
             </Link>
@@ -145,6 +180,41 @@ function Ticker({ items }: { items: HomeData["ticker"] }) {
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Desktop "More ▾" dropdown of secondary destinations. */
+function MoreMenu() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex items-center gap-1 whitespace-nowrap text-[13px] font-medium tracking-[0.3px] text-muted transition-colors hover:text-ink"
+      >
+        More
+        <ChevronDown className={`size-3.5 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden />
+          <div className="absolute top-full right-0 z-50 mt-2 w-48 rounded-md border border-border bg-bg2 py-1 shadow-xl">
+            {MORE_LINKS.map((l) => (
+              <Link
+                key={l.url}
+                href={l.url}
+                onClick={() => setOpen(false)}
+                className="block px-3 py-2 text-[13px] text-muted transition-colors hover:bg-surface-1 hover:text-ink"
+              >
+                {l.label}
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
