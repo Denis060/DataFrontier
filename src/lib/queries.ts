@@ -242,6 +242,38 @@ export async function getArticleReactions(articleId: string) {
   return { count: count ?? 0, reacted };
 }
 
+export type AuthorInsights = {
+  totalViews: number;
+  publishedCount: number;
+  totalReactions: number;
+  totalComments: number;
+  topArticles: { slug: string; title: string; views: number; reactions: number }[];
+};
+
+/** An author's own performance — their published articles' views, reactions,
+ *  and comments. Scoped to the author; no site-wide or subscriber data. */
+export async function getAuthorInsights(authorId: string): Promise<AuthorInsights> {
+  const db = await createClient();
+  const { data } = await db
+    .from("articles")
+    .select("slug, title, view_count, reactions:article_reactions(count), comments:comments(count)")
+    .eq("author_id", authorId)
+    .eq("status", "published")
+    .order("view_count", { ascending: false });
+
+  type Row = { slug: string; title: string; view_count: number | null; reactions: { count: number }[]; comments: { count: number }[] };
+  const arts = (data ?? []) as unknown as Row[];
+  const react = (a: Row) => a.reactions?.[0]?.count ?? 0;
+
+  return {
+    totalViews: arts.reduce((s, a) => s + (a.view_count ?? 0), 0),
+    publishedCount: arts.length,
+    totalReactions: arts.reduce((s, a) => s + react(a), 0),
+    totalComments: arts.reduce((s, a) => s + (a.comments?.[0]?.count ?? 0), 0),
+    topArticles: arts.slice(0, 6).map((a) => ({ slug: a.slug, title: a.title, views: a.view_count ?? 0, reactions: react(a) })),
+  };
+}
+
 /** Whether the signed-in reader has saved this article. */
 export async function isBookmarked(articleId: string): Promise<boolean> {
   const db = await createClient();

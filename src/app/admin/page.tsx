@@ -3,9 +3,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, PenLine } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getAuthorInsights } from "@/lib/queries";
 import { getCurrentProfile, hasRole } from "@/lib/auth";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { InsightsPanel, type Insights } from "@/components/admin/insights-panel";
+import { AuthorPerformance } from "@/components/admin/author-performance";
 
 export const metadata: Metadata = { title: "Newsroom", robots: { index: false } };
 
@@ -89,6 +91,9 @@ export default async function AdminPage() {
       : []),
   ];
 
+  // Everyone with a byline sees how their own articles are doing; admins also
+  // get the site-wide + subscriber insights below it.
+  const authorPerf = await getAuthorInsights(profile.id);
   const insights = hasRole(profile.role, ["admin"]) ? await getInsights(db) : null;
 
   return (
@@ -150,6 +155,7 @@ export default async function AdminPage() {
           </Link>
         </div>
 
+        {authorPerf.publishedCount > 0 && <AuthorPerformance data={authorPerf} />}
         {insights && <InsightsPanel data={insights} />}
       </div>
     </AdminShell>
