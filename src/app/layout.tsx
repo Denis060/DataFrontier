@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { DM_Mono, DM_Sans, Playfair_Display } from "next/font/google";
 import { themeInitScript } from "@/lib/theme";
 import { SubscribePrompt } from "@/components/subscribe-prompt";
+import { getCurrentProfile } from "@/lib/auth";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -47,11 +48,12 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const profile = await getCurrentProfile();
   return (
     <html
       lang="en"
@@ -64,7 +66,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         {children}
-        <SubscribePrompt />
+        <SubscribePrompt signedIn={!!profile} />
       </body>
     </html>
   );

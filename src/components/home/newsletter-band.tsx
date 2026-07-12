@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { subscribe, type SubscribeState } from "@/app/actions/subscribe";
 import type { HomeData } from "@/lib/queries";
 import { Honeypot } from "@/components/honeypot";
@@ -23,6 +23,15 @@ export function NewsletterBand({
     subscribe,
     null,
   );
+
+  // Subscribing here also silences the floating prompt (shared flag).
+  useEffect(() => {
+    if (state?.ok) {
+      try {
+        localStorage.setItem("df-subscribed", "1");
+      } catch {}
+    }
+  }, [state]);
 
   /**
    * Only surface a stat once it means something. An empty list rendering
