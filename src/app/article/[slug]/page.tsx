@@ -10,6 +10,7 @@ import {
   getMoreByAuthor,
   getUnreadCount,
   getRelated,
+  isBookmarked,
   menuFor,
   type ArticleCard,
 } from "@/lib/queries";
@@ -17,6 +18,7 @@ import { getCurrentProfile } from "@/lib/auth";
 import { Pill } from "@/components/pill";
 import { ShareBar } from "@/components/article/share-bar";
 import { ReactionButton } from "@/components/article/reaction-button";
+import { BookmarkButton } from "@/components/article/bookmark-button";
 import { Comments } from "@/components/article/comments";
 import { ViewCounter } from "@/components/article/view-counter";
 import { SiteHeader } from "@/components/home/site-header";
@@ -114,11 +116,12 @@ export default async function ArticlePage({ params }: Props) {
   ]);
   if (!article) notFound();
 
-  const [related, moreByAuthor, comments, reactions] = await Promise.all([
+  const [related, moreByAuthor, comments, reactions, bookmarked] = await Promise.all([
     getRelated(article.id, article.category_id),
     getMoreByAuthor(article.author_id, article.id),
     getComments(article.id),
     getArticleReactions(article.id),
+    isBookmarked(article.id),
   ]);
 
   const unread = await getUnreadCount(profile?.id ?? null);
@@ -233,13 +236,21 @@ export default async function ArticlePage({ params }: Props) {
             {/* Repeated at the foot: the reader who just finished is the one
                 most likely to react and share. */}
             <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6">
-              <ReactionButton
-                articleId={article.id}
-                initialCount={reactions.count}
-                initialReacted={reactions.reacted}
-                signedIn={!!profile}
-                slug={article.slug}
-              />
+              <div className="flex items-center gap-2.5">
+                <ReactionButton
+                  articleId={article.id}
+                  initialCount={reactions.count}
+                  initialReacted={reactions.reacted}
+                  signedIn={!!profile}
+                  slug={article.slug}
+                />
+                <BookmarkButton
+                  articleId={article.id}
+                  initialSaved={bookmarked}
+                  signedIn={!!profile}
+                  slug={article.slug}
+                />
+              </div>
               <div className="flex items-center gap-3">
                 <span className="font-mono text-[10px] uppercase tracking-[2px] text-muted">Share</span>
                 <ShareBar url={shareUrl} title={article.title} />
