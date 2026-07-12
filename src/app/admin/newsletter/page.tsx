@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { requireStaff } from "@/lib/admin";
+import { hasRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { emailConfigured } from "@/lib/email";
 import { AdminShell } from "@/components/admin/admin-shell";
@@ -28,6 +29,14 @@ export default async function AdminNewsletterPage() {
             <h1 className="font-serif text-3xl font-black tracking-[-0.5px]">Newsletter</h1>
             <p className="mt-1 text-[13px] text-muted">
               {confirmedRes.count ?? 0} confirmed · {pendingRes.count ?? 0} pending confirmation
+              {hasRole(profile.role, ["admin"]) && (
+                <>
+                  {" · "}
+                  <Link href="/admin/newsletter/subscribers" className="text-gold hover:underline">
+                    View subscribers →
+                  </Link>
+                </>
+              )}
             </p>
           </div>
           <Link href="/admin/newsletter/new" className="inline-flex items-center gap-2 rounded bg-gold px-4 py-2.5 text-[13px] font-bold text-on-accent hover:opacity-85">
