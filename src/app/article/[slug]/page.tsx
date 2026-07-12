@@ -19,6 +19,7 @@ import { Pill } from "@/components/pill";
 import { ShareBar } from "@/components/article/share-bar";
 import { ReactionButton } from "@/components/article/reaction-button";
 import { BookmarkButton } from "@/components/article/bookmark-button";
+import { CommentButton } from "@/components/article/comment-button";
 import { Comments } from "@/components/article/comments";
 import { ViewCounter } from "@/components/article/view-counter";
 import { SiteHeader } from "@/components/home/site-header";
@@ -244,6 +245,7 @@ export default async function ArticlePage({ params }: Props) {
                   signedIn={!!profile}
                   slug={article.slug}
                 />
+                <CommentButton count={comments.count} />
                 <BookmarkButton
                   articleId={article.id}
                   initialSaved={bookmarked}
