@@ -1,6 +1,22 @@
 import Link from "next/link";
+import { Heart } from "lucide-react";
 import { Pill } from "@/components/pill";
-import type { ArticleCard, HomeData } from "@/lib/queries";
+import { reactionCount, type ArticleCard, type HomeData } from "@/lib/queries";
+
+/** "· ❤ N" meta, shown only once an article has reactions. */
+function Reactions({ a }: { a: ArticleCard }) {
+  const n = reactionCount(a);
+  if (n < 1) return null;
+  return (
+    <>
+      <span className="opacity-40">·</span>
+      <span className="flex items-center gap-1 text-gold">
+        <Heart className="size-3 fill-current" aria-hidden />
+        {n}
+      </span>
+    </>
+  );
+}
 
 /* ─── CATEGORY STRIP ─────────────────────────────────────── */
 
@@ -45,6 +61,7 @@ function ArticleRow({ a }: { a: ArticleCard }) {
         <span>{a.author?.full_name}</span>
         <span className="opacity-40">·</span>
         <span>{a.reading_time} min</span>
+        <Reactions a={a} />
       </p>
     </Link>
   );
@@ -181,8 +198,9 @@ export function AfricaSpotlight({
               </p>
             )}
             <p className="mb-1.5 font-serif text-base leading-[1.3] font-bold">{a.title}</p>
-            <p className="text-[11px] text-muted">
-              {a.author?.full_name} · {a.reading_time} min read
+            <p className="flex items-center gap-2 text-[11px] text-muted">
+              <span>{a.author?.full_name} · {a.reading_time} min read</span>
+              <Reactions a={a} />
             </p>
           </Link>
         ))}
