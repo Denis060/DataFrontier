@@ -5,10 +5,46 @@ import { ArrowRight, PenLine } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile, hasRole } from "@/lib/auth";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { InsightsPanel, type Insights } from "@/components/admin/insights-panel";
 
 export const metadata: Metadata = { title: "Newsroom", robots: { index: false } };
 
 const STAFF = ["admin", "editor", "author"] as const;
+
+/** Newsroom insights, admin-only. Aggregated in JS — fine at publication scale. */
+async function getInsights(db: Awaited<ReturnType<typeof createClient>>): Promise<Insights> {
+  const [arts, subs, issues] = await Promise.all([
+    db.from("articles").select("slug, title, view_count").eq("status", "published").order("view_count", { ascending: false }),
+    db.from("newsletter_subscribers").select("source, created_at, status"),
+    db.from("newsletter_issues").select("title, sent_at, recipients, delivered_count, opened_count").eq("status", "sent").order("sent_at", { ascending: false }),
+  ]);
+
+  const articles = arts.data ?? [];
+  const totalViews = articles.reduce((s, a) => s + (a.view_count ?? 0), 0);
+  const topArticles = articles.slice(0, 6).map((a) => ({ slug: a.slug, title: a.title, views: a.view_count ?? 0 }));
+
+  const confirmed = (subs.data ?? []).filter((s) => s.status === "confirmed");
+  const cutoff = new Date(Date.now() - 30 * 86_400_000).toISOString();
+  const newSubs30 = confirmed.filter((s) => (s.created_at ?? "") >= cutoff).length;
+  const sourceMap = new Map<string, number>();
+  for (const s of confirmed) sourceMap.set(s.source || "direct", (sourceMap.get(s.source || "direct") ?? 0) + 1);
+  const sources = [...sourceMap.entries()]
+    .map(([source, count]) => ({ source, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  const sent = issues.data ?? [];
+  const rates = sent.filter((i) => (i.delivered_count ?? 0) > 0).map((i) => (i.opened_count ?? 0) / (i.delivered_count ?? 1));
+  const avgOpenRate = rates.length ? Math.round((rates.reduce((s, r) => s + r, 0) / rates.length) * 100) : null;
+  const recentIssues = sent.slice(0, 5).map((i) => ({
+    title: i.title,
+    sentAt: i.sent_at,
+    recipients: i.recipients ?? 0,
+    openRate: (i.delivered_count ?? 0) > 0 ? Math.round(((i.opened_count ?? 0) / (i.delivered_count ?? 1)) * 100) : null,
+  }));
+
+  return { totalViews, publishedCount: articles.length, confirmedSubs: confirmed.length, newSubs30, avgOpenRate, topArticles, sources, recentIssues };
+}
 
 export default async function AdminPage() {
   const profile = await getCurrentProfile();
@@ -49,9 +85,11 @@ export default async function AdminPage() {
     { label: "In review", value: review.count ?? 0, href: "/admin/articles?status=in_review" },
     { label: "Published", value: published.count ?? 0, href: "/admin/articles?status=published" },
     ...(subscribers.count != null
-      ? [{ label: "Subscribers", value: subscribers.count, href: "/admin/settings" }]
+      ? [{ label: "Subscribers", value: subscribers.count, href: "/admin/newsletter/subscribers" }]
       : []),
   ];
+
+  const insights = hasRole(profile.role, ["admin"]) ? await getInsights(db) : null;
 
   return (
     <AdminShell role={profile.role} name={profile.full_name}>
@@ -111,6 +149,8 @@ export default async function AdminPage() {
             <ArrowRight className="size-4" aria-hidden />
           </Link>
         </div>
+
+        {insights && <InsightsPanel data={insights} />}
       </div>
     </AdminShell>
   );
