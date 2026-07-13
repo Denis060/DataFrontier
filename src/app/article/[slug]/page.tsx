@@ -20,6 +20,7 @@ import { ShareBar } from "@/components/article/share-bar";
 import { ReactionButton } from "@/components/article/reaction-button";
 import { BookmarkButton } from "@/components/article/bookmark-button";
 import { CommentsProvider, CommentButton, CommentsReveal } from "@/components/article/comments-disclosure";
+import { InlineSubscribe } from "@/components/article/inline-subscribe";
 import { Comments } from "@/components/article/comments";
 import { ViewCounter } from "@/components/article/view-counter";
 import { SiteHeader } from "@/components/home/site-header";
@@ -259,6 +260,13 @@ export default async function ArticlePage({ params }: Props) {
                 <ShareBar url={shareUrl} title={article.title} />
               </div>
             </div>
+
+            {/* Gentle nudge — an invitation, never a gate. */}
+            <p className="mt-6 text-[13px] leading-relaxed text-muted">
+              Found this useful? Passing it on to someone who builds is the best way to help the
+              publication grow.
+            </p>
+            <InlineSubscribe slug={article.slug} />
           </article>
 
           {/* Comments sit right under the article — on mobile that means before
