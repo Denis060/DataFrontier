@@ -289,7 +289,7 @@ export function EditorSection({
   bio,
   badges,
 }: {
-  editor: { full_name: string; title: string | null; slug: string | null } | null;
+  editor: { full_name: string; title: string | null; slug: string | null; avatar_url?: string | null } | null;
   headline: string;
   bio: string;
   badges: Badge[];
@@ -300,9 +300,18 @@ export function EditorSection({
   return (
     <section className="grid gap-10 border-b border-border bg-bg2 px-5 py-12 sm:px-8 lg:grid-cols-[320px_1fr] lg:items-center lg:gap-16 lg:px-12">
       <div className="flex flex-col items-center gap-3.5 rounded-lg border border-gold/20 bg-linear-160 from-editor-from to-editor-to p-8 text-center">
-        <span className="flex size-20 items-center justify-center rounded-full border-[3px] border-gold/30 bg-linear-135 from-gold to-[#4A3000] font-serif text-[28px] font-black text-on-accent">
-          {initials}
-        </span>
+        {editor.avatar_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={editor.avatar_url}
+            alt={editor.full_name}
+            className="size-20 rounded-full border-[3px] border-gold/30 object-cover"
+          />
+        ) : (
+          <span className="flex size-20 items-center justify-center rounded-full border-[3px] border-gold/30 bg-linear-135 from-gold to-[#4A3000] font-serif text-[28px] font-black text-on-accent">
+            {initials}
+          </span>
+        )}
         <p className="font-serif text-xl font-bold">{editor.full_name}</p>
         <p className="text-xs leading-relaxed text-muted">{editor.title}</p>
         <div className="flex flex-wrap justify-center gap-1.5">

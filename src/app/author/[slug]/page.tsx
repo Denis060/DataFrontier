@@ -51,9 +51,18 @@ export default async function AuthorPage({ params, searchParams }: Props) {
     <Shell>
       <header className="border-b border-border bg-bg2 px-5 py-12 sm:px-8 lg:px-12 lg:py-16">
         <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-6 sm:flex-row sm:items-center">
-          <span className="flex size-20 shrink-0 items-center justify-center rounded-full border-[3px] border-gold/30 bg-linear-135 from-gold to-[#4A3000] font-serif text-[26px] font-black text-on-accent">
-            {initials(author.full_name)}
-          </span>
+          {author.avatar_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={author.avatar_url}
+              alt={author.full_name}
+              className="size-20 shrink-0 rounded-full border-[3px] border-gold/30 object-cover"
+            />
+          ) : (
+            <span className="flex size-20 shrink-0 items-center justify-center rounded-full border-[3px] border-gold/30 bg-linear-135 from-gold to-[#4A3000] font-serif text-[26px] font-black text-on-accent">
+              {initials(author.full_name)}
+            </span>
+          )}
           <div>
             <h1 className="font-serif text-[clamp(26px,4vw,38px)] leading-tight font-black tracking-[-0.8px]">
               {author.full_name}
