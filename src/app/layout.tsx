@@ -39,6 +39,11 @@ export const metadata: Metadata = {
     siteName: "Everyday Data Science",
     url: SITE_URL,
   },
+  // Google Search Console: paste the "HTML tag" token into this env var if you
+  // verify by meta tag instead of DNS. Unset → no tag rendered.
+  verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+    : undefined,
 };
 
 export const viewport: Viewport = {
