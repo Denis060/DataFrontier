@@ -11,6 +11,7 @@ import type { HomeData } from "@/lib/queries";
 
 // Secondary destinations, tucked under a "More" dropdown so the top bar stays clean.
 const MORE_LINKS = [
+  { label: "Learning Paths", url: "/series" },
   { label: "Events", url: "/events" },
   { label: "Careers", url: "/jobs" },
   { label: "Cheat Sheets", url: "/cheat-sheets" },

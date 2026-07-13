@@ -130,7 +130,7 @@ export async function getArticle(slug: string) {
     .from("articles")
     .select(
       `id, slug, title, subtitle, excerpt, kicker, body, body_html, status, category_id, author_id,
-       cover_image, cover_alt, reading_time, published_at, featured, view_count,
+       cover_image, cover_alt, reading_time, published_at, featured, view_count, series_id, series_position,
        meta_title, meta_description, canonical_url, og_image,
        author:profiles!articles_author_id_fkey (full_name, slug, title, bio, avatar_url),
        category:categories (name, slug, color),
@@ -226,6 +226,59 @@ export async function getComments(articleId: string) {
   }
 
   return { tree: roots, count: raw.filter((r) => r.is_approved).length };
+}
+
+export type SeriesSummary = { id: string; title: string; slug: string; description: string | null; count: number };
+
+/** All series (learning paths) with a count of their published articles. */
+export async function getAllSeries(): Promise<SeriesSummary[]> {
+  const db = await createClient();
+  const { data } = await db
+    .from("series")
+    .select("id, title, slug, description, articles(count)")
+    .order("sort_order");
+  return (data ?? []).map((s) => {
+    const row = s as unknown as { id: string; title: string; slug: string; description: string | null; articles: { count: number }[] };
+    return { id: row.id, title: row.title, slug: row.slug, description: row.description, count: row.articles?.[0]?.count ?? 0 };
+  });
+}
+
+/** One series + its published articles, in path order. */
+export async function getSeriesBySlug(slug: string) {
+  const db = await createClient();
+  const { data: series } = await db.from("series").select("id, title, slug, description").eq("slug", slug).maybeSingle();
+  if (!series) return null;
+  const { data: articles } = await db
+    .from("articles")
+    .select(ARTICLE_SELECT)
+    .eq("series_id", series.id)
+    .eq("status", "published")
+    .order("series_position", { ascending: true });
+  return { series, articles: (articles ?? []) as unknown as ArticleCard[] };
+}
+
+/** For an article in a series: the series, this article's spot, and prev/next. */
+export async function getArticleSeriesNav(seriesId: string, articleId: string) {
+  const db = await createClient();
+  const [{ data: series }, { data: items }] = await Promise.all([
+    db.from("series").select("title, slug").eq("id", seriesId).maybeSingle(),
+    db
+      .from("articles")
+      .select("id, slug, title, series_position")
+      .eq("series_id", seriesId)
+      .eq("status", "published")
+      .order("series_position", { ascending: true }),
+  ]);
+  if (!series || !items) return null;
+  const idx = items.findIndex((a) => a.id === articleId);
+  if (idx === -1) return null;
+  return {
+    series,
+    position: idx + 1,
+    total: items.length,
+    prev: idx > 0 ? items[idx - 1] : null,
+    next: idx < items.length - 1 ? items[idx + 1] : null,
+  };
 }
 
 /** Reaction count for an article + whether the signed-in reader has reacted. */

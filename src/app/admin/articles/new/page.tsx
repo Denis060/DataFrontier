@@ -16,17 +16,20 @@ const EMPTY: EditorArticle = {
   format_id: "",
   cover_image: "",
   status: "draft",
+  series_id: "",
+  series_position: "",
 };
 
 export default async function NewArticlePage() {
   const profile = await requireStaff();
-  const { formats, categories } = await listFormatsAndCategories();
+  const { formats, categories, series } = await listFormatsAndCategories();
 
   return (
     <ArticleEditor
       article={EMPTY}
       categories={categories}
       formats={formats}
+      series={series}
       canPublish={hasRole(profile.role, ["admin", "editor"])}
       justSaved={false}
     />

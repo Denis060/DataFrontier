@@ -117,9 +117,14 @@ export async function ensureProfileSlug(
 
 export async function listFormatsAndCategories() {
   const db = await createClient();
-  const [formats, categories] = await Promise.all([
+  const [formats, categories, series] = await Promise.all([
     db.from("formats").select("id, name, color").order("sort_order"),
     db.from("categories").select("id, name").order("sort_order"),
+    db.from("series").select("id, title").order("sort_order"),
   ]);
-  return { formats: formats.data ?? [], categories: categories.data ?? [] };
+  return {
+    formats: formats.data ?? [],
+    categories: categories.data ?? [],
+    series: (series.data ?? []).map((s) => ({ id: s.id, name: s.title })),
+  };
 }

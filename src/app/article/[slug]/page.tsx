@@ -10,6 +10,7 @@ import {
   getMoreByAuthor,
   getUnreadCount,
   getRelated,
+  getArticleSeriesNav,
   isBookmarked,
   menuFor,
   type ArticleCard,
@@ -126,6 +127,8 @@ export default async function ArticlePage({ params }: Props) {
     isBookmarked(article.id),
   ]);
 
+  const seriesNav = article.series_id ? await getArticleSeriesNav(article.series_id, article.id) : null;
+
   const unread = await getUnreadCount(profile?.id ?? null);
   const { settings } = chrome;
   const isDraft = article.status !== "published";
@@ -230,10 +233,42 @@ export default async function ArticlePage({ params }: Props) {
               </span>
             </div>
 
+            {seriesNav && (
+              <Link
+                href={`/series/${seriesNav.series.slug}`}
+                className="mb-8 flex items-center gap-2.5 rounded-md border border-teal/25 bg-teal-dim px-4 py-3 text-[13px] transition-colors hover:border-teal/40"
+              >
+                <span className="font-mono text-[10px] uppercase tracking-[1.5px] text-teal">
+                  Part {seriesNav.position} of {seriesNav.total}
+                </span>
+                <span className="min-w-0 flex-1 truncate font-semibold">{seriesNav.series.title}</span>
+                <span className="shrink-0 text-teal">View path →</span>
+              </Link>
+            )}
+
             {article.body || article.body_html ? (
               <ArticleBody html={article.body_html} source={article.body} />
             ) : (
               <p className="text-muted">This article has no body yet.</p>
+            )}
+
+            {seriesNav && (seriesNav.prev || seriesNav.next) && (
+              <div className="mt-12 grid gap-3 sm:grid-cols-2">
+                {seriesNav.prev ? (
+                  <Link href={`/article/${seriesNav.prev.slug}`} className="rounded-md border border-border p-4 transition-colors hover:border-border-strong hover:bg-surface-1">
+                    <span className="font-mono text-[10px] uppercase tracking-[1.5px] text-muted">← Previous</span>
+                    <p className="mt-1 font-serif text-[14px] font-bold">{seriesNav.prev.title}</p>
+                  </Link>
+                ) : (
+                  <span />
+                )}
+                {seriesNav.next && (
+                  <Link href={`/article/${seriesNav.next.slug}`} className="rounded-md border border-border p-4 text-right transition-colors hover:border-border-strong hover:bg-surface-1">
+                    <span className="font-mono text-[10px] uppercase tracking-[1.5px] text-gold">Next →</span>
+                    <p className="mt-1 font-serif text-[14px] font-bold">{seriesNav.next.title}</p>
+                  </Link>
+                )}
+              </div>
             )}
 
             {/* Repeated at the foot: the reader who just finished is the one
