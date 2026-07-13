@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Eye, Mail, TrendingUp, Users } from "lucide-react";
+import { Eye, Heart, Mail, MessageSquare, TrendingUp, Users } from "lucide-react";
 
 export type Insights = {
   totalViews: number;
@@ -7,9 +7,10 @@ export type Insights = {
   confirmedSubs: number;
   newSubs30: number;
   avgOpenRate: number | null;
-  topArticles: { slug: string; title: string; views: number }[];
+  topArticles: { slug: string; title: string; views: number; reactions: number; comments: number }[];
   sources: { source: string; count: number }[];
   recentIssues: { title: string; sentAt: string | null; recipients: number; openRate: number | null }[];
+  growth: { label: string; count: number }[];
 };
 
 const compact = (n: number) =>
@@ -40,6 +41,34 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   );
 }
 
+function GrowthChart({ data }: { data: { label: string; count: number }[] }) {
+  const max = Math.max(1, ...data.map((d) => d.count));
+  const total = data.reduce((s, d) => s + d.count, 0);
+  return (
+    <Card title={`New subscribers · last ${data.length} weeks`}>
+      {total === 0 ? (
+        <p className="text-[13px] text-muted">No new confirmed subscribers yet — this fills in as your list grows.</p>
+      ) : (
+        <div className="flex h-28 items-end gap-1.5">
+          {data.map((d, i) => (
+            <div key={i} className="group flex flex-1 flex-col items-center justify-end gap-1">
+              <span className="text-[10px] font-mono text-muted opacity-0 transition-opacity group-hover:opacity-100">
+                {d.count}
+              </span>
+              <div
+                className="w-full rounded-t bg-gold/70 transition-colors group-hover:bg-gold"
+                style={{ height: `${Math.max(d.count > 0 ? 6 : 2, (d.count / max) * 100)}%` }}
+                title={`${d.label}: ${d.count}`}
+              />
+              <span className="text-[9px] font-mono text-muted">{d.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export function InsightsPanel({ data }: { data: Insights }) {
   const maxSource = Math.max(1, ...data.sources.map((s) => s.count));
 
@@ -59,8 +88,12 @@ export function InsightsPanel({ data }: { data: Insights }) {
         />
       </div>
 
+      <div className="mt-4">
+        <GrowthChart data={data.growth} />
+      </div>
+
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <Card title="Top articles by views">
+        <Card title="Top articles">
           {data.topArticles.length === 0 ? (
             <p className="text-[13px] text-muted">No published articles yet.</p>
           ) : (
@@ -71,7 +104,19 @@ export function InsightsPanel({ data }: { data: Insights }) {
                   <Link href={`/article/${a.slug}`} className="min-w-0 flex-1 truncate text-[13px] hover:text-gold">
                     {a.title}
                   </Link>
-                  <span className="shrink-0 font-mono text-[12px] text-muted">{compact(a.views)}</span>
+                  <span className="flex shrink-0 items-center gap-1 font-mono text-[11px] text-muted" title="views">
+                    <Eye className="size-3" aria-hidden /> {compact(a.views)}
+                  </span>
+                  {a.reactions > 0 && (
+                    <span className="flex shrink-0 items-center gap-1 font-mono text-[11px] text-gold" title="reactions">
+                      <Heart className="size-3 fill-current" aria-hidden /> {a.reactions}
+                    </span>
+                  )}
+                  {a.comments > 0 && (
+                    <span className="flex shrink-0 items-center gap-1 font-mono text-[11px] text-muted" title="comments">
+                      <MessageSquare className="size-3" aria-hidden /> {a.comments}
+                    </span>
+                  )}
                 </li>
               ))}
             </ol>
