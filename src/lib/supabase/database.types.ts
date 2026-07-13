@@ -130,6 +130,7 @@ export type Database = {
           search_tsv: unknown
           series_id: string | null
           series_order: number | null
+          series_position: number | null
           slug: string
           status: Database["public"]["Enums"]["article_status"]
           subtitle: string | null
@@ -159,6 +160,7 @@ export type Database = {
           search_tsv?: unknown
           series_id?: string | null
           series_order?: number | null
+          series_position?: number | null
           slug: string
           status?: Database["public"]["Enums"]["article_status"]
           subtitle?: string | null
@@ -188,6 +190,7 @@ export type Database = {
           search_tsv?: unknown
           series_id?: string | null
           series_order?: number | null
+          series_position?: number | null
           slug?: string
           status?: Database["public"]["Enums"]["article_status"]
           subtitle?: string | null
@@ -1090,6 +1093,7 @@ export type Database = {
           description: string | null
           id: string
           slug: string
+          sort_order: number
           title: string
         }
         Insert: {
@@ -1099,6 +1103,7 @@ export type Database = {
           description?: string | null
           id?: string
           slug: string
+          sort_order?: number
           title: string
         }
         Update: {
@@ -1108,6 +1113,7 @@ export type Database = {
           description?: string | null
           id?: string
           slug?: string
+          sort_order?: number
           title?: string
         }
         Relationships: [

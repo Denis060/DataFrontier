@@ -18,7 +18,7 @@ export default async function EditArticlePage({
     searchParams,
   ]);
 
-  const [row, { formats, categories }] = await Promise.all([
+  const [row, { formats, categories, series }] = await Promise.all([
     getArticleForEdit(id, profile),
     listFormatsAndCategories(),
   ]);
@@ -37,6 +37,8 @@ export default async function EditArticlePage({
     format_id: row.format_id ?? "",
     cover_image: row.cover_image ?? "",
     status: row.status,
+    series_id: row.series_id ?? "",
+    series_position: row.series_position != null ? String(row.series_position) : "",
   };
 
   return (
@@ -44,6 +46,7 @@ export default async function EditArticlePage({
       article={article}
       categories={categories}
       formats={formats}
+      series={series}
       canPublish={hasRole(profile.role, ["admin", "editor"])}
       justSaved={saved === "1"}
     />

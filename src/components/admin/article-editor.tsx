@@ -25,6 +25,8 @@ export type EditorArticle = {
   format_id: string;
   cover_image: string;
   status: string;
+  series_id: string;
+  series_position: string;
 };
 
 const field =
@@ -35,12 +37,14 @@ export function ArticleEditor({
   article,
   categories,
   formats,
+  series,
   canPublish,
   justSaved,
 }: {
   article: EditorArticle;
   categories: Option[];
   formats: Option[];
+  series: Option[];
   canPublish: boolean;
   justSaved: boolean;
 }) {
@@ -362,6 +366,36 @@ export function ArticleEditor({
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className={label} htmlFor="series_id">
+                Series
+              </label>
+              <select id="series_id" name="series_id" defaultValue={article.series_id} className={field}>
+                <option value="">— none —</option>
+                {series.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="w-24 shrink-0">
+              <label className={label} htmlFor="series_position">
+                Part #
+              </label>
+              <input
+                id="series_position"
+                name="series_position"
+                type="number"
+                min="1"
+                defaultValue={article.series_position}
+                placeholder="1"
+                className={field}
+              />
+            </div>
           </div>
 
           <div>

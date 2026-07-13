@@ -113,6 +113,8 @@ export async function saveArticle(formData: FormData): Promise<Result> {
     format_id: (formData.get("format_id") as string) || null,
     cover_image: ((formData.get("cover_image") as string) || "").trim() || null,
     reading_time: readingTime(body),
+    series_id: (formData.get("series_id") as string) || null,
+    series_position: Number((formData.get("series_position") as string) || "") || null,
   } satisfies ArticleUpdate;
 
   // Resolve the status transition, if any, and gate it.
