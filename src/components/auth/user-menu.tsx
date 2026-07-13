@@ -9,6 +9,7 @@ export type SessionProfile = {
   slug: string | null;
   role: Role;
   email: string | null;
+  avatar_url?: string | null;
 } | null;
 
 const STAFF: Role[] = ["admin", "editor", "author"];
@@ -35,9 +36,18 @@ export function UserMenu({ profile }: { profile: SessionProfile }) {
     // outside click, with no state or event listeners of our own.
     <details className="group relative">
       <summary className="flex cursor-pointer list-none items-center gap-2 rounded-full outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">
-        <span className="flex size-8 items-center justify-center rounded-full bg-linear-135 from-gold to-[#8B6914] font-serif text-[11px] font-bold text-on-accent">
-          {initials(profile.full_name)}
-        </span>
+        {profile.avatar_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={profile.avatar_url}
+            alt={profile.full_name}
+            className="size-8 rounded-full border border-border object-cover"
+          />
+        ) : (
+          <span className="flex size-8 items-center justify-center rounded-full bg-linear-135 from-gold to-[#8B6914] font-serif text-[11px] font-bold text-on-accent">
+            {initials(profile.full_name)}
+          </span>
+        )}
       </summary>
 
       <div className="absolute right-0 z-50 mt-2 w-56 rounded-md border border-border bg-bg2 p-1.5 shadow-xl">

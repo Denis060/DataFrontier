@@ -131,9 +131,18 @@ function Comment({
   return (
     <div className="border-t border-border py-4 first:border-t-0">
       <div className="flex items-start gap-3">
-        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-linear-135 from-gold to-[#8B6914] font-serif text-[11px] font-bold text-on-accent">
-          {node.author ? initials(node.author.full_name) : "?"}
-        </span>
+        {node.author?.avatar_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={node.author.avatar_url}
+            alt={node.author.full_name}
+            className="mt-0.5 size-8 shrink-0 rounded-full border border-border object-cover"
+          />
+        ) : (
+          <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-linear-135 from-gold to-[#8B6914] font-serif text-[11px] font-bold text-on-accent">
+            {node.author ? initials(node.author.full_name) : "?"}
+          </span>
+        )}
         <div className="min-w-0 flex-1">
           <p className="flex flex-wrap items-center gap-2 text-[13px]">
             <span className="font-semibold">
