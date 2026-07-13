@@ -7,7 +7,7 @@ import { IssueComposer, type IssueDraft } from "@/components/admin/issue-compose
 import { IssueStats } from "@/components/admin/issue-stats";
 import { SECTION_DEFS } from "@/lib/newsletter";
 
-export const metadata = { title: "Edit issue — Newsroom", robots: { index: false } };
+export const metadata = { title: "Edit issue | Newsroom", robots: { index: false } };
 
 export default async function EditIssuePage({
   params,

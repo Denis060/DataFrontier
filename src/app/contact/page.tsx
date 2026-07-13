@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { InfoPage } from "@/components/info-page";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Contact — Everyday Data Science" };
+export const metadata: Metadata = { title: "Contact | Everyday Data Science" };
 export const revalidate = 3600;
 
 export default async function ContactPage() {
@@ -22,7 +22,7 @@ export default async function ContactPage() {
     <InfoPage
       eyebrow="Get in touch"
       title="Contact"
-      intro="Questions, corrections, pitches, or partnership ideas — we'd love to hear from you."
+      intro="Questions, corrections, pitches, or partnership ideas, we'd love to hear from you."
     >
       <p>
         Email us at{" "}

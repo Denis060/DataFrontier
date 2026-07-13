@@ -35,7 +35,7 @@ export async function GET() {
   <channel>
     <title>Everyday Data Science</title>
     <link>${SITE}</link>
-    <description>Agentic AI, Data Science, and the future of intelligent systems — written by practitioners.</description>
+    <description>Agentic AI, Data Science, and the future of intelligent systems, written by practitioners.</description>
     <language>en</language>
     <atom:link href="${SITE}/rss" rel="self" type="application/rss+xml" />
 ${items}

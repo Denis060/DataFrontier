@@ -4,7 +4,7 @@ import { JobCard } from "@/components/job-card";
 import { getJobs } from "@/lib/queries";
 
 export const metadata: Metadata = {
-  title: "AI & Data Science Jobs — Everyday Data Science",
+  title: "AI & Data Science Jobs | Everyday Data Science",
   description: "Curated roles in AI and data science, screened for quality.",
 };
 
@@ -21,7 +21,7 @@ export default async function JobsPage() {
             Data &amp; AI Careers
           </h1>
           <p className="mt-3 max-w-[620px] text-[15px] leading-relaxed text-muted">
-            Curated roles in AI and data science — screened for quality, not volume.
+            Curated roles in AI and data science, screened for quality, not volume.
           </p>
           <p className="mt-4 font-mono text-[11px] uppercase tracking-[2px] text-muted">
             {jobs.length} open {jobs.length === 1 ? "role" : "roles"}

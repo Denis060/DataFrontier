@@ -170,7 +170,7 @@ export async function sendWelcomeFollowups(): Promise<{ sent: number }> {
         to: sub.email,
         subject: "A quick hello from Everyday Data Science",
         html: welcomeFollowupEmail(unsubscribeUrl),
-        text: "Thanks for joining The Everyday Brief. What are you building, and what do you want more of? Just reply — I read every one. — Ibrahim",
+        text: "Thanks for joining The Everyday Brief. What are you building, and what do you want more of? Just reply, I read every one. Thanks, Ibrahim",
         headers: {
           "List-Unsubscribe": `<${unsubscribeUrl}>`,
           "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",

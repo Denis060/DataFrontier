@@ -5,7 +5,7 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { IssueComposer, type IssueDraft } from "@/components/admin/issue-composer";
 import { SECTION_DEFS } from "@/lib/newsletter";
 
-export const metadata = { title: "New issue — Newsroom", robots: { index: false } };
+export const metadata = { title: "New issue | Newsroom", robots: { index: false } };
 
 const EMPTY: IssueDraft = {
   id: null,

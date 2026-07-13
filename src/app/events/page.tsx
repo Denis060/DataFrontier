@@ -4,8 +4,8 @@ import { EventCard, type EventRow } from "@/components/event-card";
 import { getEvents } from "@/lib/queries";
 
 export const metadata: Metadata = {
-  title: "Events — Everyday Data Science",
-  description: "AI and data-science events worth your time — ours and the community's.",
+  title: "Events | Everyday Data Science",
+  description: "AI and data-science events worth your time, ours and the community's.",
 };
 
 export const revalidate = 300;
@@ -21,7 +21,7 @@ export default async function EventsPage() {
             Events
           </h1>
           <p className="mt-3 max-w-[620px] text-[15px] leading-relaxed text-muted">
-            Conferences, meetups, and workshops in AI and data science — curated so you only see the
+            Conferences, meetups, and workshops in AI and data science, curated so you only see the
             ones worth attending.
           </p>
         </div>

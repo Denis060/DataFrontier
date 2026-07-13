@@ -14,7 +14,7 @@ export type CommentState = { ok: boolean; message: string } | null;
  */
 export async function postComment(_prev: CommentState, formData: FormData): Promise<CommentState> {
   // Honeypot: silently accept-looking, actually drop.
-  if (isBot(formData)) return { ok: true, message: "Thanks — your comment is awaiting review." };
+  if (isBot(formData)) return { ok: true, message: "Thanks, your comment is awaiting review." };
 
   const profile = await getCurrentProfile();
   if (!profile) return { ok: false, message: "Please sign in to comment." };
@@ -50,7 +50,7 @@ export async function postComment(_prev: CommentState, formData: FormData): Prom
   revalidatePath(`/article/${slug}`);
   return {
     ok: true,
-    message: isStaff ? "Posted." : "Thanks — your comment is awaiting review.",
+    message: isStaff ? "Posted." : "Thanks, your comment is awaiting review.",
   };
 }
 

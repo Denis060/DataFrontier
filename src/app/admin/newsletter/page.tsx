@@ -7,7 +7,7 @@ import { emailConfigured } from "@/lib/email";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { NewsletterList } from "@/components/admin/newsletter-list";
 
-export const metadata = { title: "Newsletter — Newsroom", robots: { index: false } };
+export const metadata = { title: "Newsletter | Newsroom", robots: { index: false } };
 
 export default async function AdminNewsletterPage() {
   const profile = await requireStaff();

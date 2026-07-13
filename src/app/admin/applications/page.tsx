@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ApplicationsList } from "@/components/admin/applications-list";
 
-export const metadata = { title: "Applications — Newsroom", robots: { index: false } };
+export const metadata = { title: "Applications | Newsroom", robots: { index: false } };
 
 export default async function ApplicationsPage() {
   const profile = await requireStaff();
@@ -29,7 +29,7 @@ export default async function ApplicationsPage() {
         <p className="mb-8 text-[13px] text-muted">
           {canApprove
             ? "Approve to grant author access; the applicant is promoted automatically."
-            : "Only an admin can approve — approval grants author access."}
+            : "Only an admin can approve, approval grants author access."}
         </p>
 
         {apps.length === 0 ? (

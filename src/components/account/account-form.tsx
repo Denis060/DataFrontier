@@ -142,7 +142,7 @@ export function AccountForm({ email, profile }: { email: string; profile: Accoun
           </div>
           <div>
             <label className={label} htmlFor="bio">Bio</label>
-            <textarea id="bio" name="bio" rows={3} defaultValue={profile.bio} placeholder="A sentence or two about you — shown on your author page." className={`${field} resize-none`} />
+            <textarea id="bio" name="bio" rows={3} defaultValue={profile.bio} placeholder="A sentence or two about you, shown on your author page." className={`${field} resize-none`} />
           </div>
           <AvatarField initial={profile.avatar_url} />
         </Card>

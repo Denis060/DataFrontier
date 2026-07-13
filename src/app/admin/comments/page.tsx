@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { CommentRow } from "@/components/admin/comment-row";
 
-export const metadata = { title: "Comments — Newsroom", robots: { index: false } };
+export const metadata = { title: "Comments | Newsroom", robots: { index: false } };
 
 export default async function AdminCommentsPage() {
   const profile = await requireStaff();

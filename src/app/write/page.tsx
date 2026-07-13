@@ -19,7 +19,7 @@ export default async function WritePage() {
           Publish with Everyday Data Science
         </h1>
         <p className="mt-4 mb-8 text-[15px] leading-relaxed text-muted">
-          We publish practitioners — people who build things and can teach what they learned. If
+          We publish practitioners, people who build things and can teach what they learned. If
           that&apos;s you, tell us what you want to write about. Approved contributors get an author
           page, a byline, and editorial support.
         </p>

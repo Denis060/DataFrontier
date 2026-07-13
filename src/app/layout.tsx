@@ -29,11 +29,11 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://everydaydatascienc
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Everyday Data Science — AI, ML & Agentic Intelligence",
-    template: "%s — Everyday Data Science",
+    default: "Everyday Data Science: AI, ML & Agentic Intelligence",
+    template: "%s | Everyday Data Science",
   },
   description:
-    "Agentic AI, Data Science, and the future of intelligent systems — written by practitioners.",
+    "Agentic AI, Data Science, and the future of intelligent systems, written by practitioners.",
   openGraph: {
     type: "website",
     siteName: "Everyday Data Science",

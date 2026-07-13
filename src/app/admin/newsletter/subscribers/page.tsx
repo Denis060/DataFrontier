@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { SubscribersList } from "@/components/admin/subscribers-list";
 
-export const metadata = { title: "Subscribers — Newsroom", robots: { index: false } };
+export const metadata = { title: "Subscribers | Newsroom", robots: { index: false } };
 
 export default async function SubscribersPage() {
   const profile = await requireStaff();

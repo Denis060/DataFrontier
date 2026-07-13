@@ -29,7 +29,7 @@ export async function decideApplication(
   if (decision === "approved") {
     // Promotion is admin-only (enforced by the profiles role trigger).
     if (!hasRole(reviewer.role, ["admin"])) {
-      return { error: "Only an admin can approve — it grants author access." };
+      return { error: "Only an admin can approve, it grants author access." };
     }
     const { error: roleErr } = await db
       .from("profiles")

@@ -4,7 +4,7 @@ import { Shell } from "@/components/layout/shell";
 import { getNewsletterIssues } from "@/lib/queries";
 
 export const metadata: Metadata = {
-  title: "Newsletter Archive — Everyday Data Science",
+  title: "Newsletter Archive | Everyday Data Science",
   description: "Past issues of Everyday Data Science weekly dispatch.",
 };
 
@@ -25,7 +25,7 @@ export default async function NewsletterArchivePage() {
             Every issue, in one place
           </h1>
           <p className="mt-3 text-[15px] leading-relaxed text-muted">
-            The weekly dispatch — AI research, agentic breakdowns, and career intelligence.{" "}
+            The weekly dispatch, AI research, agentic breakdowns, and career intelligence.{" "}
             <Link href="/newsletter" className="text-gold hover:underline">
               Subscribe free →
             </Link>

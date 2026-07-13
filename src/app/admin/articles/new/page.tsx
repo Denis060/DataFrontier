@@ -2,7 +2,7 @@ import { requireStaff, listFormatsAndCategories } from "@/lib/admin";
 import { hasRole } from "@/lib/auth";
 import { ArticleEditor, type EditorArticle } from "@/components/admin/article-editor";
 
-export const metadata = { title: "New article — Newsroom", robots: { index: false } };
+export const metadata = { title: "New article | Newsroom", robots: { index: false } };
 
 const EMPTY: EditorArticle = {
   id: null,

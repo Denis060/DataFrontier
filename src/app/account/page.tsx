@@ -7,7 +7,7 @@ import { getCurrentProfile } from "@/lib/auth";
 import { AccountForm, type AccountProfile } from "@/components/account/account-form";
 import { PushToggle } from "@/components/push-toggle";
 
-export const metadata: Metadata = { title: "Your account — Everyday Data Science", robots: { index: false } };
+export const metadata: Metadata = { title: "Your account | Everyday Data Science", robots: { index: false } };
 
 export default async function AccountPage() {
   const profile = await getCurrentProfile();
@@ -45,7 +45,7 @@ export default async function AccountPage() {
         <section className="mt-5 rounded-md border border-border bg-bg2 p-5">
           <h2 className="mb-1 font-mono text-[11px] uppercase tracking-[2px] text-gold">Notifications</h2>
           <p className="mb-4 text-[13px] text-muted">
-            Get a browser notification the moment a new article is published — no inbox needed.
+            Get a browser notification the moment a new article is published, no inbox needed.
           </p>
           <PushToggle />
         </section>

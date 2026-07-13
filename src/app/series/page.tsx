@@ -6,8 +6,8 @@ import { getAllSeries } from "@/lib/queries";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Learning Paths — Everyday Data Science",
-  description: "Structured, self-paced series on AI, ML, and data science — read in order.",
+  title: "Learning Paths | Everyday Data Science",
+  description: "Structured, self-paced series on AI, ML, and data science, read in order.",
 };
 
 export default async function SeriesIndexPage() {
@@ -22,7 +22,7 @@ export default async function SeriesIndexPage() {
             Learn it in order
           </h1>
           <p className="mt-3 text-[15px] leading-relaxed text-muted">
-            Structured, self-paced series — each one a set of articles meant to be read start to finish.
+            Structured, self-paced series, each one a set of articles meant to be read start to finish.
           </p>
         </div>
       </header>

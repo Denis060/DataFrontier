@@ -5,10 +5,10 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { RoleSelect } from "@/components/admin/role-select";
 
-export const metadata = { title: "People — Newsroom", robots: { index: false } };
+export const metadata = { title: "People | Newsroom", robots: { index: false } };
 
 const fmt = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
+  iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "-";
 
 export default async function AdminUsersPage() {
   const profile = await requireStaff();
@@ -52,7 +52,7 @@ export default async function AdminUsersPage() {
               {rows.map((u) => (
                 <tr key={u.id} className="hover:bg-surface-1">
                   <td className="px-4 py-3 font-serif text-[14px] font-bold">{u.full_name}</td>
-                  <td className="px-4 py-3 text-[13px] text-muted">{emailById.get(u.id) || "—"}</td>
+                  <td className="px-4 py-3 text-[13px] text-muted">{emailById.get(u.id) || "-"}</td>
                   <td className="px-4 py-3 font-mono text-[11px] text-muted">{fmt(u.created_at)}</td>
                   <td className="px-4 py-3">
                     <RoleSelect userId={u.id} role={u.role} disabled={u.id === profile.id} />
