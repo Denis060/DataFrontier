@@ -6,7 +6,7 @@ import { getAllSeries } from "@/lib/queries";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Learning Paths | Everyday Data Science",
+  title: "Learning Paths",
   description: "Structured, self-paced series on AI, ML, and data science, read in order.",
 };
 

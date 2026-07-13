@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { InfoPage } from "@/components/info-page";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Advertise | Everyday Data Science" };
+export const metadata: Metadata = { title: "Advertise" };
 export const revalidate = 3600;
 
 export default async function AdvertisePage() {

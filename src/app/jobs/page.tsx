@@ -4,7 +4,7 @@ import { JobCard } from "@/components/job-card";
 import { getJobs } from "@/lib/queries";
 
 export const metadata: Metadata = {
-  title: "AI & Data Science Jobs | Everyday Data Science",
+  title: "AI & Data Science Jobs",
   description: "Curated roles in AI and data science, screened for quality.",
 };
 

@@ -7,7 +7,7 @@ import { getCurrentProfile } from "@/lib/auth";
 import { AccountForm, type AccountProfile } from "@/components/account/account-form";
 import { PushToggle } from "@/components/push-toggle";
 
-export const metadata: Metadata = { title: "Your account | Everyday Data Science", robots: { index: false } };
+export const metadata: Metadata = { title: "Your account", robots: { index: false } };
 
 export default async function AccountPage() {
   const profile = await getCurrentProfile();

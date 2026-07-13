@@ -9,7 +9,7 @@ export const revalidate = 300;
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const data = await getSeriesBySlug(slug);
-  if (!data) return { title: "Series not found | Everyday Data Science" };
+  if (!data) return { title: "Series not found" };
   const title = `${data.series.title} | Everyday Data Science`;
   return {
     title,

@@ -5,7 +5,7 @@ import { SetPasswordForm } from "@/components/auth/set-password-form";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "Set a new password | Everyday Data Science",
+  title: "Set a new password",
   robots: { index: false },
 };
 
