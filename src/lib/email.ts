@@ -177,6 +177,23 @@ export function welcomeEmail(unsubscribeUrl: string) {
   );
 }
 
+/**
+ * The second (and last) welcome-series touch — a light check-in a couple of days
+ * after confirming. Its whole job is to earn a reply, not to sell.
+ */
+export function welcomeFollowupEmail(unsubscribeUrl: string) {
+  return emailShell(
+    `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 14px">Quick check-in 👋</h1>
+     <p style="margin:0 0 14px">You joined <strong>The Everyday Brief</strong> a couple of days ago — thanks again. Your issues land every Tuesday.</p>
+     <p style="margin:0 0 14px">One thing makes this newsletter genuinely better: <strong>your reply</strong>. What are you building right now, and what do you want more of — deep dives, quick tips, or opportunities? Just hit reply. I read every one.</p>
+     <p style="margin:0 0 14px">Until Tuesday, the full archive lives at <a href="${SITE}" style="color:#8a6212;font-weight:700">everydaydatascience.com</a>.</p>
+     <p style="margin:0 0 4px">Talk soon,</p>
+     <p style="margin:0;font-weight:700">Ibrahim · Everyday Data Science</p>`,
+    unsubscribeUrl,
+    "A quick hello — and one question for you.",
+  );
+}
+
 export const links = {
   confirm: (token: string) => `${SITE}/api/newsletter/confirm?token=${token}`,
   unsubscribe: (token: string) => `${SITE}/api/newsletter/unsubscribe?token=${token}`,

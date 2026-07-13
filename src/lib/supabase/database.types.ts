@@ -925,6 +925,7 @@ export type Database = {
           source: string | null
           status: Database["public"]["Enums"]["subscriber_status"]
           unsubscribe_token: string
+          welcome_followup_sent_at: string | null
         }
         Insert: {
           confirm_token?: string
@@ -935,6 +936,7 @@ export type Database = {
           source?: string | null
           status?: Database["public"]["Enums"]["subscriber_status"]
           unsubscribe_token?: string
+          welcome_followup_sent_at?: string | null
         }
         Update: {
           confirm_token?: string
@@ -945,6 +947,7 @@ export type Database = {
           source?: string | null
           status?: Database["public"]["Enums"]["subscriber_status"]
           unsubscribe_token?: string
+          welcome_followup_sent_at?: string | null
         }
         Relationships: []
       }
