@@ -16,18 +16,42 @@ const STAFF = ["admin", "editor", "author"] as const;
 /** Newsroom insights, admin-only. Aggregated in JS — fine at publication scale. */
 async function getInsights(db: Awaited<ReturnType<typeof createClient>>): Promise<Insights> {
   const [arts, subs, issues] = await Promise.all([
-    db.from("articles").select("slug, title, view_count").eq("status", "published").order("view_count", { ascending: false }),
-    db.from("newsletter_subscribers").select("source, created_at, status"),
+    db
+      .from("articles")
+      .select("slug, title, view_count, reactions:article_reactions(count), comments:comments(count)")
+      .eq("status", "published")
+      .order("view_count", { ascending: false }),
+    db.from("newsletter_subscribers").select("source, created_at, confirmed_at, status"),
     db.from("newsletter_issues").select("title, sent_at, recipients, delivered_count, opened_count").eq("status", "sent").order("sent_at", { ascending: false }),
   ]);
 
-  const articles = arts.data ?? [];
+  type ArtRow = { slug: string; title: string; view_count: number | null; reactions: { count: number }[]; comments: { count: number }[] };
+  const articles = (arts.data ?? []) as unknown as ArtRow[];
   const totalViews = articles.reduce((s, a) => s + (a.view_count ?? 0), 0);
-  const topArticles = articles.slice(0, 6).map((a) => ({ slug: a.slug, title: a.title, views: a.view_count ?? 0 }));
+  const topArticles = articles.slice(0, 6).map((a) => ({
+    slug: a.slug,
+    title: a.title,
+    views: a.view_count ?? 0,
+    reactions: a.reactions?.[0]?.count ?? 0,
+    comments: a.comments?.[0]?.count ?? 0,
+  }));
 
   const confirmed = (subs.data ?? []).filter((s) => s.status === "confirmed");
   const cutoff = new Date(Date.now() - 30 * 86_400_000).toISOString();
   const newSubs30 = confirmed.filter((s) => (s.created_at ?? "") >= cutoff).length;
+
+  // Weekly new-confirmed counts for the last 12 weeks.
+  const WEEKS = 12;
+  const weekMs = 7 * 86_400_000;
+  const start = Date.now() - WEEKS * weekMs;
+  const growth = Array.from({ length: WEEKS }, (_, i) => ({ label: `${WEEKS - i}w`, count: 0 }));
+  for (const s of confirmed) {
+    const t = s.confirmed_at ? new Date(s.confirmed_at).getTime() : null;
+    if (t == null || t < start) continue;
+    const idx = Math.min(WEEKS - 1, Math.floor((t - start) / weekMs));
+    growth[idx].count++;
+  }
+  growth[WEEKS - 1].label = "now";
   const sourceMap = new Map<string, number>();
   for (const s of confirmed) sourceMap.set(s.source || "direct", (sourceMap.get(s.source || "direct") ?? 0) + 1);
   const sources = [...sourceMap.entries()]
@@ -45,7 +69,7 @@ async function getInsights(db: Awaited<ReturnType<typeof createClient>>): Promis
     openRate: (i.delivered_count ?? 0) > 0 ? Math.round(((i.opened_count ?? 0) / (i.delivered_count ?? 1)) * 100) : null,
   }));
 
-  return { totalViews, publishedCount: articles.length, confirmedSubs: confirmed.length, newSubs30, avgOpenRate, topArticles, sources, recentIssues };
+  return { totalViews, publishedCount: articles.length, confirmedSubs: confirmed.length, newSubs30, avgOpenRate, topArticles, sources, recentIssues, growth };
 }
 
 export default async function AdminPage() {
