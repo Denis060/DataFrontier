@@ -15,10 +15,15 @@ export default async function AdminSettingsPage() {
   const { data } = await db
     .from("site_settings")
     .select(
-      "site_name, tagline, established_year, contact_email, default_meta_title, default_meta_description, newsletter_headline, newsletter_subtext, newsletter_show_stats, spotlight_headline, spotlight_body, spotlight_cta_url",
+      "site_name, tagline, established_year, contact_email, default_meta_title, default_meta_description, newsletter_headline, newsletter_subtext, newsletter_show_stats, spotlight_headline, spotlight_body, spotlight_cta_url, editor_headline, editor_bio, editor_badges",
     )
     .eq("id", true)
     .single();
+
+  const settings = {
+    ...(data ?? {}),
+    editor_badges: Array.isArray(data?.editor_badges) ? (data.editor_badges as { label: string; color: string }[]) : [],
+  } as Settings;
 
   return (
     <AdminShell role={profile.role} name={profile.full_name}>
@@ -27,7 +32,7 @@ export default async function AdminSettingsPage() {
         <p className="mb-8 text-[13px] text-muted">
           Site-wide identity and homepage copy. Changes go live immediately.
         </p>
-        <SettingsForm settings={(data ?? {}) as Settings} />
+        <SettingsForm settings={settings} />
       </div>
     </AdminShell>
   );

@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { saveSettings } from "@/app/admin/settings/actions";
 
+export type Badge = { label: string; color: string };
 export type Settings = {
   site_name: string | null;
   tagline: string | null;
@@ -16,6 +17,9 @@ export type Settings = {
   spotlight_headline: string | null;
   spotlight_body: string | null;
   spotlight_cta_url: string | null;
+  editor_headline: string | null;
+  editor_bio: string | null;
+  editor_badges: Badge[];
 };
 
 const field =
@@ -55,7 +59,11 @@ export function SettingsForm({ settings }: { settings: Settings }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [saving, start] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [badges, setBadges] = useState<Badge[]>(settings.editor_badges ?? []);
   const s = settings;
+
+  const setBadge = (i: number, patch: Partial<Badge>) =>
+    setBadges((b) => b.map((x, j) => (j === i ? { ...x, ...patch } : x)));
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -94,6 +102,50 @@ export function SettingsForm({ settings }: { settings: Settings }) {
         <Text name="spotlight_headline" label="Headline" defaultValue={s.spotlight_headline ?? ""} />
         <Area name="spotlight_body" label="Body" defaultValue={s.spotlight_body ?? ""} />
         <Text name="spotlight_cta_url" label="CTA link" type="url" defaultValue={s.spotlight_cta_url ?? ""} />
+      </Section>
+
+      <Section title="From the editor (homepage card)">
+        <Text name="editor_headline" label="Headline" defaultValue={s.editor_headline ?? ""} />
+        <Area name="editor_bio" label="Bio / intro" defaultValue={s.editor_bio ?? ""} />
+        <div>
+          <label className={label}>Badges</label>
+          <p className="mb-2 -mt-1 text-[11px] text-muted">
+            Your name and title come from your account profile. These are the little tags on the card.
+          </p>
+          <input type="hidden" name="editor_badges" value={JSON.stringify(badges)} />
+          <div className="flex flex-col gap-2">
+            {badges.map((b, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  value={b.label}
+                  onChange={(e) => setBadge(i, { label: e.target.value })}
+                  placeholder="Label"
+                  className={`${field} flex-1`}
+                />
+                <select value={b.color} onChange={(e) => setBadge(i, { color: e.target.value })} className={`${field} w-24`}>
+                  <option value="gold">gold</option>
+                  <option value="teal">teal</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setBadges((arr) => arr.filter((_, j) => j !== i))}
+                  className="rounded border border-red/40 px-3 py-2 text-[12px] text-red hover:bg-red-dim"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+          {badges.length < 6 && (
+            <button
+              type="button"
+              onClick={() => setBadges((arr) => [...arr, { label: "", color: "gold" }])}
+              className="mt-2 rounded border border-dashed border-border px-3 py-1.5 text-[12px] text-muted hover:border-border-strong hover:text-ink"
+            >
+              + Add badge
+            </button>
+          )}
+        </div>
       </Section>
 
       <div className="flex items-center gap-3">
