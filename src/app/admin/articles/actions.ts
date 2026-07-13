@@ -6,6 +6,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { requireStaff } from "@/lib/admin";
 import { hasRole } from "@/lib/auth";
 import { renderMarkdown } from "@/lib/markdown";
+import { sendPushToAll } from "@/lib/push";
 import type { Database } from "@/lib/supabase/database.types";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://everydaydatascience.com";
@@ -166,6 +167,16 @@ export async function saveArticle(formData: FormData): Promise<Result> {
       await notifyFollowers(articleId);
     } catch {
       // swallow — the article is published either way
+    }
+    // Browser push to anyone who opted in. Best-effort — never blocks publish.
+    try {
+      await sendPushToAll({
+        title: "New on Everyday Data Science",
+        body: fields.title,
+        url: `/article/${fields.slug}`,
+      });
+    } catch {
+      // swallow
     }
   }
 
