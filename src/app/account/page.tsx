@@ -5,6 +5,7 @@ import { Shell } from "@/components/layout/shell";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { AccountForm, type AccountProfile } from "@/components/account/account-form";
+import { PushToggle } from "@/components/push-toggle";
 
 export const metadata: Metadata = { title: "Your account — Everyday Data Science", robots: { index: false } };
 
@@ -40,6 +41,14 @@ export default async function AccountPage() {
           )}
         </p>
         <AccountForm email={auth.user?.email ?? ""} profile={data} />
+
+        <section className="mt-5 rounded-md border border-border bg-bg2 p-5">
+          <h2 className="mb-1 font-mono text-[11px] uppercase tracking-[2px] text-gold">Notifications</h2>
+          <p className="mb-4 text-[13px] text-muted">
+            Get a browser notification the moment a new article is published — no inbox needed.
+          </p>
+          <PushToggle />
+        </section>
       </div>
     </Shell>
   );
