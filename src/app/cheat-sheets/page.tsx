@@ -6,8 +6,8 @@ import { Pill } from "@/components/pill";
 import { getCheatSheets } from "@/lib/queries";
 
 export const metadata: Metadata = {
-  title: "Cheat Sheets — Everyday Data Science",
-  description: "Visual references for AI, ML, and data science — free to browse and download.",
+  title: "Cheat Sheets | Everyday Data Science",
+  description: "Visual references for AI, ML, and data science, free to browse and download.",
 };
 
 export const revalidate = 300;
@@ -23,7 +23,7 @@ export default async function CheatSheetsPage() {
             Cheat Sheets
           </h1>
           <p className="mt-3 max-w-[620px] text-[15px] leading-relaxed text-muted">
-            Visual references you can actually use — the concepts that matter, distilled to a page.
+            Visual references you can actually use, the concepts that matter, distilled to a page.
           </p>
         </div>
       </header>

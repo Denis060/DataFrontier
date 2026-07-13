@@ -90,7 +90,7 @@ export function IssueComposer({
       else
         setTestMsg(
           res.skipped
-            ? `Mock only — no RESEND_API_KEY set, so nothing was delivered to ${res.to}.`
+            ? `Mock only, no RESEND_API_KEY set, so nothing was delivered to ${res.to}.`
             : `Test sent to ${res.to}. Check inbox, spam, and how it renders on a phone.`,
         );
     });
@@ -125,7 +125,7 @@ export function IssueComposer({
       {!locked && (
         <div className="mb-5 rounded-md border border-gold/25 bg-gold-dim px-4 py-3 text-[12px] leading-relaxed text-gold">
           <strong>How to fill this:</strong> the title + summary become the subject and inbox preview.
-          The intro is your hello. Then fill the six sections below — every one is optional, so use
+          The intro is your hello. Then fill the six sections below, every one is optional, so use
           what you have. Each has a tip under its label. Save a draft anytime, send a test to yourself,
           then schedule when it&apos;s ready.
         </div>
@@ -193,7 +193,7 @@ export function IssueComposer({
           </div>
           {testMsg && <p className="mt-2 text-[12px] text-teal">{testMsg}</p>}
           <p className="mt-2 text-[11px] text-muted">
-            Goes only to this address — never the subscriber list. Save your latest edits first.
+            Goes only to this address, never the subscriber list. Save your latest edits first.
           </p>
         </div>
       )}

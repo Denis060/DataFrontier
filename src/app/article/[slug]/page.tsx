@@ -183,7 +183,7 @@ export default async function ArticlePage({ params }: Props) {
           <article className="min-w-0 max-w-[760px] lg:col-start-1 lg:row-start-1">
             {isDraft && (
               <p className="mb-6 rounded border border-gold/30 bg-gold-dim px-3 py-2 font-mono text-[11px] uppercase tracking-[1.5px] text-gold">
-                Preview — status: {article.status.replace("_", " ")}
+                Preview, status: {article.status.replace("_", " ")}
               </p>
             )}
 

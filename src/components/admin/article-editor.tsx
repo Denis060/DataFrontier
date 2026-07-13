@@ -345,7 +345,7 @@ export function ArticleEditor({
               Category
             </label>
             <select id="category_id" name="category_id" defaultValue={article.category_id} className={field}>
-              <option value="">— none —</option>
+              <option value="">None</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -359,7 +359,7 @@ export function ArticleEditor({
               Format
             </label>
             <select id="format_id" name="format_id" defaultValue={article.format_id} className={field}>
-              <option value="">— none —</option>
+              <option value="">None</option>
               {formats.map((f) => (
                 <option key={f.id} value={f.id}>
                   {f.name}
@@ -374,7 +374,7 @@ export function ArticleEditor({
                 Series
               </label>
               <select id="series_id" name="series_id" defaultValue={article.series_id} className={field}>
-                <option value="">— none —</option>
+                <option value="">None</option>
                 {series.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}

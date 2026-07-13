@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { SeriesManager, type Series } from "@/components/admin/series-manager";
 
-export const metadata = { title: "Learning Paths — Newsroom", robots: { index: false } };
+export const metadata = { title: "Learning Paths | Newsroom", robots: { index: false } };
 
 export default async function AdminSeriesPage() {
   const profile = await requireStaff();

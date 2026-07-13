@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { InfoPage } from "@/components/info-page";
 
-export const metadata: Metadata = { title: "Terms of Use — Everyday Data Science" };
+export const metadata: Metadata = { title: "Terms of Use | Everyday Data Science" };
 
 export default function TermsPage() {
   return (

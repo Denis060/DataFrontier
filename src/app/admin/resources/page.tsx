@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ResourcesManager, type Resource } from "@/components/admin/resources-manager";
 
-export const metadata = { title: "Resources — Newsroom", robots: { index: false } };
+export const metadata = { title: "Resources | Newsroom", robots: { index: false } };
 
 export default async function AdminResourcesPage() {
   const profile = await requireStaff();

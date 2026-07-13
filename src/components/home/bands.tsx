@@ -220,7 +220,7 @@ export function CareersBand({ jobs, total }: { jobs: HomeData["jobs"]; total: nu
         <div>
           <h2 className="font-serif text-[28px] font-black tracking-[-0.5px]">Data &amp; AI Careers</h2>
           <p className="mt-1 text-sm text-muted">
-            Curated roles in AI &amp; data science — screened for quality, not volume
+            Curated roles in AI &amp; data science, screened for quality, not volume
           </p>
         </div>
         <Link

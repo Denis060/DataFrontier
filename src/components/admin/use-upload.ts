@@ -21,7 +21,7 @@ export function useUpload() {
       }
       return json.url as string;
     } catch {
-      setError("Upload failed — check your connection.");
+      setError("Upload failed, check your connection.");
       return null;
     } finally {
       setUploading(false);

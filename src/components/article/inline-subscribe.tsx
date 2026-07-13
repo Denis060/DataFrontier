@@ -30,7 +30,7 @@ export function InlineSubscribe({ slug }: { slug: string }) {
         Get the next one in your inbox
       </p>
       <p className="mt-1 mb-4 text-[13px] leading-relaxed text-muted">
-        Practical AI, ML &amp; data science — once a week, no spam. Unsubscribe anytime.
+        Practical AI, ML &amp; data science, once a week, no spam. Unsubscribe anytime.
       </p>
 
       {state?.ok ? (

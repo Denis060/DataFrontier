@@ -7,7 +7,7 @@ import { Pill } from "@/components/pill";
 import { getCurrentProfile } from "@/lib/auth";
 import { getLibrary } from "@/lib/queries";
 
-export const metadata: Metadata = { title: "Your Library — Everyday Data Science", robots: { index: false } };
+export const metadata: Metadata = { title: "Your Library | Everyday Data Science", robots: { index: false } };
 
 export default async function LibraryPage() {
   const profile = await getCurrentProfile();

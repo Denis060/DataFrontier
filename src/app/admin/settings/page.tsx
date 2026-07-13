@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { SettingsForm, type Settings } from "@/components/admin/settings-form";
 
-export const metadata = { title: "Settings — Newsroom", robots: { index: false } };
+export const metadata = { title: "Settings | Newsroom", robots: { index: false } };
 
 export default async function AdminSettingsPage() {
   const profile = await requireStaff();

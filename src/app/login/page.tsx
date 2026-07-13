@@ -4,7 +4,7 @@ import { AuthForm } from "@/components/auth/auth-form";
 import { Shell } from "@/components/layout/shell";
 import { getCurrentProfile, getEnabledProviders, safeNext } from "@/lib/auth";
 
-export const metadata: Metadata = { title: "Sign in — Everyday Data Science", robots: { index: false } };
+export const metadata: Metadata = { title: "Sign in | Everyday Data Science", robots: { index: false } };
 
 export default async function LoginPage({
   searchParams,

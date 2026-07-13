@@ -115,7 +115,7 @@ export function SubscribePrompt({ signedIn = false }: { signedIn?: boolean }) {
             Stay ahead in AI &amp; data science.
           </p>
           <p className="mt-1 mb-3 text-[13px] leading-relaxed text-muted">
-            AI research, agentic breakdowns, and career intelligence — once a week, no spam.
+            AI research, agentic breakdowns, and career intelligence, once a week, no spam.
           </p>
 
           <form action={action} className="flex flex-col gap-2">

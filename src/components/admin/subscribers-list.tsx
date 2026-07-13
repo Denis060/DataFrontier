@@ -20,7 +20,7 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 const fmt = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
+  iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "-";
 
 function toCsv(rows: Row[]): string {
   const head = ["email", "status", "source", "subscribed", "confirmed"];
@@ -122,7 +122,7 @@ export function SubscribersList({ subscribers }: { subscribers: Row[] }) {
                       {r.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-[12px] text-muted">{r.source ?? "—"}</td>
+                  <td className="px-4 py-3 text-[12px] text-muted">{r.source ?? "-"}</td>
                   <td className="px-4 py-3 font-mono text-[11px] text-muted">{fmt(r.created_at)}</td>
                 </tr>
               ))}

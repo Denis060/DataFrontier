@@ -17,7 +17,7 @@ const compact = (n: number) =>
   n >= 1000 ? `${(n / 1000).toFixed(n >= 10_000 ? 0 : 1)}K` : String(n);
 
 const fmtDate = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—";
+  iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "-";
 
 function Stat({ icon: Icon, label, value, sub }: { icon: typeof Eye; label: string; value: string; sub?: string }) {
   return (
@@ -47,7 +47,7 @@ function GrowthChart({ data }: { data: { label: string; count: number }[] }) {
   return (
     <Card title={`New subscribers · last ${data.length} weeks`}>
       {total === 0 ? (
-        <p className="text-[13px] text-muted">No new confirmed subscribers yet — this fills in as your list grows.</p>
+        <p className="text-[13px] text-muted">No new confirmed subscribers yet, this fills in as your list grows.</p>
       ) : (
         <div className="flex h-28 items-end gap-1.5">
           {data.map((d, i) => (
@@ -83,7 +83,7 @@ export function InsightsPanel({ data }: { data: Insights }) {
         <Stat
           icon={Mail}
           label="Avg open rate"
-          value={data.avgOpenRate != null ? `${data.avgOpenRate}%` : "—"}
+          value={data.avgOpenRate != null ? `${data.avgOpenRate}%` : "-"}
           sub={data.avgOpenRate != null ? "across sent issues" : "no sends yet"}
         />
       </div>
@@ -154,7 +154,7 @@ export function InsightsPanel({ data }: { data: Insights }) {
                   <span className="shrink-0 font-mono text-[11px] text-muted">{fmtDate(it.sentAt)}</span>
                   <span className="shrink-0 font-mono text-[11px] text-muted">{compact(it.recipients)} sent</span>
                   <span className="w-14 shrink-0 text-right font-mono text-[12px] text-teal">
-                    {it.openRate != null ? `${it.openRate}%` : "—"}
+                    {it.openRate != null ? `${it.openRate}%` : "-"}
                   </span>
                 </li>
               ))}

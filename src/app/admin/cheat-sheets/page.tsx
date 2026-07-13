@@ -5,7 +5,7 @@ import { hasRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/admin/admin-shell";
 
-export const metadata = { title: "Cheat Sheets — Newsroom", robots: { index: false } };
+export const metadata = { title: "Cheat Sheets | Newsroom", robots: { index: false } };
 
 export default async function AdminCheatSheetsPage() {
   const profile = await requireStaff();

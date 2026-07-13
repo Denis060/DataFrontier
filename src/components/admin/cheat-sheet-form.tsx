@@ -119,7 +119,7 @@ export function CheatSheetForm({
       <div>
         <label className={label} htmlFor="category_id">Category</label>
         <select id="category_id" name="category_id" defaultValue={sheet.category_id} className={field}>
-          <option value="">— none —</option>
+          <option value="">None</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}

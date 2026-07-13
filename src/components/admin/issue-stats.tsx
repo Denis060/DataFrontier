@@ -16,7 +16,7 @@ export function IssueStats({
   bounced: number;
   complained: number;
 }) {
-  const pct = (n: number, of: number) => (of > 0 ? `${Math.round((n / of) * 100)}%` : "—");
+  const pct = (n: number, of: number) => (of > 0 ? `${Math.round((n / of) * 100)}%` : "-");
 
   const tiles = [
     { label: "Recipients", value: recipients, sub: "queued to send" },

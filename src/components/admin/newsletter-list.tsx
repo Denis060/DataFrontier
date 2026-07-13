@@ -26,7 +26,7 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 const fmt = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
+  iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "-";
 
 export function NewsletterList({ issues }: { issues: Row[] }) {
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");

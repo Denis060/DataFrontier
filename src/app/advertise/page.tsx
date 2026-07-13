@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { InfoPage } from "@/components/info-page";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Advertise — Everyday Data Science" };
+export const metadata: Metadata = { title: "Advertise | Everyday Data Science" };
 export const revalidate = 3600;
 
 export default async function AdvertisePage() {
@@ -17,22 +17,22 @@ export default async function AdvertisePage() {
       intro="Reach a focused audience of data scientists, ML engineers, and AI practitioners."
     >
       <p>
-        Everyday Data Science reaches practitioners who build with AI and data — the people who evaluate
+        Everyday Data Science reaches practitioners who build with AI and data, the people who evaluate
         tools, choose platforms, and influence what their teams adopt. If that&apos;s who you want
         in front of, let&apos;s talk.
       </p>
       <h2>Ways to partner</h2>
       <ul>
         <li>
-          <strong>Newsletter sponsorship</strong> — a clearly-labelled placement in the weekly
+          <strong>Newsletter sponsorship:</strong> a clearly-labelled placement in the weekly
           dispatch.
         </li>
         <li>
-          <strong>Sponsored deep-dives</strong> — practitioner-quality articles, marked as
+          <strong>Sponsored deep-dives:</strong> practitioner-quality articles, marked as
           sponsored, held to the same editorial bar as everything else.
         </li>
         <li>
-          <strong>Job listings</strong> — feature a role on the careers board.
+          <strong>Job listings:</strong> feature a role on the careers board.
         </li>
       </ul>
       <p>

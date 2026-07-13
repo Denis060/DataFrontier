@@ -4,7 +4,7 @@ import { requireStaff, listArticles } from "@/lib/admin";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ArticlesList } from "@/components/admin/articles-list";
 
-export const metadata = { title: "Articles — Newsroom", robots: { index: false } };
+export const metadata = { title: "Articles | Newsroom", robots: { index: false } };
 
 export default async function AdminArticlesPage() {
   const profile = await requireStaff();

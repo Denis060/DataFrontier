@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { CheatSheetForm, type CheatSheetDraft } from "@/components/admin/cheat-sheet-form";
 
-export const metadata = { title: "Edit cheat sheet — Newsroom", robots: { index: false } };
+export const metadata = { title: "Edit cheat sheet | Newsroom", robots: { index: false } };
 
 export default async function EditCheatSheetPage({ params }: { params: Promise<{ id: string }> }) {
   const profile = await requireStaff();

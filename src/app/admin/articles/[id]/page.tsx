@@ -3,7 +3,7 @@ import { requireStaff, getArticleForEdit, listFormatsAndCategories } from "@/lib
 import { hasRole } from "@/lib/auth";
 import { ArticleEditor, type EditorArticle } from "@/components/admin/article-editor";
 
-export const metadata = { title: "Edit article — Newsroom", robots: { index: false } };
+export const metadata = { title: "Edit article | Newsroom", robots: { index: false } };
 
 export default async function EditArticlePage({
   params,

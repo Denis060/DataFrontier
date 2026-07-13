@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { CheatSheetForm, type CheatSheetDraft } from "@/components/admin/cheat-sheet-form";
 
-export const metadata = { title: "New cheat sheet — Newsroom", robots: { index: false } };
+export const metadata = { title: "New cheat sheet | Newsroom", robots: { index: false } };
 
 const EMPTY: CheatSheetDraft = {
   id: null,

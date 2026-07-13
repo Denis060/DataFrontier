@@ -31,7 +31,7 @@ export const SECTION_DEFS: SectionDef[] = [
   {
     key: "practical_tip",
     label: "One practical tip",
-    hint: "One thing a reader can apply today — concrete, not theory.",
+    hint: "One thing a reader can apply today, concrete, not theory.",
   },
   {
     key: "worth_reading",
@@ -48,7 +48,7 @@ export const SECTION_DEFS: SectionDef[] = [
   {
     key: "opportunity",
     label: "One opportunity",
-    hint: "A job, grant, fellowship, or call for papers — with the link.",
+    hint: "A job, grant, fellowship, or call for papers, with the link.",
     hasUrl: true,
   },
   {
@@ -122,7 +122,7 @@ export function renderIssue(
       htmlParts.push(
         `<img src="${esc(sec.image_url)}" alt="${esc(alt)}" width="552" style="max-width:100%;height:auto;border-radius:6px;border:1px solid #e5e2db;display:block;margin:0 0 12px">`,
       );
-      textParts.push(`[${def.label} — image: ${sec.image_url}]\n`);
+      textParts.push(`[${def.label}, image: ${sec.image_url}]\n`);
     }
     if (sec.text) para(sec.text);
     if (def.hasUrl && sec.url) link("Read more", sec.url);
@@ -140,7 +140,7 @@ export function renderIssue(
     "",
     textParts.join("").trim(),
     "",
-    "—",
+    "---",
     `View in browser: ${webUrl}`,
     `Unsubscribe: ${unsubscribeUrl}`,
   ].join("\n");
