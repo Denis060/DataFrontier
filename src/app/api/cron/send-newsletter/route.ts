@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { dispatchIssue, dueIssueIds } from "@/lib/dispatch";
+import { dispatchIssue, dueIssueIds, sendWelcomeFollowups } from "@/lib/dispatch";
 
 // Long enough to drain a bounded batch; the dispatcher itself caps work per run.
 export const maxDuration = 300;
@@ -25,5 +25,8 @@ export async function GET(request: Request) {
     results.push({ id, ...(await dispatchIssue(id)) });
   }
 
-  return NextResponse.json({ processed: ids.length, results });
+  // Same tick also sends any due welcome-series follow-ups.
+  const followups = await sendWelcomeFollowups();
+
+  return NextResponse.json({ processed: ids.length, results, followups });
 }

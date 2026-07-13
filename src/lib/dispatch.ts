@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/server";
-import { sendMail } from "@/lib/email";
+import { sendMail, welcomeFollowupEmail } from "@/lib/email";
 import { renderIssue, type IssueContent } from "@/lib/newsletter";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://everydaydatascience.com";
@@ -136,6 +136,52 @@ async function unsubUrl(db: ReturnType<typeof createAdminClient>, subscriberId: 
     .eq("id", subscriberId)
     .single();
   return `${SITE}/api/newsletter/unsubscribe?token=${data?.unsubscribe_token ?? ""}`;
+}
+
+/**
+ * The one-and-only welcome-series follow-up: sent ~2 days after a subscriber
+ * confirms, exactly once. Marked on the row so it never repeats, and skips the
+ * suppression list. Bounded per run so the cron never risks a timeout.
+ */
+export async function sendWelcomeFollowups(): Promise<{ sent: number }> {
+  const db = createAdminClient();
+  const cutoff = new Date(Date.now() - 2 * 86_400_000).toISOString();
+
+  const { data: due } = await db
+    .from("newsletter_subscribers")
+    .select("id, email, unsubscribe_token")
+    .eq("status", "confirmed")
+    .is("welcome_followup_sent_at", null)
+    .lte("confirmed_at", cutoff)
+    .limit(100);
+  if (!due || due.length === 0) return { sent: 0 };
+
+  const { data: suppressed } = await db.from("email_suppressions").select("email");
+  const blocked = new Set((suppressed ?? []).map((s) => s.email.toLowerCase()));
+
+  let sent = 0;
+  for (const sub of due) {
+    // Mark first so a mid-run crash can't double-send; a rare lost email beats a duplicate.
+    await db.from("newsletter_subscribers").update({ welcome_followup_sent_at: new Date().toISOString() }).eq("id", sub.id);
+    if (blocked.has(sub.email.toLowerCase())) continue;
+    const unsubscribeUrl = `${SITE}/api/newsletter/unsubscribe?token=${sub.unsubscribe_token ?? ""}`;
+    try {
+      await sendMail({
+        to: sub.email,
+        subject: "A quick hello from Everyday Data Science",
+        html: welcomeFollowupEmail(unsubscribeUrl),
+        text: "Thanks for joining The Everyday Brief. What are you building, and what do you want more of? Just reply — I read every one. — Ibrahim",
+        headers: {
+          "List-Unsubscribe": `<${unsubscribeUrl}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
+      });
+      sent++;
+    } catch {
+      /* already marked; skip */
+    }
+  }
+  return { sent };
 }
 
 /** Every scheduled issue whose time has come, plus any interrupted 'sending'. */
