@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { User } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { saveProfile } from "@/app/account/actions";
 
@@ -22,6 +23,66 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
       <h2 className="mb-4 font-mono text-[11px] uppercase tracking-[2px] text-gold">{title}</h2>
       <div className="flex flex-col gap-4">{children}</div>
     </section>
+  );
+}
+
+function AvatarField({ initial }: { initial: string }) {
+  const [url, setUrl] = useState(initial);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("bucket", "avatars");
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) setErr(data.error || "Upload failed.");
+      else setUrl(data.url);
+    } catch {
+      setErr("Upload failed.");
+    }
+    setBusy(false);
+    e.target.value = "";
+  }
+
+  return (
+    <div>
+      <label className={label}>Avatar</label>
+      <div className="flex items-center gap-4">
+        {url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={url} alt="Your avatar" className="size-16 rounded-full border border-border object-cover" />
+        ) : (
+          <span className="flex size-16 items-center justify-center rounded-full border border-dashed border-border text-muted">
+            <User className="size-6" aria-hidden />
+          </span>
+        )}
+        <div>
+          <input id="avatar-file" type="file" accept="image/jpeg,image/png,image/webp" onChange={onFile} className="hidden" />
+          <label
+            htmlFor="avatar-file"
+            className="inline-block cursor-pointer rounded border border-border px-4 py-2 text-[13px] font-semibold transition-colors hover:border-border-strong hover:bg-surface-1"
+          >
+            {busy ? "Uploading…" : "Upload photo"}
+          </label>
+          <p className="mt-1 text-[11px] text-muted">JPG, PNG or WebP · up to 2 MB.</p>
+        </div>
+      </div>
+      <input
+        name="avatar_url"
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
+        placeholder="…or paste an image URL"
+        className={`${field} mt-3 font-mono text-[12px]`}
+      />
+      {err && <p className="mt-1 text-[12px] text-red">{err}</p>}
+    </div>
   );
 }
 
@@ -83,10 +144,7 @@ export function AccountForm({ email, profile }: { email: string; profile: Accoun
             <label className={label} htmlFor="bio">Bio</label>
             <textarea id="bio" name="bio" rows={3} defaultValue={profile.bio} placeholder="A sentence or two about you — shown on your author page." className={`${field} resize-none`} />
           </div>
-          <div>
-            <label className={label} htmlFor="avatar_url">Avatar image URL</label>
-            <input id="avatar_url" name="avatar_url" defaultValue={profile.avatar_url} placeholder="https://…" className={`${field} font-mono text-[12px]`} />
-          </div>
+          <AvatarField initial={profile.avatar_url} />
         </Card>
 
         <Card title="Links">

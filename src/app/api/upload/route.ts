@@ -4,12 +4,15 @@ import { getCurrentProfile, hasRole } from "@/lib/auth";
 
 // Per-bucket size limits (must match the storage migration) and the extra
 // types some buckets allow. Only these buckets are writable through here.
-const BUCKETS: Record<string, { maxBytes: number; extraTypes?: Record<string, string> }> = {
+const BUCKETS: Record<string, { maxBytes: number; extraTypes?: Record<string, string>; anyUser?: boolean }> = {
   "article-images": { maxBytes: 5 * 1024 * 1024 },
   "cheat-sheets": {
     maxBytes: 10 * 1024 * 1024,
     extraTypes: { "application/pdf": "pdf" },
   },
+  // Any signed-in user may upload their own avatar (storage RLS scopes it to
+  // their own folder).
+  avatars: { maxBytes: 2 * 1024 * 1024, anyUser: true },
 };
 
 const IMAGE_TYPES: Record<string, string> = {
@@ -27,7 +30,7 @@ const IMAGE_TYPES: Record<string, string> = {
  */
 export async function POST(request: Request) {
   const profile = await getCurrentProfile();
-  if (!profile || !hasRole(profile.role, ["admin", "editor", "author"])) {
+  if (!profile) {
     return NextResponse.json({ error: "Not authorised." }, { status: 403 });
   }
 
@@ -41,6 +44,10 @@ export async function POST(request: Request) {
   const bucket = BUCKETS[bucketName];
   if (!bucket) {
     return NextResponse.json({ error: "Unknown upload target." }, { status: 400 });
+  }
+  // Staff-only buckets; avatars are open to any signed-in user.
+  if (!bucket.anyUser && !hasRole(profile.role, ["admin", "editor", "author"])) {
+    return NextResponse.json({ error: "Not authorised." }, { status: 403 });
   }
 
   const allowed = { ...IMAGE_TYPES, ...(bucket.extraTypes ?? {}) };
