@@ -18,7 +18,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const issue = await getNewsletterIssueBySlug(slug);
-  if (!issue) return { title: "Issue not found | Everyday Data Science" };
+  if (!issue) return { title: "Issue not found" };
   const title = `${issue.title} | Everyday Data Science`;
   return {
     title,

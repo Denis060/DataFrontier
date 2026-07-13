@@ -5,7 +5,7 @@ import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
 import { getCurrentProfile } from "@/lib/auth";
 
 export const metadata: Metadata = {
-  title: "Reset your password | Everyday Data Science",
+  title: "Reset your password",
   robots: { index: false },
 };
 

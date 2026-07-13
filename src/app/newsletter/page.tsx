@@ -5,7 +5,7 @@ import { NewsletterBand } from "@/components/home/newsletter-band";
 import { getHomeData } from "@/lib/queries";
 
 export const metadata: Metadata = {
-  title: "Subscribe | Everyday Data Science",
+  title: "Subscribe",
   description: "Join the free weekly newsletter for AI and data science practitioners.",
 };
 

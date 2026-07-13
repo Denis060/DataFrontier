@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!category) return { title: "Not found" };
 
   return {
-    title: `${category.name} | Everyday Data Science`,
+    title: `${category.name}`,
     description: category.description ?? `Articles on ${category.name}.`,
     // Canonical to page 1 so ?page= variants don't split ranking.
     alternates: { canonical: `/category/${slug}` },
