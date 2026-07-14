@@ -284,12 +284,21 @@ export function Comments({
           <CommentForm articleId={articleId} slug={slug} />
         </div>
       ) : (
-        <p className="mb-8 rounded border border-border bg-surface-1 px-4 py-4 text-sm text-muted">
-          <Link href={`/login?next=/article/${slug}`} className="text-gold hover:underline">
-            Sign in
-          </Link>{" "}
-          to join the discussion.
-        </p>
+        <div className="mb-8 rounded border border-border bg-surface-1 px-4 py-4 text-sm">
+          <p className="text-ink">
+            <Link href={`/signup?next=/article/${slug}`} className="font-semibold text-gold hover:underline">
+              Create a free account
+            </Link>{" "}
+            or{" "}
+            <Link href={`/login?next=/article/${slug}`} className="text-gold hover:underline">
+              sign in
+            </Link>{" "}
+            to join the discussion.
+          </p>
+          <p className="mt-1 text-[13px] text-muted">
+            Free forever. Comment, react, and save articles to your library.
+          </p>
+        </div>
       )}
 
       {tree.length === 0 ? (
