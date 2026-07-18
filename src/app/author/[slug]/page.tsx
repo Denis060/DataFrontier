@@ -12,6 +12,8 @@ type Props = {
   searchParams: Promise<{ page?: string }>;
 };
 
+import { sameAsLinks } from "@/lib/socials";
+
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://everydaydatascience.com";
 
 const toPage = (raw?: string) => Math.max(1, Number.parseInt(raw ?? "1", 10) || 1);
@@ -49,10 +51,8 @@ export default async function AuthorPage({ params, searchParams }: Props) {
     (entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].length > 0,
   );
 
-  // Canonical Person entity for E-E-A-T. Articles reference it by @id. sameAs
-  // uses only real profile links (with a path), so bare-domain placeholders
-  // never leak into the schema.
-  const sameAs = socials.map(([, url]) => url).filter((u) => /^https?:\/\/[^/]+\/.+/.test(u));
+  // Canonical Person entity for E-E-A-T. Articles reference it by @id.
+  const sameAs = sameAsLinks(author.socials);
   const personLd = {
     "@context": "https://schema.org",
     "@type": "Person",

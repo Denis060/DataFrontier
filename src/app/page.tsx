@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getChrome, getHomeData, getUnreadCount, menuFor } from "@/lib/queries";
 import { getCurrentProfile } from "@/lib/auth";
+import { sameAsLinks } from "@/lib/socials";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://everydaydatascience.com";
 
@@ -46,10 +47,7 @@ export default async function Home() {
     ? (s.editor_badges as { label: string; color: string }[])
     : [];
 
-  // Only real profile links (with a path) become sameAs; bare domains are placeholders.
-  const sameAs = Object.values((s?.socials ?? {}) as Record<string, unknown>).filter(
-    (v): v is string => typeof v === "string" && /^https?:\/\/[^/]+\/.+/.test(v),
-  );
+  const sameAs = sameAsLinks(s?.socials);
   const orgLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
