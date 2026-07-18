@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Shell } from "@/components/layout/shell";
-import { getNewsletterIssues } from "@/lib/queries";
+import { Pagination } from "@/components/article-list";
+import { getNewsletterIssues, paginate, toPageNumber } from "@/lib/queries";
 
 export const metadata: Metadata = {
   title: "Newsletter Archive",
@@ -13,8 +15,14 @@ export const revalidate = 300;
 const fmt = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : null;
 
-export default async function NewsletterArchivePage() {
-  const issues = await getNewsletterIssues();
+export default async function NewsletterArchivePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const page = toPageNumber((await searchParams).page);
+  const { items, total, perPage } = paginate(await getNewsletterIssues(), page);
+  if (page > 1 && items.length === 0) notFound();
 
   return (
     <Shell>
@@ -34,13 +42,14 @@ export default async function NewsletterArchivePage() {
       </header>
 
       <div className="mx-auto w-full max-w-[760px] px-5 py-12 sm:px-8">
-        {issues.length === 0 ? (
+        {total === 0 ? (
           <p className="rounded border border-dashed border-border px-6 py-16 text-center text-sm text-muted">
             No issues published yet.
           </p>
         ) : (
+          <>
           <ul className="divide-y divide-border border-y border-border">
-            {issues.map((issue) => (
+            {items.map((issue) => (
               <li key={issue.issue_number}>
                 <Link href={`/newsletter/${issue.slug}`} className="flex items-baseline gap-4 py-5 hover:opacity-80">
                   <span className="shrink-0 font-mono text-[11px] text-muted">
@@ -57,6 +66,8 @@ export default async function NewsletterArchivePage() {
               </li>
             ))}
           </ul>
+          <Pagination page={page} total={total} perPage={perPage} basePath="/newsletter/archive" />
+          </>
         )}
       </div>
     </Shell>

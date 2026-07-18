@@ -537,6 +537,15 @@ export type Chrome = Awaited<ReturnType<typeof getChrome>>;
 
 export const PER_PAGE = 12;
 
+/** Parse a ?page= value into a safe 1-based page number. */
+export const toPageNumber = (raw?: string) => Math.max(1, Number.parseInt(raw ?? "1", 10) || 1);
+
+/** In-memory pagination for already-fetched lists (small collections). */
+export function paginate<T>(items: T[], page: number, perPage = PER_PAGE) {
+  const from = (page - 1) * perPage;
+  return { items: items.slice(from, from + perPage), total: items.length, page, perPage };
+}
+
 type Page<T> = { items: T[]; total: number; page: number; perPage: number };
 
 const range = (page: number, perPage: number): [number, number] => [
