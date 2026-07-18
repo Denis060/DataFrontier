@@ -18,7 +18,7 @@ export async function saveProfile(fd: FormData): Promise<{ error: string } | { o
 
   // socials is a jsonb map of platform → url; keep only the ones filled in.
   const socials: Record<string, string> = {};
-  for (const key of ["linkedin", "twitter", "github", "website"]) {
+  for (const key of ["linkedin", "twitter", "github", "website", "orcid", "youtube", "scholar", "researchgate"]) {
     const v = str(fd, key);
     if (v) socials[key] = v;
   }
