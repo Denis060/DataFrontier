@@ -28,6 +28,8 @@ export type EditorArticle = {
   series_id: string;
   series_position: string;
   featured: boolean;
+  meta_title: string;
+  meta_description: string;
 };
 
 const field =
@@ -442,6 +444,32 @@ export function ArticleEditor({
               </span>
             </label>
           )}
+
+          <div className="rounded border border-border bg-surface-1 p-3">
+            <p className="mb-2 font-mono text-[10px] uppercase tracking-[1.5px] text-muted">Search (SEO)</p>
+            <label className="mb-1 block text-[11px] text-muted" htmlFor="meta_title">SEO title</label>
+            <input
+              id="meta_title"
+              name="meta_title"
+              defaultValue={article.meta_title}
+              maxLength={70}
+              placeholder="Front-load the keyword, aim for ~60 chars"
+              className={field}
+            />
+            <p className="mt-1 mb-3 text-[10px] leading-snug text-muted">
+              Shown in Google results. Leave blank to use the headline.
+            </p>
+            <label className="mb-1 block text-[11px] text-muted" htmlFor="meta_description">Meta description</label>
+            <textarea
+              id="meta_description"
+              name="meta_description"
+              defaultValue={article.meta_description}
+              rows={3}
+              maxLength={170}
+              placeholder="~155 characters. Leave blank to use the excerpt."
+              className={`${field} resize-none`}
+            />
+          </div>
 
           {article.id && canPublish && (
             <button

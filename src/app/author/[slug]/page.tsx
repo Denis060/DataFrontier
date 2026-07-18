@@ -12,6 +12,8 @@ type Props = {
   searchParams: Promise<{ page?: string }>;
 };
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://everydaydatascience.com";
+
 const toPage = (raw?: string) => Math.max(1, Number.parseInt(raw ?? "1", 10) || 1);
 
 const initials = (name: string) =>
@@ -47,8 +49,26 @@ export default async function AuthorPage({ params, searchParams }: Props) {
     (entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].length > 0,
   );
 
+  // Canonical Person entity for E-E-A-T. Articles reference it by @id. sameAs
+  // uses only real profile links (with a path), so bare-domain placeholders
+  // never leak into the schema.
+  const sameAs = socials.map(([, url]) => url).filter((u) => /^https?:\/\/[^/]+\/.+/.test(u));
+  const personLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "@id": `${SITE_URL}/author/${slug}#person`,
+    name: author.full_name,
+    url: `${SITE_URL}/author/${slug}`,
+    ...(author.title ? { jobTitle: author.title } : {}),
+    ...(author.bio ? { description: author.bio } : {}),
+    ...(author.avatar_url ? { image: author.avatar_url } : {}),
+    ...(sameAs.length ? { sameAs } : {}),
+    worksFor: { "@type": "Organization", "@id": `${SITE_URL}/#organization`, name: "Everyday Data Science" },
+  };
+
   return (
     <Shell>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personLd) }} />
       <header className="border-b border-border bg-bg2 px-5 py-12 sm:px-8 lg:px-12 lg:py-16">
         <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-6 sm:flex-row sm:items-center">
           {author.avatar_url ? (

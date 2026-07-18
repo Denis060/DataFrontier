@@ -116,6 +116,8 @@ export async function saveArticle(formData: FormData): Promise<Result> {
     reading_time: readingTime(body),
     series_id: (formData.get("series_id") as string) || null,
     series_position: Number((formData.get("series_position") as string) || "") || null,
+    meta_title: ((formData.get("meta_title") as string) || "").trim() || null,
+    meta_description: ((formData.get("meta_description") as string) || "").trim() || null,
   } satisfies ArticleUpdate;
 
   // Resolve the status transition, if any, and gate it.
@@ -149,8 +151,16 @@ export async function saveArticle(formData: FormData): Promise<Result> {
   let articleId = id;
 
   if (id) {
+    const { data: existing } = await db.from("articles").select("slug").eq("id", id).single();
     const { error } = await db.from("articles").update(patch).eq("id", id);
     if (error) return { error: humanize(error.message) };
+    // Slug changed: record a 301 from the old URL to the new one so links and
+    // any ranking survive. Clear the reverse entry to avoid a redirect loop.
+    if (existing?.slug && existing.slug !== slug) {
+      const admin = createAdminClient();
+      await admin.from("slug_redirects").upsert({ old_slug: existing.slug, new_slug: slug }, { onConflict: "old_slug" });
+      await admin.from("slug_redirects").delete().eq("old_slug", slug);
+    }
   } else {
     // A brand-new article can't publish in the same action (no id yet to stamp
     // published_at against, and it hasn't been reviewed). It starts as a draft

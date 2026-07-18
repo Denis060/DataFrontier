@@ -43,9 +43,9 @@ export function Hero({ hero, latest }: { hero: ArticleCard | null; latest: Artic
             <span className="text-xs text-muted">{fmtDate(hero.published_at)}</span>
           </div>
 
-          <h1 className="mb-5 max-w-[700px] font-serif text-[clamp(30px,5vw,56px)] leading-[1.08] font-black tracking-[-1.5px]">
+          <h2 className="mb-5 max-w-[700px] font-serif text-[clamp(30px,5vw,56px)] leading-[1.08] font-black tracking-[-1.5px]">
             {hero.title}
-          </h1>
+          </h2>
 
           {hero.excerpt && (
             <p className="mb-9 max-w-[580px] text-base leading-[1.65] text-muted sm:text-[17px]">
