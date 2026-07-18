@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Shell } from "@/components/layout/shell";
+import { Pagination } from "@/components/article-list";
 import { createClient } from "@/lib/supabase/server";
+import { paginate, toPageNumber } from "@/lib/queries";
 import type { SearchResult } from "@/components/search/search-bar";
 
 export const metadata: Metadata = { title: "Search", robots: { index: false } };
@@ -15,10 +17,11 @@ const KIND_LABEL: Record<string, string> = {
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; page?: string }>;
 }) {
-  const { q = "" } = await searchParams;
+  const { q = "", page: pageRaw } = await searchParams;
   const term = q.trim();
+  const page = toPageNumber(pageRaw);
 
   let results: SearchResult[] = [];
   if (term) {
@@ -26,6 +29,7 @@ export default async function SearchPage({
     const { data } = await db.rpc("search_content", { q: term, max_results: 50 });
     results = (data as SearchResult[]) ?? [];
   }
+  const { items, total, perPage } = paginate(results, page);
 
   return (
     <Shell>
@@ -35,7 +39,7 @@ export default async function SearchPage({
         </h1>
         {term && (
           <p className="mt-2 font-mono text-[11px] uppercase tracking-[2px] text-muted">
-            {results.length} {results.length === 1 ? "result" : "results"}
+            {total} {total === 1 ? "result" : "results"}
           </p>
         )}
 
@@ -43,13 +47,14 @@ export default async function SearchPage({
           <p className="mt-8 text-[15px] text-muted">
             Use the search box in the header to find articles, cheat sheets, and events.
           </p>
-        ) : results.length === 0 ? (
+        ) : total === 0 ? (
           <p className="mt-8 rounded border border-dashed border-border px-6 py-16 text-center text-sm text-muted">
             No matches. Try a different term or a broader keyword.
           </p>
         ) : (
+          <>
           <ul className="mt-8 divide-y divide-border border-y border-border">
-            {results.map((r) => (
+            {items.map((r) => (
               <li key={r.url}>
                 <Link href={r.url} className="block py-5 transition-colors hover:bg-surface-1">
                   <span className="flex items-center gap-2">
@@ -68,6 +73,8 @@ export default async function SearchPage({
               </li>
             ))}
           </ul>
+          <Pagination page={page} total={total} perPage={perPage} basePath={`/search?q=${encodeURIComponent(term)}`} />
+          </>
         )}
       </div>
     </Shell>

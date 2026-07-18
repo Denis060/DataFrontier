@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Shell } from "@/components/layout/shell";
 import { Pill } from "@/components/pill";
-import { getCheatSheets } from "@/lib/queries";
+import { Pagination } from "@/components/article-list";
+import { getCheatSheets, paginate, toPageNumber } from "@/lib/queries";
 
 export const metadata: Metadata = {
   title: "Cheat Sheets",
@@ -12,8 +14,14 @@ export const metadata: Metadata = {
 
 export const revalidate = 300;
 
-export default async function CheatSheetsPage() {
-  const sheets = await getCheatSheets();
+export default async function CheatSheetsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const page = toPageNumber((await searchParams).page);
+  const { items, total, perPage } = paginate(await getCheatSheets(), page);
+  if (page > 1 && items.length === 0) notFound();
 
   return (
     <Shell>
@@ -29,13 +37,14 @@ export default async function CheatSheetsPage() {
       </header>
 
       <div className="mx-auto w-full max-w-[1100px] px-5 py-12 sm:px-8 lg:px-12">
-        {sheets.length === 0 ? (
+        {total === 0 ? (
           <p className="rounded border border-dashed border-border px-6 py-16 text-center text-sm text-muted">
             No cheat sheets published yet.
           </p>
         ) : (
+          <>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {sheets.map((s) => (
+            {items.map((s) => (
               <Link
                 key={s.id}
                 href={`/cheat-sheets/${s.slug}`}
@@ -67,6 +76,8 @@ export default async function CheatSheetsPage() {
               </Link>
             ))}
           </div>
+          <Pagination page={page} total={total} perPage={perPage} basePath="/cheat-sheets" />
+          </>
         )}
       </div>
     </Shell>

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Shell } from "@/components/layout/shell";
 import { EventCard, type EventRow } from "@/components/event-card";
-import { getEvents } from "@/lib/queries";
+import { Pagination } from "@/components/article-list";
+import { getEvents, paginate, toPageNumber } from "@/lib/queries";
 
 export const metadata: Metadata = {
   title: "Events",
@@ -10,8 +11,14 @@ export const metadata: Metadata = {
 
 export const revalidate = 300;
 
-export default async function EventsPage() {
+export default async function EventsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const page = toPageNumber((await searchParams).page);
   const { upcoming, past } = await getEvents();
+  const { items: pastItems, total: pastTotal, perPage } = paginate(past as EventRow[], page);
 
   return (
     <Shell>
@@ -43,14 +50,15 @@ export default async function EventsPage() {
           )}
         </section>
 
-        {past.length > 0 && (
+        {pastTotal > 0 && (
           <section className="mt-14">
             <h2 className="mb-6 font-mono text-[11px] uppercase tracking-[2px] text-muted">Past</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {(past as EventRow[]).map((e) => (
+              {pastItems.map((e) => (
                 <EventCard key={e.id} event={e} past />
               ))}
             </div>
+            <Pagination page={page} total={pastTotal} perPage={perPage} basePath="/events" />
           </section>
         )}
       </div>

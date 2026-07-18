@@ -59,7 +59,10 @@ export function Pagination({
   const pages = Math.ceil(total / perPage);
   if (pages <= 1) return null;
 
-  const href = (p: number) => (p === 1 ? basePath : `${basePath}?page=${p}`);
+  // basePath may already carry a query string (e.g. /search?q=term), so pick
+  // the right separator and only add page= for pages past the first.
+  const sep = basePath.includes("?") ? "&" : "?";
+  const href = (p: number) => (p === 1 ? basePath : `${basePath}${sep}page=${p}`);
   const link =
     "inline-flex items-center rounded border border-border px-4 py-2 text-[13px] transition-colors hover:border-border-strong hover:bg-surface-1";
 
