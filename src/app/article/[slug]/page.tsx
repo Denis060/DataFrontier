@@ -174,6 +174,10 @@ export default async function ArticlePage({ params }: Props) {
   // Structured data helps Google render rich results for articles.
   const authorUrl = article.author?.slug ? `${SITE_URL}/author/${article.author.slug}` : undefined;
   const logo = settings?.logo_url ?? `${SITE_URL}/icon.svg`;
+  // Only real profile links (with a path) become sameAs; blanks/placeholders drop out.
+  const authorSameAs = Object.values((article.author?.socials ?? {}) as Record<string, unknown>).filter(
+    (v): v is string => typeof v === "string" && /^https?:\/\/[^/]+\/.+/.test(v),
+  );
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -189,6 +193,7 @@ export default async function ArticlePage({ params }: Props) {
           "@type": "Person",
           ...(authorUrl ? { "@id": `${authorUrl}#person`, url: authorUrl } : {}),
           name: article.author.full_name,
+          ...(authorSameAs.length ? { sameAs: authorSameAs } : {}),
         }
       : undefined,
     publisher: {
