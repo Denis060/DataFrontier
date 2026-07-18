@@ -39,6 +39,7 @@ export default async function EditArticlePage({
     status: row.status,
     series_id: row.series_id ?? "",
     series_position: row.series_position != null ? String(row.series_position) : "",
+    featured: row.featured ?? false,
   };
 
   return (

@@ -18,6 +18,7 @@ const EMPTY: EditorArticle = {
   status: "draft",
   series_id: "",
   series_position: "",
+  featured: false,
 };
 
 export default async function NewArticlePage() {

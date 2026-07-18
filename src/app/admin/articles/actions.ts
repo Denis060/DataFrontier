@@ -122,6 +122,11 @@ export async function saveArticle(formData: FormData): Promise<Result> {
   const patch: ArticleUpdate = { ...fields };
   const staff = hasRole(profile.role, ["admin", "editor"]);
 
+  // Only editors/admins can pick the homepage hero. The checkbox is absent for
+  // authors, so their saves must never touch `featured`.
+  const wantsFeatured = staff && formData.get("featured") === "on";
+  if (staff) patch.featured = wantsFeatured;
+
   let firstPublish = false;
 
   if (TRANSITIONS.has(intent)) {
@@ -153,11 +158,24 @@ export async function saveArticle(formData: FormData): Promise<Result> {
     const status: ArticleStatus = intent === "in_review" ? "in_review" : "draft";
     const { data, error } = await db
       .from("articles")
-      .insert({ ...fields, author_id: profile.id, status })
+      .insert({ ...fields, author_id: profile.id, status, ...(staff ? { featured: wantsFeatured } : {}) })
       .select("id")
       .single();
     if (error) return { error: humanize(error.message) };
     articleId = data.id;
+  }
+
+  // Homepage hero. Featuring an article makes it THE hero: unfeature every other
+  // article (so it's the sole one, and stays out of the "Latest" list) and pin
+  // it explicitly. Un-featuring the current hero clears the pin so the homepage
+  // falls back to the most recent article.
+  if (staff && articleId) {
+    if (wantsFeatured) {
+      await db.from("articles").update({ featured: false }).neq("id", articleId);
+      await db.from("site_settings").update({ hero_article_id: articleId }).eq("id", true);
+    } else {
+      await db.from("site_settings").update({ hero_article_id: null }).eq("id", true).eq("hero_article_id", articleId);
+    }
   }
 
   // Fan out follower notifications on the first publish. Best-effort — a
