@@ -143,7 +143,7 @@ export async function getArticle(slug: string) {
       `id, slug, title, subtitle, excerpt, kicker, body, body_html, status, category_id, author_id,
        cover_image, cover_alt, reading_time, published_at, updated_at, featured, view_count, series_id, series_position,
        meta_title, meta_description, canonical_url, og_image,
-       author:profiles!articles_author_id_fkey (full_name, slug, title, bio, avatar_url),
+       author:profiles!articles_author_id_fkey (full_name, slug, title, bio, avatar_url, socials),
        category:categories (name, slug, color),
        format:formats (name, slug, color)`,
     )
