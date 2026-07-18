@@ -17,6 +17,7 @@ import {
   type ArticleCard,
 } from "@/lib/queries";
 import { getCurrentProfile } from "@/lib/auth";
+import { sameAsLinks } from "@/lib/socials";
 import { Pill } from "@/components/pill";
 import { ShareBar } from "@/components/article/share-bar";
 import { ReactionButton } from "@/components/article/reaction-button";
@@ -174,10 +175,7 @@ export default async function ArticlePage({ params }: Props) {
   // Structured data helps Google render rich results for articles.
   const authorUrl = article.author?.slug ? `${SITE_URL}/author/${article.author.slug}` : undefined;
   const logo = settings?.logo_url ?? `${SITE_URL}/icon.svg`;
-  // Only real profile links (with a path) become sameAs; blanks/placeholders drop out.
-  const authorSameAs = Object.values((article.author?.socials ?? {}) as Record<string, unknown>).filter(
-    (v): v is string => typeof v === "string" && /^https?:\/\/[^/]+\/.+/.test(v),
-  );
+  const authorSameAs = sameAsLinks(article.author?.socials);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
