@@ -10,7 +10,16 @@ export type AccountProfile = {
   title: string;
   bio: string;
   avatar_url: string;
-  socials: { linkedin?: string; twitter?: string; github?: string; website?: string };
+  socials: {
+    linkedin?: string;
+    twitter?: string;
+    github?: string;
+    website?: string;
+    orcid?: string;
+    youtube?: string;
+    scholar?: string;
+    researchgate?: string;
+  };
 };
 
 const field =
@@ -163,6 +172,28 @@ export function AccountForm({ email, profile }: { email: string; profile: Accoun
           <div>
             <label className={label} htmlFor="website">Website</label>
             <input id="website" name="website" defaultValue={s.website ?? ""} placeholder="https://…" className={`${field} font-mono text-[12px]`} />
+          </div>
+        </Card>
+
+        <Card title="Research profiles">
+          <p className="-mt-1 text-[11px] text-muted">
+            These are strong credibility signals for search engines. Any you fill in are linked from your author page and its structured data.
+          </p>
+          <div>
+            <label className={label} htmlFor="orcid">ORCID</label>
+            <input id="orcid" name="orcid" defaultValue={s.orcid ?? ""} placeholder="https://orcid.org/0000-0000-0000-0000" className={`${field} font-mono text-[12px]`} />
+          </div>
+          <div>
+            <label className={label} htmlFor="scholar">Google Scholar</label>
+            <input id="scholar" name="scholar" defaultValue={s.scholar ?? ""} placeholder="https://scholar.google.com/citations?user=…" className={`${field} font-mono text-[12px]`} />
+          </div>
+          <div>
+            <label className={label} htmlFor="researchgate">ResearchGate</label>
+            <input id="researchgate" name="researchgate" defaultValue={s.researchgate ?? ""} placeholder="https://researchgate.net/profile/…" className={`${field} font-mono text-[12px]`} />
+          </div>
+          <div>
+            <label className={label} htmlFor="youtube">YouTube</label>
+            <input id="youtube" name="youtube" defaultValue={s.youtube ?? ""} placeholder="https://youtube.com/@…" className={`${field} font-mono text-[12px]`} />
           </div>
         </Card>
 
