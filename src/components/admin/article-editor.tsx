@@ -27,6 +27,7 @@ export type EditorArticle = {
   status: string;
   series_id: string;
   series_position: string;
+  featured: boolean;
 };
 
 const field =
@@ -429,6 +430,18 @@ export function ArticleEditor({
             <span className={label}>Cover image</span>
             <CoverUpload name="cover_image" defaultUrl={article.cover_image} />
           </div>
+
+          {canPublish && (
+            <label className="flex items-start gap-2.5 rounded border border-gold/30 bg-surface-1 px-3 py-3 text-[13px]">
+              <input type="checkbox" name="featured" defaultChecked={article.featured} className="mt-0.5 size-4 accent-gold" />
+              <span>
+                <span className="font-semibold">Feature on homepage</span>
+                <span className="mt-0.5 block text-[11px] text-muted">
+                  Make this the big hero article on the front page. Only one article can be the hero, so turning this on replaces the current one. It must be published to show.
+                </span>
+              </span>
+            </label>
+          )}
 
           {article.id && canPublish && (
             <button
