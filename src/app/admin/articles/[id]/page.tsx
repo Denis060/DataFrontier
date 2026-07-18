@@ -40,6 +40,8 @@ export default async function EditArticlePage({
     series_id: row.series_id ?? "",
     series_position: row.series_position != null ? String(row.series_position) : "",
     featured: row.featured ?? false,
+    meta_title: row.meta_title ?? "",
+    meta_description: row.meta_description ?? "",
   };
 
   return (

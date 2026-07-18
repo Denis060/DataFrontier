@@ -19,6 +19,8 @@ const EMPTY: EditorArticle = {
   series_id: "",
   series_position: "",
   featured: false,
+  meta_title: "",
+  meta_description: "",
 };
 
 export default async function NewArticlePage() {

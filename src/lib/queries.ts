@@ -122,6 +122,17 @@ export type HomeData = Awaited<ReturnType<typeof getHomeData>>;
  * their own author — so this deliberately does not filter on status. A draft is
  * previewable by the person writing it, and invisible to everyone else.
  */
+/** If `oldSlug` was renamed, return its current slug so the route can 301. */
+export async function getSlugRedirect(oldSlug: string): Promise<string | null> {
+  const db = await createClient();
+  const { data } = await db
+    .from("slug_redirects")
+    .select("new_slug")
+    .eq("old_slug", oldSlug)
+    .maybeSingle();
+  return data?.new_slug ?? null;
+}
+
 export async function getArticle(slug: string) {
   const db = await createClient();
   // One `author` alias only — PostgREST rejects a relationship embedded twice
@@ -130,7 +141,7 @@ export async function getArticle(slug: string) {
     .from("articles")
     .select(
       `id, slug, title, subtitle, excerpt, kicker, body, body_html, status, category_id, author_id,
-       cover_image, cover_alt, reading_time, published_at, featured, view_count, series_id, series_position,
+       cover_image, cover_alt, reading_time, published_at, updated_at, featured, view_count, series_id, series_position,
        meta_title, meta_description, canonical_url, og_image,
        author:profiles!articles_author_id_fkey (full_name, slug, title, bio, avatar_url),
        category:categories (name, slug, color),

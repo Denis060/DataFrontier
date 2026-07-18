@@ -1257,6 +1257,24 @@ export type Database = {
           },
         ]
       }
+      slug_redirects: {
+        Row: {
+          created_at: string
+          new_slug: string
+          old_slug: string
+        }
+        Insert: {
+          created_at?: string
+          new_slug: string
+          old_slug: string
+        }
+        Update: {
+          created_at?: string
+          new_slug?: string
+          old_slug?: string
+        }
+        Relationships: []
+      }
       tags: {
         Row: {
           id: string

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { ArticleBody } from "@/components/article/article-body";
 import {
   getArticle,
@@ -11,6 +11,7 @@ import {
   getUnreadCount,
   getRelated,
   getArticleSeriesNav,
+  getSlugRedirect,
   isBookmarked,
   menuFor,
   type ArticleCard,
@@ -30,6 +31,27 @@ import { SiteFooter } from "@/components/home/site-footer";
 type Props = { params: Promise<{ slug: string }> };
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const TITLE_SUFFIX = " | Everyday Data Science";
+
+/**
+ * Search engines truncate the <title> near 60 characters, so keywords at the
+ * end vanish from the SERP. Keep it tight: append the site suffix only if the
+ * result still fits, otherwise drop it (and trim a long headline at a word
+ * boundary). Editors front-load keywords via the `meta_title` override.
+ */
+function clampTitle(base: string): string {
+  const withSuffix = base + TITLE_SUFFIX;
+  if (withSuffix.length <= 60) return withSuffix;
+  if (base.length <= 60) return base;
+  const cut = base.slice(0, 60);
+  const sp = cut.lastIndexOf(" ");
+  return (sp > 30 ? cut.slice(0, sp) : cut).trimEnd();
+}
+
+/** Strip Markdown to plain text for a meta-description fallback. */
+function plainText(md: string): string {
+  return md.replace(/[#>*_`~[\]()!]/g, "").replace(/\s+/g, " ").trim();
+}
 
 const fmtDate = (iso: string | null) =>
   iso
@@ -44,9 +66,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const [article, { settings }] = await Promise.all([getArticle(slug), getChrome()]);
   if (!article) return { title: "Not found" };
 
-  const title = article.meta_title ?? article.title;
+  const headline = article.title;
+  // SERP title: sized for ~60 chars. Social title: the full headline.
+  const metaTitle = clampTitle(article.meta_title ?? headline);
+  const bodyText = article.body ? plainText(article.body) : "";
   const description =
-    article.meta_description ?? article.excerpt ?? settings?.default_meta_description ?? undefined;
+    article.meta_description ??
+    article.excerpt ??
+    (bodyText ? bodyText.slice(0, 155).trimEnd() : undefined) ??
+    settings?.default_meta_description ??
+    undefined;
   // A real cover photo wins; otherwise fall back to the generated branded card
   // (the opengraph-image route). Defining openGraph here suppresses the file
   // convention's auto-merge, so the fallback is referenced explicitly.
@@ -56,21 +85,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     : { url: `${SITE_URL}/article/${article.slug}/opengraph-image`, width: 1200, height: 630 };
 
   return {
-    title,
+    // `absolute` bypasses the layout's "%s | Everyday Data Science" template,
+    // which would otherwise blow past the 60-char SERP limit.
+    title: { absolute: metaTitle },
     description,
     // Self-canonical to the article's own URL, unless an explicit override is set.
     alternates: { canonical: article.canonical_url ?? `/article/${article.slug}` },
     robots: article.status === "published" ? undefined : { index: false, follow: false },
     openGraph: {
       type: "article",
-      title,
+      title: headline,
       description,
       url: `${SITE_URL}/article/${article.slug}`,
       publishedTime: article.published_at ?? undefined,
+      modifiedTime: article.updated_at ?? article.published_at ?? undefined,
       authors: article.author ? [article.author.full_name] : undefined,
       images: [ogImage],
     },
-    twitter: { card: "summary_large_image", title, description, images: [ogImage.url] },
+    twitter: { card: "summary_large_image", title: headline, description, images: [ogImage.url] },
   };
 }
 
@@ -117,7 +149,12 @@ export default async function ArticlePage({ params }: Props) {
     getChrome(),
     getCurrentProfile(),
   ]);
-  if (!article) notFound();
+  if (!article) {
+    // A renamed post 301s from its old slug so links and ranking are preserved.
+    const dest = await getSlugRedirect(slug);
+    if (dest && dest !== slug) permanentRedirect(`/article/${dest}`);
+    notFound();
+  }
 
   const [related, moreByAuthor, comments, reactions, bookmarked] = await Promise.all([
     getRelated(article.id, article.category_id),
@@ -135,36 +172,55 @@ export default async function ArticlePage({ params }: Props) {
   const shareUrl = `${SITE_URL}/article/${article.slug}`;
 
   // Structured data helps Google render rich results for articles.
+  const authorUrl = article.author?.slug ? `${SITE_URL}/author/${article.author.slug}` : undefined;
+  const logo = settings?.logo_url ?? `${SITE_URL}/icon.svg`;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: article.title,
     description: article.excerpt ?? undefined,
-    image: article.og_image ?? article.cover_image ?? undefined,
+    image: article.og_image ?? article.cover_image ?? `${shareUrl}/opengraph-image`,
     datePublished: article.published_at ?? undefined,
-    dateModified: article.published_at ?? undefined,
+    dateModified: article.updated_at ?? article.published_at ?? undefined,
+    // Reference the author by @id so it resolves to the single canonical Person
+    // entity defined on the author page (with sameAs links to their profiles).
     author: article.author
       ? {
           "@type": "Person",
+          ...(authorUrl ? { "@id": `${authorUrl}#person`, url: authorUrl } : {}),
           name: article.author.full_name,
-          url: article.author.slug ? `${SITE_URL}/author/${article.author.slug}` : undefined,
         }
       : undefined,
     publisher: {
       "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
       name: settings?.site_name ?? "Everyday Data Science",
+      logo: { "@type": "ImageObject", url: logo },
     },
     mainEntityOfPage: { "@type": "WebPage", "@id": shareUrl },
     articleSection: article.category?.name,
   };
 
+  // Breadcrumb trail: Home > Category > Article, for richer SERP display.
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      ...(article.category
+        ? [{ "@type": "ListItem", position: 2, name: article.category.name, item: `${SITE_URL}/category/${article.category.slug}` }]
+        : []),
+      { "@type": "ListItem", position: article.category ? 3 : 2, name: article.title, item: shareUrl },
+    ],
+  };
+
   return (
     <>
       {!isDraft && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
+        <>
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
+        </>
       )}
       <SiteHeader
         siteName={settings?.site_name ?? "Everyday Data Science"}
