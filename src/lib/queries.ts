@@ -132,8 +132,9 @@ export async function getHomeData() {
     spotlight,
     columns,
     editor: editorRes.data ?? null,
-    // Paths with nothing published yet would be dead ends.
-    series: seriesList.filter((s) => s.count > 0).slice(0, 3),
+    // A "path" needs at least two steps; a one-part path reads as thin on the
+    // homepage (it still appears on /series).
+    series: seriesList.filter((s) => s.count >= 2).slice(0, 3),
     cheatSheets: cheatRes.data ?? [],
     latestIssue: latestIssueRes.data ?? null,
     categories: categories.map((c, i) => ({ ...c, count: counts[i].count ?? 0 })),
