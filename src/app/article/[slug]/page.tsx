@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { ArticleBody } from "@/components/article/article-body";
 import { CoverImage } from "@/components/cover-image";
+import { AuthorBox } from "@/components/article/author-box";
+import { AuthorAvatar } from "@/components/author-avatar";
 import { ArticleTocInline, ArticleTocRail } from "@/components/article/article-toc";
 import { ReadingProgress } from "@/components/article/reading-progress";
 import { extractHeadings } from "@/lib/headings";
@@ -20,6 +22,7 @@ import {
   isBookmarked,
   menuFor,
   type ArticleCard,
+  getFollowState,
 } from "@/lib/queries";
 import { getCurrentProfile } from "@/lib/auth";
 import { sameAsLinks } from "@/lib/socials";
@@ -64,8 +67,6 @@ const fmtDate = (iso: string | null) =>
     ? new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
     : null;
 
-const initials = (name: string) =>
-  name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -162,12 +163,13 @@ export default async function ArticlePage({ params }: Props) {
     notFound();
   }
 
-  const [related, moreByAuthor, comments, reactions, bookmarked] = await Promise.all([
+  const [related, moreByAuthor, comments, reactions, bookmarked, authorFollow] = await Promise.all([
     getRelated(article.id, article.category_id),
     getMoreByAuthor(article.author_id, article.id),
     getComments(article.id),
     getArticleReactions(article.id),
     isBookmarked(article.id),
+    getFollowState({ authorId: article.author_id }, profile?.id ?? null),
   ]);
 
   const seriesNav = article.series_id ? await getArticleSeriesNav(article.series_id, article.id) : null;
@@ -294,9 +296,7 @@ export default async function ArticlePage({ params }: Props) {
                   href={article.author.slug ? `/author/${article.author.slug}` : "#"}
                   className="flex items-center gap-2.5"
                 >
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-linear-135 from-gold to-[#8B6914] font-serif text-[13px] font-bold text-on-accent">
-                    {initials(article.author.full_name)}
-                  </span>
+                  <AuthorAvatar name={article.author.full_name} src={article.author.avatar_url} className="size-9 text-[13px]" />
                   <span className="flex flex-col">
                     <span className="text-[13px] font-semibold">{article.author.full_name}</span>
                     <span className="text-[11px] text-muted">{article.author.title}</span>
@@ -375,6 +375,16 @@ export default async function ArticlePage({ params }: Props) {
             {/* Right where the text ends, before the reaction bar: the reader
                 who just finished is the one most likely to subscribe. An
                 invitation, never a gate. */}
+            {article.author && !isDraft && (
+              <AuthorBox
+                author={article.author}
+                authorId={article.author_id}
+                follow={authorFollow}
+                canFollow={!!profile && profile.id !== article.author_id}
+                path={`/article/${article.slug}`}
+              />
+            )}
+
             <InlineSubscribe slug={article.slug} />
 
             {/* Repeated at the foot: the reader who just finished is the one

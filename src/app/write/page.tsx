@@ -74,6 +74,17 @@ export default async function WritePage() {
             what they learned. If you have shipped a model, fought a data pipeline, or studied AI in
             a place most coverage ignores, we want to hear from you.
           </p>
+          <p className="mt-3 text-[14px] text-muted">
+            New to writing for us?{" "}
+            <Link href="/write/guide" className="font-semibold text-gold hover:underline">
+              Read the writer&apos;s guide
+            </Link>{" "}
+            or{" "}
+            <Link href="/authors" className="font-semibold text-gold hover:underline">
+              meet our writers
+            </Link>
+            .
+          </p>
           {/* Phones only: the form sits at the end of the page there. */}
           <a
             href="#apply"

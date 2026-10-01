@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getChrome, getHomeData, getUnreadCount, menuFor } from "@/lib/queries";
+import { getChrome, getHomeData, getUnreadCount, getWriters, menuFor } from "@/lib/queries";
 import { getCurrentProfile } from "@/lib/auth";
 import { sameAsLinks } from "@/lib/socials";
 
@@ -40,7 +40,7 @@ import { SiteFooter } from "@/components/home/site-footer";
 export const revalidate = 60;
 
 export default async function Home() {
-  const [d, profile] = await Promise.all([getHomeData(), getCurrentProfile()]);
+  const [d, profile, writers] = await Promise.all([getHomeData(), getCurrentProfile(), getWriters()]);
   const unread = await getUnreadCount(profile?.id ?? null);
   const s = d.settings;
   const siteName = s?.site_name ?? "Everyday Data Science";
@@ -126,6 +126,7 @@ export default async function Home() {
           headline={s?.editor_headline ?? ""}
           bio={s?.editor_bio ?? ""}
           badges={badges}
+          writers={writers}
         />
       </main>
 
