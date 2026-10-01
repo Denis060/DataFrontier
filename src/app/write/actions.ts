@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { rateLimit, isBot } from "@/lib/rate-limit";
 import { REPUBLISH_PREFIX } from "@/lib/applications";
+import { applicationReceivedEmail, newApplicationAdminEmail, sendEmail } from "@/lib/email";
 
 export type ApplyState = { ok: boolean; message: string } | null;
 
@@ -50,6 +51,35 @@ export async function applyToWrite(_prev: ApplyState, formData: FormData): Promi
   }
   if (error) return { ok: false, message: "Something went wrong. Try again." };
 
+  // Tell both sides. Before this, a pitch landed silently: the applicant got
+  // nothing and the owner only knew by checking the admin list. Sends are
+  // best-effort; a failed email must not undo a saved application.
+  const { data: settings } = await db.from("site_settings").select("contact_email").eq("id", true).maybeSingle();
+  await Promise.allSettled([
+    profile.email
+      ? sendEmail({
+          to: profile.email,
+          subject: "We got your pitch for Everyday Data Science",
+          html: applicationReceivedEmail(profile.full_name ?? "", republish),
+        })
+      : null,
+    settings?.contact_email
+      ? sendEmail({
+          to: settings.contact_email,
+          subject: `New writer ${republish ? "republish request" : "pitch"}: ${profile.full_name ?? "someone"}`,
+          html: newApplicationAdminEmail({
+            name: profile.full_name ?? "Unknown",
+            email: profile.email,
+            bio,
+            topics,
+            republish: republish ? original : null,
+            links: otherLinks,
+          }),
+        })
+      : null,
+  ]);
+
   revalidatePath("/admin/applications");
+  revalidatePath("/write");
   return { ok: true, message: "Application received. We'll be in touch." };
 }

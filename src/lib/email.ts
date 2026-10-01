@@ -195,12 +195,62 @@ export function welcomeFollowupEmail(unsubscribeUrl: string) {
   );
 }
 
+const escHtml = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/** Sent to the applicant right after they send a pitch, so it never feels lost. */
+export function applicationReceivedEmail(name: string, republish: boolean) {
+  const first = escHtml(name.split(" ")[0] || "there");
+  return emailShell(
+    `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 14px">Got it, ${first}. Thank you.</h1>
+     <p style="margin:0 0 14px">Your ${republish ? "request to republish your post" : "pitch"} for <strong>Everyday Data Science</strong> has arrived, and a real person will read it.</p>
+     <p style="margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:#5a6270;font-weight:700">What happens next</p>
+     ${benefitList([
+       "We read every pitch ourselves",
+       "If it's a fit, you get an author account and a link to start your draft",
+       "You can check where it stands any time on the Write for us page",
+     ])}
+     <p style="margin:0 0 14px">Want to add anything, a link or a second idea? Just reply to this email.</p>
+     <p style="margin:0 0 4px">Talk soon,</p>
+     <p style="margin:0;font-weight:700">Ibrahim · Everyday Data Science</p>`,
+    undefined,
+    "Your pitch arrived. Here's what happens next.",
+  );
+}
+
+/** Tells the site owner a new pitch is waiting. All applicant text is escaped. */
+export function newApplicationAdminEmail(a: {
+  name: string;
+  email: string | null;
+  bio: string;
+  topics: string;
+  republish: string | null;
+  links: string;
+}) {
+  const row = (label: string, value: string) =>
+    `<p style="margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:#5a6270;font-weight:700">${label}</p>
+     <p style="margin:0 0 14px;white-space:pre-wrap">${escHtml(value)}</p>`;
+  return emailShell(
+    `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 14px">New ${a.republish ? "republish request" : "pitch"} from ${escHtml(a.name)}</h1>
+     ${a.email ? row("Email", a.email) : ""}
+     ${a.republish ? row("Post to republish", a.republish) : ""}
+     ${row("Idea or topic", a.topics)}
+     ${row("About them", a.bio)}
+     ${a.links ? row("Other links", a.links) : ""}
+     <p style="margin:0">
+       <a href="${SITE}/admin/applications" style="display:inline-block;background:#8a6212;color:#fff;text-decoration:none;padding:12px 22px;border-radius:6px;font-weight:700">Review it in the newsroom &rarr;</a>
+     </p>`,
+    undefined,
+    `New writer application from ${a.name}`,
+  );
+}
+
 /**
  * Sent when an admin approves a writer application. Before this, approval
  * changed the role silently and the new author never found out.
  */
 export function authorApprovedEmail(name: string) {
-  const first = name.split(" ")[0] || "there";
+  const first = escHtml(name.split(" ")[0] || "there");
   return emailShell(
     `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 14px">You're in, ${first}. Welcome aboard.</h1>
      <p style="margin:0 0 14px">Your application to write for <strong>Everyday Data Science</strong> is approved. You now have an author account.</p>
@@ -214,6 +264,7 @@ export function authorApprovedEmail(name: string) {
      <p style="margin:0 0 22px">
        <a href="${SITE}/admin/articles/new" style="display:inline-block;background:#8a6212;color:#fff;text-decoration:none;padding:13px 26px;border-radius:6px;font-weight:700;font-size:15px">Start your first draft &rarr;</a>
      </p>
+     <p style="margin:0 0 14px">Before your first piece goes live, add your photo, bio and links (ORCID, Google Scholar, GitHub, LinkedIn) in <a href="${SITE}/account" style="color:#8a6212;font-weight:700">your account</a>. They appear on your author page and under every article you write.</p>
      <p style="margin:0 0 14px">Stuck on an angle or a title? Just reply to this email.</p>
      <p style="margin:0 0 4px">Looking forward to reading it,</p>
      <p style="margin:0;font-weight:700">Ibrahim · Everyday Data Science</p>`,
