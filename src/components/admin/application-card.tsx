@@ -3,6 +3,17 @@
 import { useState, useTransition } from "react";
 import { ChevronDown } from "lucide-react";
 import { decideApplication } from "@/app/admin/applications/actions";
+import { parseApplicationLinks } from "@/lib/applications";
+
+/** Applicant-supplied text: only an http(s) URL becomes a clickable link. */
+function LinkOrText({ href }: { href: string }) {
+  if (!/^https?:\/\//i.test(href)) return <span className="text-muted">{href}</span>;
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="text-gold hover:underline">
+      {href}
+    </a>
+  );
+}
 
 type App = {
   id: string;
@@ -47,6 +58,7 @@ export function ApplicationCard({
   }
 
   const decided = app.status !== "pending";
+  const { republish, links } = parseApplicationLinks(app.writing_links);
 
   return (
     <div className="rounded-md border border-border bg-bg2">
@@ -63,6 +75,11 @@ export function ApplicationCard({
         />
         <span className="min-w-0 flex-1">
           <span className="font-serif text-[15px] font-bold">{app.applicant?.full_name ?? "Unknown"}</span>
+          {republish && (
+            <span className="ml-2 rounded bg-teal-dim px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[1.5px] text-teal">
+              Republish
+            </span>
+          )}
           <span className="ml-2 truncate text-[12px] text-muted">· {app.topics}</span>
         </span>
         <span
@@ -82,13 +99,19 @@ export function ApplicationCard({
             <span className="text-muted">Topics: </span>
             {app.topics}
           </p>
-          {app.writing_links && (
-            <p className="mt-1 truncate text-[12px]">
-              <a href={app.writing_links} target="_blank" rel="noopener noreferrer" className="text-gold hover:underline">
-                {app.writing_links}
-              </a>
+          {republish && (
+            <p className="mt-2 text-[13px]">
+              <span className="mr-2 rounded bg-teal-dim px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[1.5px] text-teal">
+                Republish
+              </span>
+              <LinkOrText href={republish} />
             </p>
           )}
+          {links.map((l) => (
+            <p key={l} className="mt-1 truncate text-[12px]">
+              <LinkOrText href={l} />
+            </p>
+          ))}
 
           {decided ? (
             <p

@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { authorApprovedEmail, sendEmail } from "@/lib/email";
 import { requireStaff, ensureProfileSlug } from "@/lib/admin";
 import { hasRole } from "@/lib/auth";
 
@@ -51,6 +52,27 @@ export async function decideApplication(
     })
     .eq("id", id);
   if (error) return { error: error.message };
+
+  // Tell the new author. Their address lives in auth.users, which only the
+  // service role can read. A failed send must not undo the approval.
+  if (decision === "approved") {
+    try {
+      const admin = createAdminClient();
+      const [{ data: user }, { data: prof }] = await Promise.all([
+        admin.auth.admin.getUserById(app.profile_id),
+        admin.from("profiles").select("full_name").eq("id", app.profile_id).maybeSingle(),
+      ]);
+      if (user?.user?.email) {
+        await sendEmail({
+          to: user.user.email,
+          subject: "You're approved to write for Everyday Data Science",
+          html: authorApprovedEmail(prof?.full_name ?? ""),
+        });
+      }
+    } catch {
+      /* approval stands either way */
+    }
+  }
 
   revalidatePath("/admin/applications");
   return { ok: true };
