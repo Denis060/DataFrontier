@@ -32,6 +32,8 @@ import {
   CareersBand,
   CategoryStrip,
   EditorSection,
+  PromiseStrip,
+  StartHere,
 } from "@/components/home/bands";
 import { SiteFooter } from "@/components/home/site-footer";
 
@@ -90,6 +92,8 @@ export default async function Home() {
           Everyday Data Science: applied AI, agentic systems, machine learning, and AI in Africa,
           written by practitioners for people who build.
         </h1>
+        <PromiseStrip tagline={s?.tagline ?? null} />
+
         <Hero hero={d.hero} latest={d.latest} />
 
         <NewsletterBand
@@ -97,11 +101,14 @@ export default async function Home() {
           subtext={s?.newsletter_subtext ?? ""}
           stats={d.stats}
           showStats={s?.newsletter_show_stats ?? true}
+          latestIssue={d.latestIssue}
         />
 
         <CategoryStrip categories={d.categories} />
 
-        <ArticleGrid columns={d.columns} resources={d.resources} />
+        <ArticleGrid columns={d.columns} />
+
+        <StartHere series={d.series} cheatSheets={d.cheatSheets} resources={d.resources} />
 
         {d.spotlight.length > 0 && s?.spotlight_headline && (
           <AfricaSpotlight

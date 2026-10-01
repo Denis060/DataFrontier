@@ -18,7 +18,7 @@ export default async function SeriesIndexPage() {
       <header className="border-b border-border px-5 py-12 sm:px-8 lg:px-12 lg:py-16">
         <div className="mx-auto w-full max-w-[760px]">
           <p className="mb-2 font-mono text-[10px] uppercase tracking-[2px] text-teal">Learning paths</p>
-          <h1 className="font-serif text-[clamp(30px,5vw,44px)] leading-[1.1] font-black tracking-[-1px]">
+          <h1 className="font-serif text-[clamp(30px,5vw,44px)] leading-[1.1] font-black tracking-[-0.5px]">
             Learn it in order
           </h1>
           <p className="mt-3 text-[15px] leading-relaxed text-muted">

@@ -48,7 +48,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       <header className="border-b border-border px-5 py-12 sm:px-8 lg:px-12 lg:py-16">
         <div className="mx-auto w-full max-w-[1100px]">
           <p className="mb-3 text-3xl">{category.icon}</p>
-          <h1 className="mb-3 font-serif text-[clamp(30px,5vw,44px)] leading-[1.1] font-black tracking-[-1px]">
+          <h1 className="mb-3 font-serif text-[clamp(30px,5vw,44px)] leading-[1.1] font-black tracking-[-0.5px]">
             {category.name}
           </h1>
           {category.description && (

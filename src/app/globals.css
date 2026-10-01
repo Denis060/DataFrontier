@@ -181,6 +181,17 @@ body::before {
 .article-prose > * + * {
   margin-top: 1.4em;
 }
+/* Playfair defaults to old-style figures, so "100" reads like "1oo" and
+   "3.5" sits below the line. Headlines here are full of numbers; use
+   full-height ones. In the base layer so a numeric utility can still win. */
+@layer base {
+  .font-serif,
+  .article-prose h2,
+  .article-prose h3,
+  .article-prose .pullquote {
+    font-variant-numeric: lining-nums;
+  }
+}
 .article-prose h2,
 .article-prose h3 {
   font-family: var(--font-serif), Georgia, serif;
@@ -258,6 +269,34 @@ body::before {
   overflow-x: auto;
   font-size: 13.5px;
   line-height: 1.6;
+}
+/* Copy button, added client-side by <Prose>. */
+.article-prose .code-block {
+  position: relative;
+}
+.article-prose .code-copy {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: var(--df-muted);
+  background: var(--df-bg);
+  border: 1px solid var(--df-border);
+  border-radius: 4px;
+  padding: 3px 9px;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+}
+.article-prose .code-block:hover .code-copy,
+.article-prose .code-copy:focus-visible {
+  opacity: 1;
+}
+.article-prose .code-copy:hover {
+  color: var(--df-gold);
+  border-color: var(--df-gold);
 }
 .article-prose pre code {
   font-family: var(--font-mono), monospace;
