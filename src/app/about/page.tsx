@@ -53,6 +53,9 @@ export default async function AboutPage() {
     db.from("site_settings").select("tagline, editor_profile_id, contact_email").eq("id", true).maybeSingle(),
   ]);
   const editor = writers.find((w) => w.id === settings?.editor_profile_id) ?? null;
+  // A sample, not the roster: the 8 most recently published writers, so the
+  // section stays short and current as the list grows. /authors has everyone.
+  const recent = [...writers].sort((a, b) => (b.latest ?? "").localeCompare(a.latest ?? "")).slice(0, 8);
 
   return (
     <Shell>
@@ -102,7 +105,7 @@ export default async function AboutPage() {
               </Link>
             </div>
             <div className="flex flex-wrap gap-3">
-              {writers.map((w) => (
+              {recent.map((w) => (
                 <Link
                   key={w.id}
                   href={`/author/${w.slug}`}
