@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { BrandIcon } from "@/components/brand-icons";
 import { createClient } from "@/lib/supabase/client";
 import type { OAuthProvider } from "@/lib/auth";
+import { useDraftKind } from "@/lib/write-draft";
 
 type Mode = "signin" | "signup";
 
@@ -34,6 +35,10 @@ export function AuthForm({
   // Arriving from the pitch form: say why the account is needed, and that the
   // pitch is safe (write-form parks it in localStorage).
   const forPitch = next === "/write";
+  // "Republish my post" vs "Pitch a new piece", read from the parked draft.
+  const draftKind = useDraftKind();
+  const republish = forPitch && draftKind === "republish";
+  const thing = republish ? "republish request" : "pitch";
   const redirectTo = () => `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
 
   async function onSubmit(e: React.FormEvent) {
@@ -53,7 +58,11 @@ export function AuthForm({
           // the name falls back to the email prefix.
           // `pitch` switches the confirmation email to its pitch wording
           // (see scripts/apply-auth-emails.mjs).
-          data: { full_name: name.trim(), ...(forPitch ? { pitch: true } : {}) },
+          data: {
+            full_name: name.trim(),
+            ...(forPitch ? { pitch: true } : {}),
+            ...(republish ? { republish: true } : {}),
+          },
           emailRedirectTo: redirectTo(),
         },
       });
@@ -115,7 +124,7 @@ export function AuthForm({
         </p>
         {forPitch && (
           <p className="mt-4 rounded-md border border-gold/30 bg-gold-dim px-4 py-3 text-[13px] leading-relaxed">
-            <strong className="font-semibold">Your pitch is saved.</strong> The link brings you back to
+            <strong className="font-semibold">Your {thing} is saved.</strong> The link brings you back to
             the Write for us page with everything you typed, ready to send.
           </p>
         )}
@@ -161,17 +170,21 @@ export function AuthForm({
       <h1 className="mb-2 font-serif text-[32px] leading-tight font-black tracking-[-0.8px]">
         {mode === "signin"
           ? forPitch
-            ? "Sign in to send your pitch"
+            ? republish
+              ? "Sign in to republish your post"
+              : "Sign in to send your pitch"
             : "Welcome back"
           : forPitch
-            ? "Create your account to send your pitch"
+            ? republish
+              ? "Create your account to republish your post"
+              : "Create your account to send your pitch"
             : "Create your account"}
       </h1>
       <p className="mb-8 text-sm text-muted">
         {forPitch
           ? mode === "signin"
             ? "You'll go straight back to the Write for us page. Anything you typed in this browser is still there."
-            : "It's free and takes a minute. Your pitch is saved and will be waiting when you get back."
+            : `It's free and takes a minute. Your ${thing} is saved and will be waiting when you get back.`
           : mode === "signin"
             ? "Sign in to comment, save articles, and access the newsroom."
             : "Join Everyday Data Science to comment and follow the work."}
