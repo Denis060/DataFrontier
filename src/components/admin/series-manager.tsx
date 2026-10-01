@@ -10,6 +10,7 @@ export type Series = {
   title: string;
   slug: string;
   description: string | null;
+  long_description: string | null;
   sort_order: number;
   count: number;
 };
@@ -52,8 +53,14 @@ function Fields({ series, onSaved }: { series?: Series; onSaved?: () => void }) 
         </div>
       </div>
       <div className="mt-3">
-        <label className={label}>Description</label>
+        <label className={label}>Short description</label>
         <textarea name="description" rows={2} defaultValue={series?.description ?? ""} className={`${field} resize-none`} />
+        <p className="mt-1 text-[11px] text-muted">Used on path cards and as the page meta description. Keep it to a line or two.</p>
+      </div>
+      <div className="mt-3">
+        <label className={label}>Long description</label>
+        <textarea name="long_description" rows={6} defaultValue={series?.long_description ?? ""} className={field} />
+        <p className="mt-1 text-[11px] text-muted">Markdown. Rendered as the introduction on the path&apos;s own page.</p>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-4">
         <button type="submit" disabled={saving} className="rounded bg-gold px-4 py-2 text-[13px] font-bold text-on-accent hover:opacity-85 disabled:opacity-60">
