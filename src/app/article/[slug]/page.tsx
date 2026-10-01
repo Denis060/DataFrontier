@@ -3,6 +3,10 @@ import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { ArticleBody } from "@/components/article/article-body";
 import { CoverImage } from "@/components/cover-image";
+import { ArticleTocInline, ArticleTocRail } from "@/components/article/article-toc";
+import { ReadingProgress } from "@/components/article/reading-progress";
+import { extractHeadings } from "@/lib/headings";
+import { renderMarkdown } from "@/lib/markdown";
 import {
   getArticle,
   getArticleReactions,
@@ -172,6 +176,11 @@ export default async function ArticlePage({ params }: Props) {
   const { settings } = chrome;
   const isDraft = article.status !== "published";
   const shareUrl = `${SITE_URL}/article/${article.slug}`;
+  // Sections for the contents list. Older rows may have no cached HTML yet,
+  // so fall back to rendering the Markdown (the same pipeline ArticleBody uses).
+  const headings = extractHeadings(
+    article.body_html || (article.body ? await renderMarkdown(article.body) : ""),
+  );
   // Credit the original home of a republished piece, but not a canonical
   // that just points back at this site.
   const originalHost = (() => {
@@ -247,11 +256,12 @@ export default async function ArticlePage({ params }: Props) {
       />
 
       {!isDraft && <ViewCounter slug={article.slug} />}
+      <ReadingProgress targetId="article-main" />
 
       <main className="flex-1">
        <CommentsProvider>
         <div className="mx-auto grid w-full max-w-[1240px] gap-12 px-5 py-12 sm:px-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:px-12 lg:py-16">
-          <article className="min-w-0 max-w-[760px] lg:col-start-1 lg:row-start-1">
+          <article id="article-main" className="min-w-0 max-w-[760px] lg:col-start-1 lg:row-start-1">
             {isDraft && (
               <p className="mb-6 rounded border border-gold/30 bg-gold-dim px-3 py-2 font-mono text-[11px] uppercase tracking-[1.5px] text-gold">
                 Preview, status: {article.status.replace("_", " ")}
@@ -324,6 +334,8 @@ export default async function ArticlePage({ params }: Props) {
                 <span className="shrink-0 text-teal">View path →</span>
               </Link>
             )}
+
+            {headings.length >= 3 && <ArticleTocInline headings={headings} />}
 
             {article.body || article.body_html ? (
               <ArticleBody html={article.body_html} source={article.body} />
@@ -424,6 +436,12 @@ export default async function ArticlePage({ params }: Props) {
           <aside className="flex flex-col gap-9 lg:col-start-2 lg:row-start-1 lg:sticky lg:top-28 lg:max-h-[calc(100vh-8rem)] lg:self-start lg:overflow-y-auto lg:pr-1">
             {/* Desktop only. On mobile the rail stacks beneath the article, so
                 this would sit immediately under the in-article share bar. */}
+            {headings.length >= 3 && (
+              <RailSection title="On this page" className="hidden lg:block">
+                <ArticleTocRail headings={headings} />
+              </RailSection>
+            )}
+
             <RailSection title="Share" className="hidden lg:block">
               <ShareBar url={shareUrl} title={article.title} />
             </RailSection>
