@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { applyToWrite, type ApplyState } from "@/app/write/actions";
 import { Honeypot } from "@/components/honeypot";
+import { DRAFT_KEY } from "@/lib/write-draft";
 
 const field =
   "w-full rounded border border-border bg-surface-1 px-3.5 py-3 text-sm outline-none transition-colors focus:border-gold/40 focus:bg-surface-2";
@@ -13,7 +14,6 @@ const label = "mb-1.5 block font-mono text-[10px] uppercase tracking-[1.5px] tex
 // A signed-out visitor fills the form first; it's parked here while they
 // create an account, then restored when /signup sends them back. localStorage,
 // not sessionStorage: the email-confirmation link usually opens a new tab.
-const DRAFT_KEY = "df-write-draft";
 const FIELDS = ["kind", "original_url", "bio", "topics", "writing_links"] as const;
 
 const KINDS = [

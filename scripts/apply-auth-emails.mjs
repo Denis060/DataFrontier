@@ -80,21 +80,32 @@ function shell({ preheader, heading, body, buttonLabel, note, benefits, benefits
 }
 
 const templates = {
-  // Pitch-aware: the sign-up form sets user_metadata.pitch when the visitor
-  // came from /write. `if .Data.pitch` is a truthiness test, so a reader
-  // without that key gets the else branch (an `eq` would error on a nil key).
+  // Three versions, chosen from user_metadata set by the sign-up form:
+  // pitch (came from /write), republish (picked "Republish my post"), or
+  // neither (a reader). Only truthiness tests (`if .Data.x`), never `eq`, so
+  // a missing key renders the fallback instead of erroring.
   confirmation: {
     subject: "Confirm your email · Everyday Data Science",
     file: "confirm-signup.html",
     html: shell({
       preheader:
-        "{{ if .Data.pitch }}One click and your pitch is ready to send.{{ else }}Confirm your email to activate your Everyday Data Science account.{{ end }}",
-      heading: "{{ if .Data.pitch }}Confirm your email to send your pitch{{ else }}Confirm your email{{ end }}",
+        "{{ if .Data.pitch }}{{ if .Data.republish }}One click and your republish request is ready to send.{{ else }}One click and your pitch is ready to send.{{ end }}{{ else }}Confirm your email to activate your Everyday Data Science account.{{ end }}",
+      heading:
+        "{{ if .Data.pitch }}{{ if .Data.republish }}Confirm your email to republish your post{{ else }}Confirm your email to send your pitch{{ end }}{{ else }}Confirm your email{{ end }}",
       body:
-        "{{ if .Data.pitch }}Thanks for pitching to Everyday Data Science. Confirm your email and we'll take you straight back to the Write for us page, where your pitch is saved and waiting. One more click sends it.{{ else }}Thanks for joining Everyday Data Science. Confirm your email address to activate your account and start reading.{{ end }}",
+        "{{ if .Data.pitch }}{{ if .Data.republish }}Thanks for offering your post to Everyday Data Science. Confirm your email and we'll take you straight back to the Write for us page, where your republish request is saved and waiting. One more click sends it.{{ else }}Thanks for pitching to Everyday Data Science. Confirm your email and we'll take you straight back to the Write for us page, where your pitch is saved and waiting. One more click sends it.{{ end }}{{ else }}Thanks for joining Everyday Data Science. Confirm your email address to activate your account and start reading.{{ end }}",
       buttonLabel: "Confirm your email",
       benefitsHtml:
-        "{{ if .Data.pitch }}" +
+        "{{ if .Data.pitch }}{{ if .Data.republish }}" +
+        benefitList(
+          [
+            "A real person reads every request",
+            "You get a confirmation email the moment it's sent",
+            "If it's a fit: your post republished under your byline, with search engines pointed back to your original",
+          ],
+          "What happens next",
+        ) +
+        "{{ else }}" +
         benefitList(
           [
             "A real person reads every pitch",
@@ -103,7 +114,7 @@ const templates = {
           ],
           "What happens next",
         ) +
-        "{{ else }}" +
+        "{{ end }}{{ else }}" +
         benefitList([
           "The latest in AI, machine learning &amp; data science",
           "Practical breakdowns and tips from people who build",
