@@ -21,6 +21,7 @@ const EMPTY: EditorArticle = {
   featured: false,
   meta_title: "",
   meta_description: "",
+  canonical_url: "",
 };
 
 export default async function NewArticlePage() {
