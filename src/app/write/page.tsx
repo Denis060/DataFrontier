@@ -5,6 +5,7 @@ import { WriteForm } from "@/components/write-form";
 import { Pill } from "@/components/pill";
 import { CoverImage } from "@/components/cover-image";
 import { getCurrentProfile } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 import { getFormatExamples } from "@/lib/queries";
 
 export const metadata: Metadata = {
@@ -16,11 +17,11 @@ export const metadata: Metadata = {
 const PERKS = [
   {
     title: "Your byline and author page",
-    body: "Every piece carries your name and links to an author page with your ORCID, Google Scholar, GitHub, and LinkedIn, so it counts toward your public record.",
+    body: "Every piece carries your name and links to your author page, where you add your own photo, bio, ORCID, Google Scholar, GitHub, and LinkedIn, so it counts toward your public record.",
   },
   {
     title: "Real editing",
-    body: "An editor reviews every piece before it goes live and works with you to make it sharper. You see the final version before it is published.",
+    body: "An editor reads and checks every piece before it goes live. Nothing is published under your name without that review, and you can reply to any of our emails to talk an edit through.",
   },
   {
     title: "Republish what you already wrote",
@@ -28,19 +29,35 @@ const PERKS = [
   },
   {
     title: "A place in the newsletter",
-    body: "Strong pieces are featured in The Everyday Brief, our weekly email for people who build with AI and data.",
+    body: "Strong pieces can be featured in The Everyday Brief, our weekly email for people who build with AI and data.",
   },
 ];
 
 const STEPS = [
-  { title: "Tell us your idea", body: "Fill in the short pitch form. It takes a few minutes." },
-  { title: "We read it and reply", body: "If it is a fit, you get an author account and an email with next steps." },
-  { title: "Write in our editor", body: "Draft, preview, and send it for review when you are ready." },
-  { title: "Edit and publish", body: "We polish it together, then it goes live under your name." },
+  { title: "Tell us your idea", body: "Fill in the short pitch form on this page. It takes a few minutes." },
+  { title: "We read it", body: "You get a confirmation email straight away. If it is a fit, you get an author account and an email with next steps." },
+  { title: "Write in our editor", body: "Draft, preview, and add a cover image, then send it for review when you are ready." },
+  { title: "Review and publish", body: "An editor reviews it, then it goes live under your name." },
 ];
 
 export default async function WritePage() {
   const [profile, examples] = await Promise.all([getCurrentProfile(), getFormatExamples(3)]);
+  // A reader's latest application, so the form can say where it stands
+  // instead of inviting a duplicate. RLS lets applicants read their own.
+  const application =
+    profile?.role === "reader"
+      ? (
+          await (await createClient())
+            .from("author_applications")
+            .select("status, created_at, review_note")
+            .eq("profile_id", profile.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle()
+        ).data
+      : null;
+  const isWriter = !!profile && profile.role !== "reader";
+  const pending = application?.status === "pending";
 
   return (
     <Shell>
@@ -131,11 +148,23 @@ export default async function WritePage() {
 
         <aside className="lg:sticky lg:top-28 lg:self-start">
           <section id="apply" className="scroll-mt-28 rounded-lg border border-border bg-bg2 p-5 sm:p-7">
-            <h2 className="mb-1 font-serif text-2xl font-black tracking-[-0.4px]">Send your pitch</h2>
+            {/* The card's heading follows the visitor's situation. */}
+            <h2 className="mb-1 font-serif text-2xl font-black tracking-[-0.4px]">
+              {isWriter ? "Welcome back" : pending ? "Your pitch" : "Send your pitch"}
+            </h2>
             <p className="mb-6 text-[13px] text-muted">
-              A few lines is enough. We&apos;d rather see a clear idea than a polished essay.
+              {isWriter
+                ? "Your author tools are one click away."
+                : pending
+                  ? "It's with us. Here's where it stands."
+                  : "A few lines is enough. We'd rather see a clear idea than a polished essay."}
             </p>
-            <WriteForm signedIn={!!profile} isReader={profile?.role === "reader"} />
+            <WriteForm
+              signedIn={!!profile}
+              isReader={profile?.role === "reader"}
+              application={application}
+              authorSlug={profile?.slug ?? null}
+            />
           </section>
         </aside>
       </div>
