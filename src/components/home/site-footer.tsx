@@ -92,14 +92,20 @@ export function SiteFooter({
           )}
           {" · All rights reserved."}
         </p>
-        <div className="flex gap-4">
-          {["Terms", "Privacy", "RSS"].map((l) => (
+        <div className="flex flex-wrap gap-4">
+          {[
+            { label: "About", href: "/about" },
+            { label: "Writers", href: "/authors" },
+            { label: "Terms", href: "/terms" },
+            { label: "Privacy", href: "/privacy" },
+            { label: "RSS", href: "/rss" },
+          ].map((l) => (
             <Link
-              key={l}
-              href={`/${l.toLowerCase()}`}
+              key={l.href}
+              href={l.href}
               className="font-mono text-[11px] tracking-[1px] text-muted transition-colors hover:text-ink"
             >
-              {l}
+              {l.label}
             </Link>
           ))}
         </div>
