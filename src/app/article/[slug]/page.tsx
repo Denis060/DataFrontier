@@ -23,6 +23,7 @@ import {
   menuFor,
   type ArticleCard,
   getFollowState,
+  getMostRead,
 } from "@/lib/queries";
 import { getCurrentProfile } from "@/lib/auth";
 import { sameAsLinks } from "@/lib/socials";
@@ -163,13 +164,14 @@ export default async function ArticlePage({ params }: Props) {
     notFound();
   }
 
-  const [related, moreByAuthor, comments, reactions, bookmarked, authorFollow] = await Promise.all([
+  const [related, moreByAuthor, comments, reactions, bookmarked, authorFollow, mostRead] = await Promise.all([
     getRelated(article.id, article.category_id),
     getMoreByAuthor(article.author_id, article.id),
     getComments(article.id),
     getArticleReactions(article.id),
     isBookmarked(article.id),
     getFollowState({ authorId: article.author_id }, profile?.id ?? null),
+    getMostRead(5, article.id),
   ]);
 
   const seriesNav = article.series_id ? await getArticleSeriesNav(article.series_id, article.id) : null;
@@ -469,6 +471,23 @@ export default async function ArticlePage({ params }: Props) {
                 {moreByAuthor.map((r) => (
                   <RailCard key={r.id} a={r} />
                 ))}
+              </RailSection>
+            )}
+
+            {mostRead.length >= 3 && (
+              <RailSection title="Most read">
+                <ol className="flex flex-col">
+                  {mostRead.map((r, i) => (
+                    <li key={r.id} className="border-b border-border last:border-b-0">
+                      <Link href={`/article/${r.slug}`} className="group flex gap-3 py-3">
+                        <span aria-hidden className="w-5 shrink-0 font-serif text-[22px] leading-none font-black text-gold/50 group-hover:text-gold">
+                          {i + 1}
+                        </span>
+                        <span className="font-serif text-[14px] leading-snug font-bold group-hover:opacity-75">{r.title}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ol>
               </RailSection>
             )}
 
