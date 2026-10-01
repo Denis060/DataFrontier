@@ -6,7 +6,7 @@ export type MenuLocation = Database["public"]["Enums"]["menu_location"];
 
 /** Shared shape for every article card on the site. */
 const ARTICLE_SELECT = `
-  id, slug, title, excerpt, kicker, reading_time, published_at, featured,
+  id, slug, title, excerpt, kicker, reading_time, published_at, featured, cover_image, cover_alt,
   author:profiles!articles_author_id_fkey (full_name, slug, title),
   category:categories (name, slug, color),
   format:formats (name, slug, color),
@@ -22,6 +22,9 @@ export type ArticleCard = {
   reading_time: number | null;
   published_at: string | null;
   featured: boolean;
+  // Optional: a few queries build cards from their own narrower select.
+  cover_image?: string | null;
+  cover_alt?: string | null;
   author: { full_name: string; slug: string | null; title: string | null } | null;
   category: { name: string; slug: string; color: string | null } | null;
   format: { name: string; slug: string; color: Accent } | null;
@@ -65,25 +68,53 @@ export async function getHomeData() {
   const categories = categoriesRes.data ?? [];
   const byslug = Object.fromEntries(categories.map((c) => [c.slug, c.id]));
 
-  const [heroRes, latestRes, spotlightRes, editorRes, ...columnRes] = await Promise.all([
+  // Each section over-fetches so that, after removing articles already shown
+  // higher up the page, it can still fill its slots (see `take` below).
+  const [heroRes, latestRes, spotlightRes, editorRes, seriesList, cheatRes, latestIssueRes, ...columnRes] = await Promise.all([
     settings?.hero_article_id
       ? published().eq("id", settings.hero_article_id).maybeSingle()
       : published().eq("featured", true).order("published_at", { ascending: false }).limit(1).maybeSingle(),
-    published().eq("featured", false).order("published_at", { ascending: false }).limit(4),
+    published().eq("featured", false).order("published_at", { ascending: false }).limit(9),
     byslug["ai-in-africa"]
-      ? published().eq("category_id", byslug["ai-in-africa"]).order("published_at", { ascending: false }).limit(4)
+      ? published().eq("category_id", byslug["ai-in-africa"]).order("published_at", { ascending: false }).limit(10)
       : Promise.resolve({ data: [] }),
     settings?.editor_profile_id
       ? db.from("profiles").select("full_name, slug, title, bio, avatar_url").eq("id", settings.editor_profile_id).maybeSingle()
       : Promise.resolve({ data: null }),
+    getAllSeries(),
+    db.from("cheat_sheets").select("id, title, slug").eq("published", true).order("created_at", { ascending: false }).limit(4),
+    db
+      .from("newsletter_issues")
+      .select("title, slug, issue_number")
+      .eq("status", "sent")
+      .order("issue_number", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
     ...["agentic-ai", "ml-data", "research"].map((slug) =>
       byslug[slug]
-        ? published().eq("category_id", byslug[slug]).order("published_at", { ascending: false }).limit(3)
+        ? published().eq("category_id", byslug[slug]).order("published_at", { ascending: false }).limit(10)
         : Promise.resolve({ data: [] }),
     ),
   ]);
 
   const counts = await Promise.all(categories.map((c) => countIn(c.id)));
+
+  // Hand out articles top to bottom so none appears twice on the page.
+  const hero = (heroRes.data ?? null) as ArticleCard | null;
+  const shown = new Set<string>(hero ? [hero.id] : []);
+  const take = (list: ArticleCard[], n: number) => {
+    const out: ArticleCard[] = [];
+    for (const a of list) {
+      if (out.length >= n) break;
+      if (shown.has(a.id)) continue;
+      shown.add(a.id);
+      out.push(a);
+    }
+    return out;
+  };
+  const latest = take((latestRes.data ?? []) as ArticleCard[], 4);
+  const columns = columnRes.map((r) => take((r.data ?? []) as ArticleCard[], 3));
+  const spotlight = take((spotlightRes.data ?? []) as ArticleCard[], 4);
 
   const issues = issuesRes.data ?? [];
   // Real open rate = opened ÷ delivered, from webhook counts. Only shown once
@@ -96,11 +127,16 @@ export async function getHomeData() {
 
   return {
     settings,
-    hero: (heroRes.data ?? null) as ArticleCard | null,
-    latest: (latestRes.data ?? []) as ArticleCard[],
-    spotlight: (spotlightRes.data ?? []) as ArticleCard[],
-    columns: columnRes.map((r) => (r.data ?? []) as ArticleCard[]),
+    hero,
+    latest,
+    spotlight,
+    columns,
     editor: editorRes.data ?? null,
+    // A "path" needs at least two steps; a one-part path reads as thin on the
+    // homepage (it still appears on /series).
+    series: seriesList.filter((s) => s.count >= 2).slice(0, 3),
+    cheatSheets: cheatRes.data ?? [],
+    latestIssue: latestIssueRes.data ?? null,
     categories: categories.map((c, i) => ({ ...c, count: counts[i].count ?? 0 })),
     ticker: tickerRes.data ?? [],
     menus: menusRes.data ?? [],
@@ -247,6 +283,10 @@ export async function getAllSeries(): Promise<SeriesSummary[]> {
   const { data } = await db
     .from("series")
     .select("id, title, slug, description, articles(count)")
+    // Count only what a reader can actually open. The index hides empty paths,
+    // and the path page lists published parts only, so an unfiltered count
+    // advertises "3 parts" on a path whose parts are all still drafts.
+    .eq("articles.status", "published")
     .order("sort_order");
   return (data ?? []).map((s) => {
     const row = s as unknown as { id: string; title: string; slug: string; description: string | null; articles: { count: number }[] };
@@ -257,7 +297,11 @@ export async function getAllSeries(): Promise<SeriesSummary[]> {
 /** One series + its published articles, in path order. */
 export async function getSeriesBySlug(slug: string) {
   const db = await createClient();
-  const { data: series } = await db.from("series").select("id, title, slug, description").eq("slug", slug).maybeSingle();
+  const { data: series } = await db
+    .from("series")
+    .select("id, title, slug, description, long_description")
+    .eq("slug", slug)
+    .maybeSingle();
   if (!series) return null;
   const { data: articles } = await db
     .from("articles")
@@ -383,6 +427,26 @@ export async function getMoreByAuthor(authorId: string, excludeId: string, limit
     .order("published_at", { ascending: false })
     .limit(limit);
   return (data ?? []) as ArticleCard[];
+}
+
+/** Recent pieces in distinct formats, to show would-be writers the range. */
+export async function getFormatExamples(limit = 3) {
+  const db = await createClient();
+  const { data } = await db
+    .from("articles")
+    .select(ARTICLE_SELECT)
+    .eq("status", "published")
+    .order("published_at", { ascending: false })
+    .limit(30);
+  const seen = new Set<string>();
+  return ((data ?? []) as ArticleCard[])
+    .filter((a) => {
+      const key = a.format?.slug ?? "none";
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, limit);
 }
 
 export async function getJobs() {

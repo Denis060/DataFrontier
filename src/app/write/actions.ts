@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { rateLimit, isBot } from "@/lib/rate-limit";
+import { REPUBLISH_PREFIX } from "@/lib/applications";
 
 export type ApplyState = { ok: boolean; message: string } | null;
 
@@ -24,10 +25,19 @@ export async function applyToWrite(_prev: ApplyState, formData: FormData): Promi
 
   const bio = String(formData.get("bio") ?? "").trim();
   const topics = String(formData.get("topics") ?? "").trim();
-  const links = String(formData.get("writing_links") ?? "").trim() || null;
+  const otherLinks = String(formData.get("writing_links") ?? "").trim();
+  const republish = formData.get("kind") === "republish";
+  const original = String(formData.get("original_url") ?? "").trim();
 
+  if (republish && !/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(original)) {
+    return { ok: false, message: "Add the full link to the post you want to republish (https://…)." };
+  }
   if (bio.length < 40) return { ok: false, message: "Tell us a bit more about yourself (40+ characters)." };
   if (topics.length < 10) return { ok: false, message: "What topics do you want to cover?" };
+
+  // A republish request rides in writing_links as a "Republish: <url>" first
+  // line (see parseApplicationLinks), so it needs no schema change.
+  const links = [republish ? `${REPUBLISH_PREFIX}${original}` : "", otherLinks].filter(Boolean).join("\n") || null;
 
   const db = await createClient();
   const { error } = await db

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { ArticleBody } from "@/components/article/article-body";
+import { CoverImage } from "@/components/cover-image";
 import {
   getArticle,
   getArticleReactions,
@@ -171,6 +172,17 @@ export default async function ArticlePage({ params }: Props) {
   const { settings } = chrome;
   const isDraft = article.status !== "published";
   const shareUrl = `${SITE_URL}/article/${article.slug}`;
+  // Credit the original home of a republished piece, but not a canonical
+  // that just points back at this site.
+  const originalHost = (() => {
+    if (!article.canonical_url) return null;
+    try {
+      const host = new URL(article.canonical_url).hostname.replace(/^www\./, "");
+      return host === new URL(SITE_URL).hostname.replace(/^www\./, "") ? null : host;
+    } catch {
+      return null;
+    }
+  })();
 
   // Structured data helps Google render rich results for articles.
   const authorUrl = article.author?.slug ? `${SITE_URL}/author/${article.author.slug}` : undefined;
@@ -258,7 +270,7 @@ export default async function ArticlePage({ params }: Props) {
               </time>
             </div>
 
-            <h1 className="mb-4 font-serif text-[clamp(30px,5vw,48px)] leading-[1.1] font-black tracking-[-1.2px]">
+            <h1 className="mb-4 font-serif text-[clamp(30px,5vw,48px)] leading-[1.1] font-black tracking-[-0.6px]">
               {article.title}
             </h1>
 
@@ -292,6 +304,14 @@ export default async function ArticlePage({ params }: Props) {
               </span>
             </div>
 
+            <CoverImage
+              src={article.cover_image}
+              alt={article.cover_alt ?? ""}
+              sizes="(min-width: 1024px) 760px, 100vw"
+              priority
+              className="mb-10"
+            />
+
             {seriesNav && (
               <Link
                 href={`/series/${seriesNav.series.slug}`}
@@ -309,6 +329,16 @@ export default async function ArticlePage({ params }: Props) {
               <ArticleBody html={article.body_html} source={article.body} />
             ) : (
               <p className="text-muted">This article has no body yet.</p>
+            )}
+
+            {originalHost && (
+              <p className="mt-8 text-[13px] text-muted">
+                Originally published on{" "}
+                <a href={article.canonical_url!} rel="noopener" className="text-gold hover:underline">
+                  {originalHost}
+                </a>
+                .
+              </p>
             )}
 
             {seriesNav && (seriesNav.prev || seriesNav.next) && (
@@ -329,6 +359,11 @@ export default async function ArticlePage({ params }: Props) {
                 )}
               </div>
             )}
+
+            {/* Right where the text ends, before the reaction bar: the reader
+                who just finished is the one most likely to subscribe. An
+                invitation, never a gate. */}
+            <InlineSubscribe slug={article.slug} />
 
             {/* Repeated at the foot: the reader who just finished is the one
                 most likely to react and share. */}
@@ -355,12 +390,16 @@ export default async function ArticlePage({ params }: Props) {
               </div>
             </div>
 
-            {/* Gentle nudge — an invitation, never a gate. */}
             <p className="mt-6 text-[13px] leading-relaxed text-muted">
               Found this useful? Passing it on to someone who builds is the best way to help the
               publication grow.
             </p>
-            <InlineSubscribe slug={article.slug} />
+            <p className="mt-2 text-[13px] leading-relaxed text-muted">
+              Built something worth sharing?{" "}
+              <Link href="/write" className="text-gold hover:underline">
+                Write it up for us →
+              </Link>
+            </p>
           </article>
 
           {/* Comments sit right under the article — on mobile that means before

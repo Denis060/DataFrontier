@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArticleBody } from "@/components/article/article-body";
 import { Shell } from "@/components/layout/shell";
 import { getSeriesBySlug } from "@/lib/queries";
 
@@ -38,6 +39,14 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
             <p className="mt-4 text-[16px] leading-relaxed text-muted">{series.description}</p>
           )}
         </header>
+
+        {/* The full editorial introduction, authored as Markdown and rendered
+            through the same sanitized pipeline as article bodies. */}
+        {series.long_description && (
+          <div className="mt-8">
+            <ArticleBody source={series.long_description} />
+          </div>
+        )}
 
         {articles.length === 0 ? (
           <p className="mt-8 rounded border border-dashed border-border px-6 py-16 text-center text-sm text-muted">

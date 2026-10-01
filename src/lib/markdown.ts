@@ -36,7 +36,16 @@ function remarkCallouts() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (tree: any) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    visit(tree, (node: any) => {
+    visit(tree, (node: any, index, parent: any) => {
+      // Only :::container directives are ours. A stray colon in prose, like
+      // "arXiv:2606.10209", parses as a text directive named "2606" and would
+      // render as an empty <div>, eating the text. Put it back as plain text.
+      if ((node.type === "textDirective" || node.type === "leafDirective") && parent && index !== undefined) {
+        const colons = node.type === "leafDirective" ? "::" : ":";
+        const label = node.children?.length ? [{ type: "text", value: "[" }, ...node.children, { type: "text", value: "]" }] : [];
+        parent.children.splice(index, 1, { type: "text", value: colons + node.name }, ...label);
+        return index + 1;
+      }
       if (node.type === "containerDirective") {
         if (node.name === "aside") {
           const data = node.data || (node.data = {});

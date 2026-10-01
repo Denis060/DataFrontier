@@ -1,4 +1,5 @@
 import { renderMarkdown } from "@/lib/markdown";
+import { Prose } from "./prose";
 
 /**
  * Renders an article/event/newsletter body. Prefers pre-rendered `html`
@@ -10,5 +11,5 @@ import { renderMarkdown } from "@/lib/markdown";
 export async function ArticleBody({ html, source }: { html?: string | null; source?: string | null }) {
   const rendered = html && html.length > 0 ? html : await renderMarkdown(source ?? "");
   if (!rendered) return null;
-  return <div className="article-prose" dangerouslySetInnerHTML={{ __html: rendered }} />;
+  return <Prose html={rendered} />;
 }

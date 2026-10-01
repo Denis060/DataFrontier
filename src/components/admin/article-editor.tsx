@@ -30,6 +30,7 @@ export type EditorArticle = {
   featured: boolean;
   meta_title: string;
   meta_description: string;
+  canonical_url: string;
 };
 
 const field =
@@ -469,6 +470,21 @@ export function ArticleEditor({
               placeholder="~155 characters. Leave blank to use the excerpt."
               className={`${field} resize-none`}
             />
+            <label className="mt-3 mb-1 block text-[11px] text-muted" htmlFor="canonical_url">
+              Originally published at
+            </label>
+            <input
+              id="canonical_url"
+              name="canonical_url"
+              type="url"
+              defaultValue={article.canonical_url}
+              placeholder="https://yourblog.com/the-original-post"
+              className={`${field} font-mono text-[12px]`}
+            />
+            <p className="mt-1 text-[10px] leading-snug text-muted">
+              Republishing a post from your own blog or Medium? Paste the original link. Google
+              credits the original, so neither copy is penalised. Leave blank for new pieces.
+            </p>
           </div>
 
           {article.id && canPublish && (

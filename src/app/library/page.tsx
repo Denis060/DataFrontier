@@ -28,7 +28,7 @@ export default async function LibraryPage({
           <p className="mb-2 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[2px] text-gold">
             <Bookmark className="size-3.5" aria-hidden /> Your Library
           </p>
-          <h1 className="font-serif text-[clamp(28px,5vw,40px)] leading-[1.1] font-black tracking-[-1px]">
+          <h1 className="font-serif text-[clamp(28px,5vw,40px)] leading-[1.1] font-black tracking-[-0.5px]">
             Saved to read later
           </h1>
           <p className="mt-2 text-[14px] text-muted">{total} saved</p>

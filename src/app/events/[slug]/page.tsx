@@ -51,7 +51,7 @@ export default async function EventPage({ params }: Props) {
           )}
         </div>
 
-        <h1 className="font-serif text-[clamp(28px,5vw,44px)] leading-[1.1] font-black tracking-[-1px]">
+        <h1 className="font-serif text-[clamp(28px,5vw,44px)] leading-[1.1] font-black tracking-[-0.5px]">
           {event.title}
         </h1>
 
