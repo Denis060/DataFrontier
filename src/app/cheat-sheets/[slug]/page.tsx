@@ -53,7 +53,7 @@ export default async function CheatSheetPage({ params }: Props) {
           )}
         </div>
 
-        <h1 className="font-serif text-[clamp(28px,5vw,42px)] leading-[1.1] font-black tracking-[-1px]">
+        <h1 className="font-serif text-[clamp(28px,5vw,42px)] leading-[1.1] font-black tracking-[-0.5px]">
           {sheet.title}
         </h1>
         {sheet.description && (

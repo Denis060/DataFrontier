@@ -95,6 +95,13 @@ export async function saveArticle(formData: FormData): Promise<Result> {
   if (!title) return { error: "Title is required." };
 
   const body = (formData.get("body") as string) ?? "";
+
+  // Only a real http(s) URL may become the canonical; anything else would
+  // point search engines somewhere broken.
+  const canonical = ((formData.get("canonical_url") as string) || "").trim();
+  if (canonical && !/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(canonical)) {
+    return { error: "“Originally published at” must be a full link starting with https://" };
+  }
   const rawSlug = (formData.get("slug") as string)?.trim();
   const slug = rawSlug ? slugify(rawSlug) : slugify(title);
 
@@ -118,6 +125,7 @@ export async function saveArticle(formData: FormData): Promise<Result> {
     series_position: Number((formData.get("series_position") as string) || "") || null,
     meta_title: ((formData.get("meta_title") as string) || "").trim() || null,
     meta_description: ((formData.get("meta_description") as string) || "").trim() || null,
+    canonical_url: canonical || null,
   } satisfies ArticleUpdate;
 
   // Resolve the status transition, if any, and gate it.

@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Heart } from "lucide-react";
+import { BookOpen, CodeXml, Earth, FileSearch, FileText, Heart, Route, Scale } from "lucide-react";
 import { Pill } from "@/components/pill";
+import { CoverImage } from "@/components/cover-image";
 import { reactionCount, type ArticleCard, type HomeData } from "@/lib/queries";
 
 /** "· ❤ N" meta, shown only once an article has reactions. */
@@ -18,16 +19,51 @@ function Reactions({ a }: { a: ArticleCard }) {
   );
 }
 
+/* ─── PROMISE STRIP ──────────────────────────────────────── */
+
+// What sets the publication apart, said up front instead of at the bottom of
+// the page. Phrased to hold for the archive as a whole (most pieces link
+// sources and say what would prove them wrong; tutorials ship runnable code).
+const PROOF = [
+  { icon: FileSearch, label: "Sources you can check" },
+  { icon: Scale, label: "Says what would prove it wrong" },
+  { icon: CodeXml, label: "Code you can run" },
+  { icon: Earth, label: "AI in Africa, taken seriously" },
+];
+
+export function PromiseStrip({ tagline }: { tagline: string | null }) {
+  if (!tagline) return null;
+  return (
+    <div className="flex flex-col gap-3 border-b border-border bg-bg2 px-5 py-4 sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:px-12">
+      <p className="font-serif text-[17px] leading-snug font-bold sm:text-[19px]">{tagline}</p>
+      {/* One swipeable line on phones instead of three wrapped rows. */}
+      <ul className="-mx-5 flex gap-x-5 overflow-x-auto px-5 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:gap-y-2 sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">
+        {PROOF.map(({ icon: Icon, label }) => (
+          <li key={label} className="flex items-center gap-1.5 text-[12px] whitespace-nowrap text-muted">
+            <Icon className="size-3.5 text-gold" aria-hidden />
+            {label}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 /* ─── CATEGORY STRIP ─────────────────────────────────────── */
 
 export function CategoryStrip({ categories }: { categories: HomeData["categories"] }) {
   return (
-    <div className="flex overflow-x-auto border-b border-border">
+    // Scrolls sideways on small screens; on wide ones the tiles share the full
+    // width instead of leaving an empty run on the right.
+    <div
+      className="flex overflow-x-auto border-b border-border lg:grid lg:overflow-visible"
+      style={{ gridTemplateColumns: `repeat(${Math.max(categories.length, 1)}, minmax(0, 1fr))` }}
+    >
       {categories.map((c) => (
         <Link
           key={c.id}
           href={`/category/${c.slug}`}
-          className="flex min-w-[170px] shrink-0 flex-col border-r border-border px-6 py-6 whitespace-nowrap transition-colors hover:bg-bg2 sm:min-w-[200px] sm:px-9"
+          className="flex min-w-[170px] shrink-0 flex-col border-r border-border px-6 py-6 whitespace-nowrap transition-colors last:border-r-0 hover:bg-bg2 sm:min-w-[200px] sm:px-9 lg:min-w-0"
         >
           <span className="mb-2 text-2xl">{c.icon}</span>
           <span className="mb-0.5 text-sm font-semibold">{c.name}</span>
@@ -43,26 +79,39 @@ export function CategoryStrip({ categories }: { categories: HomeData["categories
 /* ─── ARTICLE GRID ───────────────────────────────────────── */
 
 function ArticleRow({ a }: { a: ArticleCard }) {
+  // On phones each row is compact (title + small thumbnail on the right, no
+  // excerpt), so nine stacked articles don't take four screens of scrolling.
+  // From md up it's the full card: cover on top, then text.
   return (
     <Link
       href={`/article/${a.slug}`}
-      className="block border-b border-border py-4.5 transition-opacity last:border-b-0 last:pb-0 hover:opacity-70"
+      className={`border-b border-border py-4.5 transition-opacity last:border-b-0 last:pb-0 hover:opacity-70 md:block ${
+        a.cover_image ? "grid grid-cols-[minmax(0,1fr)_112px] items-start gap-x-4" : "block"
+      }`}
     >
-      {a.format && (
-        <Pill color={a.format.color} className="mb-2">
-          {a.format.name}
-        </Pill>
-      )}
-      <p className="mb-2 font-serif text-[17px] leading-[1.3] font-bold">{a.title}</p>
-      {a.excerpt && (
-        <p className="mb-2.5 text-[13px] leading-[1.55] text-muted">{a.excerpt}</p>
-      )}
-      <p className="flex items-center gap-2.5 text-[11px] text-muted">
-        <span>{a.author?.full_name}</span>
-        <span className="opacity-40">·</span>
-        <span>{a.reading_time} min</span>
-        <Reactions a={a} />
-      </p>
+      <CoverImage
+        src={a.cover_image}
+        alt={a.cover_alt ?? ""}
+        sizes="(min-width: 1280px) 300px, (min-width: 768px) 50vw, 112px"
+        className="col-start-2 row-start-1 md:mb-3"
+      />
+      <div className="col-start-1 row-start-1">
+        {a.format && (
+          <Pill color={a.format.color} className="mb-2">
+            {a.format.name}
+          </Pill>
+        )}
+        <p className="mb-2 font-serif text-[16px] leading-[1.3] font-bold md:text-[17px]">{a.title}</p>
+        {a.excerpt && (
+          <p className="mb-2.5 hidden text-[13px] leading-[1.55] text-muted md:block">{a.excerpt}</p>
+        )}
+        <p className="flex items-center gap-2.5 text-[11px] text-muted">
+          <span>{a.author?.full_name}</span>
+          <span className="opacity-40">·</span>
+          <span>{a.reading_time} min</span>
+          <Reactions a={a} />
+        </p>
+      </div>
     </Link>
   );
 }
@@ -103,13 +152,7 @@ function GridSection({
   );
 }
 
-export function ArticleGrid({
-  columns,
-  resources,
-}: {
-  columns: ArticleCard[][];
-  resources: HomeData["resources"];
-}) {
+export function ArticleGrid({ columns }: { columns: ArticleCard[][] }) {
   const meta = [
     { title: "Agentic AI", titleClass: "text-gold", href: "/category/agentic-ai", linkLabel: "All articles" },
     { title: "ML & Data Science", titleClass: "text-ink", href: "/category/ml-data", linkLabel: "All articles" },
@@ -117,32 +160,133 @@ export function ArticleGrid({
   ];
 
   return (
-    <div className="grid border-b border-border md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_340px]">
+    <div className="grid border-b border-border md:grid-cols-2 xl:grid-cols-3">
       {meta.map((m, i) => (
         <GridSection key={m.title} {...m} articles={columns[i] ?? []} />
       ))}
+    </div>
+  );
+}
 
-      <section className="bg-bg2 px-6 py-10 sm:px-8">
-        <div className="mb-7 flex items-center justify-between border-b-2 border-border pb-3.5">
-          <h2 className="font-mono text-[11px] font-medium uppercase tracking-[2px] text-muted">
-            Tools & Resources
-          </h2>
-        </div>
-        {resources.map((r) => (
-          <div key={r.id} className="border-b border-border py-4.5 last:border-b-0 last:pb-0">
-            <p className="mb-2 font-serif text-sm font-bold">
-              {r.emoji} {r.title}
+/* ─── START HERE ─────────────────────────────────────────── */
+
+/** Where a newcomer should go next: learning paths, cheat sheets, the book. */
+export function StartHere({
+  series,
+  cheatSheets,
+  resources,
+}: {
+  series: HomeData["series"];
+  cheatSheets: HomeData["cheatSheets"];
+  resources: HomeData["resources"];
+}) {
+  if (series.length === 0 && cheatSheets.length === 0 && resources.length === 0) return null;
+
+  const colTitle = "mb-4 flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[2px]";
+  const more = "mt-4 inline-block text-[12px] text-gold hover:underline";
+
+  return (
+    <section className="border-b border-border px-5 py-12 sm:px-8 lg:px-12">
+      <div className="mb-8 max-w-[640px]">
+        <p className="mb-2 font-mono text-[10px] uppercase tracking-[2px] text-gold">Start here</p>
+        <h2 className="font-serif text-[28px] leading-[1.1] font-black tracking-[-0.5px] sm:text-[32px]">
+          New here? Go deeper than one article.
+        </h2>
+        <p className="mt-2 text-[15px] leading-relaxed text-muted">
+          Step-by-step learning paths, one-page cheat sheets you can keep open while you work, and
+          the book.
+        </p>
+      </div>
+
+      <div className="grid gap-10 lg:grid-cols-3 lg:gap-8">
+        {series.length > 0 && (
+          <div>
+            <p className={`${colTitle} text-teal`}>
+              <Route className="size-3.5" aria-hidden />
+              Learning paths
             </p>
-            {r.description && (
-              <p className="mb-2.5 text-[13px] leading-[1.55] text-muted">{r.description}</p>
-            )}
-            <Link href={r.url} className="text-xs text-gold hover:underline">
-              {r.cta_label}
+            <div className="flex flex-col gap-3">
+              {series.map((s) => (
+                <Link
+                  key={s.id}
+                  href={`/series/${s.slug}`}
+                  className="rounded-md border border-border bg-bg2 p-4 transition-colors hover:border-teal/40"
+                >
+                  <p className="font-serif text-[16px] leading-snug font-bold">{s.title}</p>
+                  {s.description && (
+                    <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-muted">{s.description}</p>
+                  )}
+                  <p className="mt-2 font-mono text-[10px] uppercase tracking-[1.5px] text-teal">
+                    {s.count} {s.count === 1 ? "part" : "parts"} →
+                  </p>
+                </Link>
+              ))}
+            </div>
+            <Link href="/series" className={more}>
+              All learning paths →
             </Link>
           </div>
-        ))}
-      </section>
-    </div>
+        )}
+
+        {cheatSheets.length > 0 && (
+          <div>
+            <p className={`${colTitle} text-gold`}>
+              <FileText className="size-3.5" aria-hidden />
+              Cheat sheets
+            </p>
+            <div className="flex flex-col divide-y divide-border rounded-md border border-border bg-bg2">
+              {cheatSheets.map((c) => (
+                <Link
+                  key={c.id}
+                  href={`/cheat-sheets/${c.slug}`}
+                  className="flex items-center justify-between gap-3 px-4 py-3.5 text-[14px] font-semibold transition-colors hover:bg-surface-1"
+                >
+                  <span className="min-w-0">{c.title}</span>
+                  <span className="shrink-0 text-gold" aria-hidden>
+                    →
+                  </span>
+                </Link>
+              ))}
+            </div>
+            <Link href="/cheat-sheets" className={more}>
+              All cheat sheets →
+            </Link>
+          </div>
+        )}
+
+        {resources.length > 0 && (
+          <div>
+            <p className={`${colTitle} text-ink`}>
+              <BookOpen className="size-3.5" aria-hidden />
+              The book
+            </p>
+            {resources.map((r) => {
+              const external = /^https?:\/\//.test(r.url);
+              return (
+                <div
+                  key={r.id}
+                  className="mb-3 rounded-md border border-gold/30 bg-linear-160 from-editor-from to-editor-to p-5 last:mb-0"
+                >
+                  <p className="font-serif text-[18px] leading-snug font-black">
+                    {r.emoji} {r.title}
+                  </p>
+                  {r.description && (
+                    <p className="mt-2 text-[13px] leading-relaxed text-muted">{r.description}</p>
+                  )}
+                  <a
+                    href={r.url}
+                    {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                    className="mt-4 inline-flex items-center gap-2 rounded bg-gold px-4 py-2 text-[13px] font-bold text-on-accent transition-opacity hover:opacity-85"
+                  >
+                    {r.cta_label}
+                  </a>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -330,7 +474,8 @@ export function EditorSection({
         <h2 className="mb-4 font-serif text-[26px] leading-[1.15] font-black tracking-[-0.5px] sm:text-[30px]">
           {headline}
         </h2>
-        <p className="mb-6 text-[15px] leading-[1.75] text-muted">{bio}</p>
+        {/* Clamped on phones; "More from …" below leads to the full bio. */}
+        <p className="mb-6 line-clamp-6 text-[15px] leading-[1.75] text-muted sm:line-clamp-none">{bio}</p>
         <div className="flex flex-wrap gap-3">
           <Link
             href="/newsletter"

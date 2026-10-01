@@ -170,6 +170,7 @@ export function welcomeEmail(unsubscribeUrl: string) {
        "An opportunity: a job, grant, or call",
      ])}
      <p style="margin:0 0 14px">Got a question or a topic you want covered? Just hit reply, I read every email.</p>
+     <p style="margin:0 0 14px">And if you build things yourself, write for us. We publish practitioners, and you can even republish a post from your own blog: <a href="${SITE}/write" style="color:#8a6212;font-weight:700">everydaydatascience.com/write</a>.</p>
      <p style="margin:0 0 4px">Glad you're here,</p>
      <p style="margin:0;font-weight:700">Ibrahim · Everyday Data Science</p>`,
     unsubscribeUrl,
@@ -191,6 +192,33 @@ export function welcomeFollowupEmail(unsubscribeUrl: string) {
      <p style="margin:0;font-weight:700">Ibrahim · Everyday Data Science</p>`,
     unsubscribeUrl,
     "A quick hello, and one question for you.",
+  );
+}
+
+/**
+ * Sent when an admin approves a writer application. Before this, approval
+ * changed the role silently and the new author never found out.
+ */
+export function authorApprovedEmail(name: string) {
+  const first = name.split(" ")[0] || "there";
+  return emailShell(
+    `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 14px">You're in, ${first}. Welcome aboard.</h1>
+     <p style="margin:0 0 14px">Your application to write for <strong>Everyday Data Science</strong> is approved. You now have an author account.</p>
+     <p style="margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:#5a6270;font-weight:700">How it works from here</p>
+     ${benefitList([
+       "Sign in and open the editor to start a draft",
+       "Republishing a post? Paste its original link under Originally published at",
+       "Send it for review when it's ready, and we'll edit it with you",
+       "Once it's live, your byline links to your author page",
+     ])}
+     <p style="margin:0 0 22px">
+       <a href="${SITE}/admin/articles/new" style="display:inline-block;background:#8a6212;color:#fff;text-decoration:none;padding:13px 26px;border-radius:6px;font-weight:700;font-size:15px">Start your first draft &rarr;</a>
+     </p>
+     <p style="margin:0 0 14px">Stuck on an angle or a title? Just reply to this email.</p>
+     <p style="margin:0 0 4px">Looking forward to reading it,</p>
+     <p style="margin:0;font-weight:700">Ibrahim · Everyday Data Science</p>`,
+    undefined,
+    "Your application is approved. Here's how to publish your first piece.",
   );
 }
 

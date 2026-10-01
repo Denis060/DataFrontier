@@ -3,7 +3,9 @@
 import { useActionState, useEffect } from "react";
 import { subscribe, type SubscribeState } from "@/app/actions/subscribe";
 import type { HomeData } from "@/lib/queries";
+import Link from "next/link";
 import { Honeypot } from "@/components/honeypot";
+import { SubscribeSuccess } from "@/components/subscribe-success";
 
 const compact = (n: number) =>
   n >= 1000 ? `${(n / 1000).toFixed(n >= 10_000 ? 0 : 1)}K+` : String(n);
@@ -13,11 +15,17 @@ export function NewsletterBand({
   subtext,
   stats,
   showStats,
+  source = "homepage",
+  latestIssue = null,
 }: {
   headline: string;
   subtext: string;
   stats: HomeData["stats"];
   showStats: boolean;
+  /** Most recent sent issue; linked so readers can see what they'd get. */
+  latestIssue?: HomeData["latestIssue"];
+  /** Recorded on the subscriber row, so sign-ups can be attributed per page. */
+  source?: string;
 }) {
   const [state, formAction, pending] = useActionState<SubscribeState, FormData>(
     subscribe,
@@ -40,7 +48,9 @@ export function NewsletterBand({
   const tiles = [
     stats.subscribers >= 100 && { num: compact(stats.subscribers), label: "Subscribers" },
     stats.openRate != null && { num: `${stats.openRate}%`, label: "Open Rate" },
-    stats.issues > 0 && { num: String(stats.issues), label: "Issues Published" },
+    // A handful of issues reads as "brand new"; the latest-issue link sells it
+    // better until the archive has some depth.
+    stats.issues >= 10 && { num: String(stats.issues), label: "Issues Published" },
   ].filter(Boolean) as { num: string; label: string }[];
 
   return (
@@ -73,43 +83,62 @@ export function NewsletterBand({
         )}
       </div>
 
-      <form action={formAction} className="relative flex flex-col gap-3">
-        <Honeypot />
-        <p className="text-sm text-muted">
-          Join data scientists, ML engineers, and AI researchers building what's next.
-        </p>
-        <input type="hidden" name="source" value="homepage" />
-        <div className="flex flex-col sm:flex-row">
-          <label htmlFor="email" className="sr-only">
-            Email address
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            placeholder="your@email.com"
-            className="flex-1 rounded border border-border bg-surface-1 px-4 py-3 text-sm outline-none transition-colors placeholder:text-muted focus:border-gold/40 focus:bg-surface-2 sm:rounded-r-none sm:border-r-0"
-          />
-          <button
-            type="submit"
-            disabled={pending}
-            className="mt-2 rounded bg-gold px-6 py-3 text-sm font-bold whitespace-nowrap text-on-accent transition-opacity hover:opacity-85 disabled:opacity-60 sm:mt-0 sm:rounded-l-none"
-          >
-            {pending ? "Subscribing…" : "Subscribe →"}
-          </button>
+      {state?.ok ? (
+        <div className="relative">
+          <SubscribeSuccess email={state.email} />
         </div>
-        <p
-          className="flex items-center gap-1.5 text-xs text-muted"
-          aria-live="polite"
-        >
-          {state ? (
-            <span className={state.ok ? "text-teal" : "text-red"}>{state.message}</span>
+      ) : (
+        <form action={formAction} className="relative flex flex-col gap-3">
+          <Honeypot />
+          <p className="text-sm text-muted">
+            Join data scientists, ML engineers, and AI researchers building what&apos;s next.
+          </p>
+          <input type="hidden" name="source" value={source} />
+          <div className="flex flex-col sm:flex-row">
+            <label htmlFor="email" className="sr-only">
+              Email address
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              placeholder="your@email.com"
+              className="flex-1 rounded border border-border bg-surface-1 px-4 py-3 text-sm outline-none transition-colors placeholder:text-muted focus:border-gold/40 focus:bg-surface-2 sm:rounded-r-none sm:border-r-0"
+            />
+            <button
+              type="submit"
+              disabled={pending}
+              className="mt-2 rounded bg-gold px-6 py-3 text-sm font-bold whitespace-nowrap text-on-accent transition-opacity hover:opacity-85 disabled:opacity-60 sm:mt-0 sm:rounded-l-none"
+            >
+              {pending ? "Subscribing…" : "Subscribe →"}
+            </button>
+          </div>
+          <p
+            className="flex items-center gap-1.5 text-xs text-muted"
+            aria-live="polite"
+          >
+            {state ? (
+              <span className="text-red">{state.message}</span>
+            ) : (
+              <>🔒 No spam. Unsubscribe anytime. Sent every Tuesday.</>
+            )}
+          </p>
+          {latestIssue?.slug ? (
+            <Link
+              href={`/newsletter/${latestIssue.slug}`}
+              title={latestIssue.title}
+              className="self-start text-xs text-gold hover:underline"
+            >
+              See what you&apos;d get: read issue #{latestIssue.issue_number} →
+            </Link>
           ) : (
-            <>🔒 No spam. Unsubscribe anytime. Sent every Tuesday.</>
+            <Link href="/newsletter/archive" className="self-start text-xs text-gold hover:underline">
+              See past issues first →
+            </Link>
           )}
-        </p>
-      </form>
+        </form>
+      )}
     </section>
   );
 }

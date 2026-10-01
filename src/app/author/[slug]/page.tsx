@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Shell } from "@/components/layout/shell";
+import Link from "next/link";
 import { ArticleList, Pagination } from "@/components/article-list";
 import { BrandIcon } from "@/components/brand-icons";
 import { getArticlesByAuthor, getAuthor, getFollowState } from "@/lib/queries";
@@ -131,6 +132,21 @@ export default async function AuthorPage({ params, searchParams }: Props) {
       <div className="mx-auto w-full max-w-[1100px] px-5 py-12 sm:px-8 lg:px-12">
         <ArticleList articles={items} />
         <Pagination page={page} total={total} perPage={perPage} basePath={`/author/${slug}`} />
+
+        <div className="mt-14 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-bg2 px-6 py-5">
+          <div>
+            <p className="font-serif text-lg font-black">Want an author page like this?</p>
+            <p className="mt-0.5 text-[13px] text-muted">
+              We publish practitioners. Pitch an idea or republish a post from your own blog.
+            </p>
+          </div>
+          <Link
+            href="/write"
+            className="rounded border border-gold/30 px-5 py-2.5 text-[13px] font-semibold text-gold transition-colors hover:border-gold hover:bg-gold-dim"
+          >
+            Write for us →
+          </Link>
+        </div>
       </div>
     </Shell>
   );

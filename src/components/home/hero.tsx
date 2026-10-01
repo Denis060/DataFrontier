@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Pill } from "@/components/pill";
+import { CoverImage } from "@/components/cover-image";
 import type { ArticleCard } from "@/lib/queries";
 
 const fmtDate = (iso: string | null) =>
@@ -37,50 +38,69 @@ export function Hero({ hero, latest }: { hero: ArticleCard | null; latest: Artic
           aria-hidden
           className="pointer-events-none absolute -top-25 -left-25 size-[500px] rounded-full bg-[radial-gradient(circle,var(--df-gold-dim)_0%,transparent_70%)] opacity-40"
         />
-        <div className="relative">
-          <div className="mb-7 flex flex-wrap items-center gap-3">
-            {hero.category && <Pill color={hero.category.color}>{hero.category.name}</Pill>}
-            <span className="text-xs text-muted">{fmtDate(hero.published_at)}</span>
-          </div>
+        {/* On wide screens the cover sits beside the text instead of under
+            it, so the column doesn't leave a band of empty space. */}
+        <div
+          className={`relative flex flex-col ${hero.cover_image ? "min-[1400px]:grid min-[1400px]:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] min-[1400px]:items-center min-[1400px]:gap-12" : ""}`}
+        >
+          <div>
+            <div className="mb-7 flex flex-wrap items-center gap-3">
+              {hero.category && <Pill color={hero.category.color}>{hero.category.name}</Pill>}
+              <span className="text-xs text-muted">{fmtDate(hero.published_at)}</span>
+            </div>
 
-          <h2 className="mb-5 max-w-[700px] font-serif text-[clamp(30px,5vw,56px)] leading-[1.08] font-black tracking-[-1.5px]">
-            {hero.title}
-          </h2>
+            <h2 className={`mb-5 max-w-[700px] font-serif text-[clamp(30px,5vw,56px)] leading-[1.08] ${hero.cover_image ? "min-[1400px]:text-[clamp(36px,3.2vw,54px)]" : ""} font-black tracking-[-0.8px]`}>
+              {hero.title}
+            </h2>
 
-          {hero.excerpt && (
-            <p className="mb-9 max-w-[580px] text-base leading-[1.65] text-muted sm:text-[17px]">
-              {hero.excerpt}
-            </p>
-          )}
-
-          <div className="flex flex-wrap items-center gap-5">
-            {hero.author && (
-              <Link
-                href={hero.author.slug ? `/author/${hero.author.slug}` : "#"}
-                className="flex items-center gap-2.5"
-              >
-                <span className="flex size-[38px] shrink-0 items-center justify-center rounded-full bg-linear-135 from-gold to-[#8B6914] font-serif text-sm font-bold text-on-accent">
-                  {initials(hero.author.full_name)}
-                </span>
-                <span className="flex flex-col">
-                  <span className="text-[13px] font-semibold">{hero.author.full_name}</span>
-                  <span className="text-[11px] text-muted">{hero.author.title}</span>
-                </span>
-              </Link>
+            {hero.excerpt && (
+              <p className="mb-9 line-clamp-3 max-w-[580px] text-base leading-[1.65] text-muted sm:line-clamp-none sm:text-[17px]">
+                {hero.excerpt}
+              </p>
             )}
-            <Link
-              href={`/article/${hero.slug}`}
-              className="inline-flex items-center gap-2 rounded border border-gold/30 px-5 py-2.5 text-[13px] font-semibold text-gold transition-colors hover:border-gold hover:bg-gold-dim"
-            >
-              Read Feature →
-            </Link>
+
+            <div className="flex flex-wrap items-center gap-5">
+              {hero.author && (
+                <Link
+                  href={hero.author.slug ? `/author/${hero.author.slug}` : "#"}
+                  className="flex items-center gap-2.5"
+                >
+                  <span className="flex size-[38px] shrink-0 items-center justify-center rounded-full bg-linear-135 from-gold to-[#8B6914] font-serif text-sm font-bold text-on-accent">
+                    {initials(hero.author.full_name)}
+                  </span>
+                  <span className="flex flex-col">
+                    <span className="text-[13px] font-semibold">{hero.author.full_name}</span>
+                    <span className="text-[11px] text-muted">{hero.author.title}</span>
+                  </span>
+                </Link>
+              )}
+              <Link
+                href={`/article/${hero.slug}`}
+                className="inline-flex items-center gap-2 rounded border border-gold/30 px-5 py-2.5 text-[13px] font-semibold text-gold transition-colors hover:border-gold hover:bg-gold-dim"
+              >
+                Read Feature →
+              </Link>
+            </div>
           </div>
+
+          {/* Phones show the cover first, so the opening screen has a picture
+              and not just a wall of headline. */}
+          {hero.cover_image && (
+            <Link href={`/article/${hero.slug}`} className="-order-1 mb-7 block max-w-[700px] sm:order-none sm:mt-10 sm:mb-0 min-[1400px]:mt-0 min-[1400px]:max-w-none" tabIndex={-1} aria-hidden>
+              <CoverImage
+                src={hero.cover_image}
+                alt=""
+                sizes="(min-width: 1400px) 45vw, (min-width: 1024px) 700px, 100vw"
+                priority
+              />
+            </Link>
+          )}
         </div>
       </div>
 
       <aside className="px-5 py-8 sm:px-8 lg:px-8">
         <p className="mb-5 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[2px] text-muted before:h-px before:w-4 before:bg-muted before:content-['']">
-          Also in This Issue
+          Latest
         </p>
         {latest.length === 0 ? (
           <p className="text-sm text-muted">Nothing else published yet.</p>

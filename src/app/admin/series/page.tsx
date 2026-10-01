@@ -14,12 +14,20 @@ export default async function AdminSeriesPage() {
   const db = await createClient();
   const { data } = await db
     .from("series")
-    .select("id, title, slug, description, sort_order, articles(count)")
+    .select("id, title, slug, description, long_description, sort_order, articles(count)")
     .order("sort_order");
 
   const series: Series[] = (data ?? []).map((s) => {
-    const row = s as unknown as { id: string; title: string; slug: string; description: string | null; sort_order: number; articles: { count: number }[] };
-    return { id: row.id, title: row.title, slug: row.slug, description: row.description, sort_order: row.sort_order, count: row.articles?.[0]?.count ?? 0 };
+    const row = s as unknown as { id: string; title: string; slug: string; description: string | null; long_description: string | null; sort_order: number; articles: { count: number }[] };
+    return {
+      id: row.id,
+      title: row.title,
+      slug: row.slug,
+      description: row.description,
+      long_description: row.long_description,
+      sort_order: row.sort_order,
+      count: row.articles?.[0]?.count ?? 0,
+    };
   });
 
   return (

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Pill } from "@/components/pill";
+import { CoverImage } from "@/components/cover-image";
 import type { ArticleCard } from "@/lib/queries";
 
 const fmtDate = (iso: string | null) =>
@@ -18,6 +19,12 @@ export function ArticleList({ articles }: { articles: ArticleCard[] }) {
     <div className="grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
       {articles.map((a) => (
         <Link key={a.id} href={`/article/${a.slug}`} className="group flex flex-col">
+          <CoverImage
+            src={a.cover_image}
+            alt={a.cover_alt ?? ""}
+            sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
+            className="mb-3.5 transition-opacity group-hover:opacity-85"
+          />
           <div className="mb-2.5 flex flex-wrap items-center gap-2">
             {a.format && <Pill color={a.format.color}>{a.format.name}</Pill>}
             {a.kicker && (

@@ -27,7 +27,7 @@ export default async function CheatSheetsPage({
     <Shell>
       <header className="border-b border-border px-5 py-12 sm:px-8 lg:px-12 lg:py-16">
         <div className="mx-auto w-full max-w-[1100px]">
-          <h1 className="font-serif text-[clamp(30px,5vw,44px)] leading-[1.1] font-black tracking-[-1px]">
+          <h1 className="font-serif text-[clamp(30px,5vw,44px)] leading-[1.1] font-black tracking-[-0.5px]">
             Cheat Sheets
           </h1>
           <p className="mt-3 max-w-[620px] text-[15px] leading-relaxed text-muted">
