@@ -15,6 +15,19 @@ export function Prose({ html }: { html: string }) {
     if (!root) return;
     const timers: number[] = [];
 
+    // The sanitizer prefixes heading ids with "user-content-" (so article text
+    // can't clobber page globals) but leaves the headings' self-links as
+    // "#slug", so they pointed nowhere. Repoint them, and honour a shared
+    // "#slug" link on arrival.
+    const prefixed = (id: string) =>
+      id && !document.getElementById(id) ? document.getElementById(`user-content-${id}`) : null;
+    for (const a of Array.from(root.querySelectorAll<HTMLAnchorElement>('a[href^="#"]'))) {
+      const id = decodeURIComponent(a.getAttribute("href")!.slice(1));
+      const target = prefixed(id);
+      if (target) a.setAttribute("href", `#${target.id}`);
+    }
+    prefixed(decodeURIComponent(window.location.hash.slice(1)))?.scrollIntoView();
+
     for (const pre of Array.from(root.querySelectorAll("pre"))) {
       if (pre.parentElement?.classList.contains("code-block")) continue;
       // Wrap so the button stays put while the <pre> scrolls sideways.
