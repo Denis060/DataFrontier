@@ -169,6 +169,47 @@ export function ArticleGrid({ columns }: { columns: ArticleCard[][] }) {
   );
 }
 
+/* ─── MOST READ ──────────────────────────────────────────── */
+
+/** Top five by views, with big rank numerals. Hidden until there's data. */
+export function MostRead({ articles }: { articles: ArticleCard[] }) {
+  if (articles.length < 3) return null;
+  return (
+    <section className="border-b border-border px-5 py-12 sm:px-8 lg:px-12">
+      <h2 className="mb-7 flex items-center gap-2.5 font-mono text-[11px] font-medium uppercase tracking-[2px] text-gold after:h-px after:flex-1 after:bg-border after:content-['']">
+        Most read
+      </h2>
+      <ol className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-5">
+        {articles.map((a, i) => (
+          <li key={a.id}>
+            <Link href={`/article/${a.slug}`} className="group flex gap-4 lg:flex-col lg:gap-2">
+              <span
+                aria-hidden
+                className="w-7 shrink-0 font-serif text-[40px] leading-none font-black text-gold/40 transition-colors group-hover:text-gold lg:w-auto lg:text-[48px]"
+              >
+                {i + 1}
+              </span>
+              <span className="min-w-0">
+                {a.format && (
+                  <span className="mb-1 block font-mono text-[9px] uppercase tracking-[1.5px] text-muted">
+                    {a.format.name}
+                  </span>
+                )}
+                <span className="block font-serif text-[16px] leading-[1.3] font-bold transition-opacity group-hover:opacity-75">
+                  {a.title}
+                </span>
+                <span className="mt-1.5 block text-[11px] text-muted">
+                  {a.author?.full_name} · {a.reading_time} min
+                </span>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 /* ─── START HERE ─────────────────────────────────────────── */
 
 /** Where a newcomer should go next: learning paths, cheat sheets, the book. */

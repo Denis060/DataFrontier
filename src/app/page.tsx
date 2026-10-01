@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getChrome, getHomeData, getUnreadCount, getWriters, menuFor } from "@/lib/queries";
+import { getChrome, getHomeData, getMostRead, getUnreadCount, getWriters, menuFor } from "@/lib/queries";
 import { getCurrentProfile } from "@/lib/auth";
 import { sameAsLinks } from "@/lib/socials";
 
@@ -32,6 +32,7 @@ import {
   CareersBand,
   CategoryStrip,
   EditorSection,
+  MostRead,
   PromiseStrip,
   StartHere,
 } from "@/components/home/bands";
@@ -40,7 +41,12 @@ import { SiteFooter } from "@/components/home/site-footer";
 export const revalidate = 60;
 
 export default async function Home() {
-  const [d, profile, writers] = await Promise.all([getHomeData(), getCurrentProfile(), getWriters()]);
+  const [d, profile, writers, mostRead] = await Promise.all([
+    getHomeData(),
+    getCurrentProfile(),
+    getWriters(),
+    getMostRead(5),
+  ]);
   const unread = await getUnreadCount(profile?.id ?? null);
   const s = d.settings;
   const siteName = s?.site_name ?? "Everyday Data Science";
@@ -107,6 +113,8 @@ export default async function Home() {
         <CategoryStrip categories={d.categories} />
 
         <ArticleGrid columns={d.columns} />
+
+        <MostRead articles={mostRead} />
 
         <StartHere series={d.series} cheatSheets={d.cheatSheets} resources={d.resources} />
 

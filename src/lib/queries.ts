@@ -416,6 +416,24 @@ export async function getLibrary(profileId: string): Promise<ArticleCard[]> {
 }
 
 /** Other pieces by the same author, for the article rail. */
+/**
+ * Most-read published articles by lifetime views. A ranking, so it may
+ * repeat pieces shown elsewhere on the page; that's the point of it.
+ */
+export async function getMostRead(limit = 5, excludeId?: string) {
+  const db = await createClient();
+  let q = db
+    .from("articles")
+    .select(ARTICLE_SELECT)
+    .eq("status", "published")
+    .gt("view_count", 0)
+    .order("view_count", { ascending: false })
+    .limit(limit);
+  if (excludeId) q = q.neq("id", excludeId);
+  const { data } = await q;
+  return (data ?? []) as ArticleCard[];
+}
+
 export async function getMoreByAuthor(authorId: string, excludeId: string, limit = 3) {
   const db = await createClient();
   const { data } = await db
