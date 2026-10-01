@@ -159,11 +159,19 @@ export function AuthForm({
   return (
     <div className="w-full max-w-[400px]">
       <h1 className="mb-2 font-serif text-[32px] leading-tight font-black tracking-[-0.8px]">
-        {mode === "signin" ? "Welcome back" : forPitch ? "Create your account to send your pitch" : "Create your account"}
+        {mode === "signin"
+          ? forPitch
+            ? "Sign in to send your pitch"
+            : "Welcome back"
+          : forPitch
+            ? "Create your account to send your pitch"
+            : "Create your account"}
       </h1>
       <p className="mb-8 text-sm text-muted">
         {forPitch
-          ? "It's free and takes a minute. Your pitch is saved and will be waiting when you get back."
+          ? mode === "signin"
+            ? "You'll go straight back to the Write for us page. Anything you typed in this browser is still there."
+            : "It's free and takes a minute. Your pitch is saved and will be waiting when you get back."
           : mode === "signin"
             ? "Sign in to comment, save articles, and access the newsroom."
             : "Join Everyday Data Science to comment and follow the work."}
