@@ -11,11 +11,13 @@ import type { HomeData } from "@/lib/queries";
 
 // Secondary destinations, tucked under a "More" dropdown so the top bar stays clean.
 const MORE_LINKS = [
+  { label: "Our Writers", url: "/authors" },
   { label: "Learning Paths", url: "/series" },
   { label: "Events", url: "/events" },
   { label: "Careers", url: "/jobs" },
   { label: "Cheat Sheets", url: "/cheat-sheets" },
   { label: "Newsletter Archive", url: "/newsletter/archive" },
+  { label: "About", url: "/about" },
   { label: "Advertise", url: "/advertise" },
   { label: "Contact", url: "/contact" },
 ];

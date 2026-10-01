@@ -84,6 +84,9 @@ export function AuthorBox({
                 More from {first} →
               </Link>
             )}
+            <Link href="/authors" className="text-[13px] text-muted hover:text-gold">
+              All writers
+            </Link>
           </div>
         </div>
       </div>
