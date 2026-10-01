@@ -4,7 +4,9 @@ import { useActionState, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import { subscribe, type SubscribeState } from "@/app/actions/subscribe";
+import Link from "next/link";
 import { Honeypot } from "@/components/honeypot";
+import { SubscribeSuccess } from "@/components/subscribe-success";
 
 const STORAGE_KEY = "df-subscribe-prompt";
 const SUBSCRIBED_KEY = "df-subscribed";
@@ -102,8 +104,7 @@ export function SubscribePrompt({ signedIn = false }: { signedIn?: boolean }) {
 
       {state?.ok ? (
         <div className="pr-6">
-          <p className="font-serif text-lg font-black">Almost there.</p>
-          <p className="mt-1 text-[13px] text-muted">{state.message}</p>
+          <SubscribeSuccess email={state.email} compact />
         </div>
       ) : (
         <>
@@ -137,6 +138,9 @@ export function SubscribePrompt({ signedIn = false }: { signedIn?: boolean }) {
             </button>
             {state && !state.ok && <p className="text-[12px] text-red">{state.message}</p>}
           </form>
+          <Link href="/newsletter/archive" className="mt-2.5 inline-block text-[12px] text-gold hover:underline">
+            See past issues first →
+          </Link>
         </>
       )}
     </div>

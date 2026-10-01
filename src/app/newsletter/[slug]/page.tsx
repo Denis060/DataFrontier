@@ -50,7 +50,7 @@ export default async function NewsletterIssuePage({
           <p className="mb-3 font-mono text-[10px] uppercase tracking-[2px] text-teal">
             The Everyday Brief · Issue #{String(issue.issue_number).padStart(2, "0")}
           </p>
-          <h1 className="font-serif text-[clamp(28px,4.5vw,40px)] leading-[1.12] font-black tracking-[-1px]">
+          <h1 className="font-serif text-[clamp(28px,4.5vw,40px)] leading-[1.12] font-black tracking-[-0.5px]">
             {issue.title}
           </h1>
           {issue.summary && (

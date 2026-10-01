@@ -2,7 +2,9 @@
 
 import { useActionState, useEffect } from "react";
 import { subscribe, type SubscribeState } from "@/app/actions/subscribe";
+import Link from "next/link";
 import { Honeypot } from "@/components/honeypot";
+import { SubscribeSuccess } from "@/components/subscribe-success";
 
 /**
  * A calm, in-article invitation to subscribe — no pop-up, no gate, just a box a
@@ -34,9 +36,7 @@ export function InlineSubscribe({ slug }: { slug: string }) {
       </p>
 
       {state?.ok ? (
-        <p className="rounded border border-teal/30 bg-teal-dim px-4 py-3 text-[13px] text-teal">
-          {state.message}
-        </p>
+        <SubscribeSuccess email={state.email} compact />
       ) : (
         <form action={action} className="flex flex-col gap-2 sm:flex-row">
           <Honeypot />
@@ -62,6 +62,11 @@ export function InlineSubscribe({ slug }: { slug: string }) {
         </form>
       )}
       {state && !state.ok && <p className="mt-2 text-[12px] text-red">{state.message}</p>}
+      {!state?.ok && (
+        <Link href="/newsletter/archive" className="mt-3 inline-block text-[12px] text-gold hover:underline">
+          See past issues first →
+        </Link>
+      )}
     </aside>
   );
 }

@@ -4,7 +4,8 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { confirmEmail, links, sendEmail } from "@/lib/email";
 import { rateLimit, isBot } from "@/lib/rate-limit";
 
-export type SubscribeState = { ok: boolean; message: string } | null;
+// `email` is echoed back on success so the form can say where the link went.
+export type SubscribeState = { ok: boolean; message: string; email?: string } | null;
 
 export async function subscribe(
   _prev: SubscribeState,
@@ -36,7 +37,7 @@ export async function subscribe(
   // 23505 = already subscribed. Don't reveal that (it would leak the list),
   // and don't resend — just report the same success message.
   if (error?.code === "23505") {
-    return { ok: true, message: "Check your inbox to confirm." };
+    return { ok: true, message: "Check your inbox to confirm.", email };
   }
   if (error || !data) {
     return { ok: false, message: "Something went wrong. Try again." };
@@ -55,5 +56,43 @@ export async function subscribe(
     // re-sent later. Report success either way.
   }
 
-  return { ok: true, message: "Check your inbox to confirm." };
+  return { ok: true, message: "Check your inbox to confirm.", email };
+}
+
+export type ResendState = { message: string } | null;
+
+/**
+ * "Didn't get it?" button on the success screen. Re-sends the confirmation to
+ * a still-pending address. The reply is identical whether or not the address
+ * is on the list, so this can't be used to probe who has subscribed.
+ */
+export async function resendConfirmation(_prev: ResendState, formData: FormData): Promise<ResendState> {
+  const done = { message: "Sent again. It can take a minute to arrive." };
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return done;
+
+  if (!(await rateLimit("subscribe-resend", { limit: 3, windowSeconds: 900 }))) {
+    return { message: "Already re-sent a few times. Please check Spam or Promotions." };
+  }
+
+  const db = createAdminClient();
+  const { data } = await db
+    .from("newsletter_subscribers")
+    .select("confirm_token, unsubscribe_token")
+    .eq("email", email)
+    .eq("status", "pending")
+    .maybeSingle();
+
+  if (data) {
+    try {
+      await sendEmail({
+        to: email,
+        subject: "Confirm your subscription to Everyday Data Science",
+        html: confirmEmail(links.confirm(data.confirm_token), links.unsubscribe(data.unsubscribe_token)),
+      });
+    } catch {
+      /* same reply either way */
+    }
+  }
+  return done;
 }
