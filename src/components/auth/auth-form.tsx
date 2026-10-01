@@ -51,7 +51,9 @@ export function AuthForm({
         options: {
           // The handle_new_user trigger reads full_name from here; without it
           // the name falls back to the email prefix.
-          data: { full_name: name.trim() },
+          // `pitch` switches the confirmation email to its pitch wording
+          // (see scripts/apply-auth-emails.mjs).
+          data: { full_name: name.trim(), ...(forPitch ? { pitch: true } : {}) },
           emailRedirectTo: redirectTo(),
         },
       });
