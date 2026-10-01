@@ -282,6 +282,10 @@ export async function getAllSeries(): Promise<SeriesSummary[]> {
   const { data } = await db
     .from("series")
     .select("id, title, slug, description, articles(count)")
+    // Count only what a reader can actually open. The index hides empty paths,
+    // and the path page lists published parts only, so an unfiltered count
+    // advertises "3 parts" on a path whose parts are all still drafts.
+    .eq("articles.status", "published")
     .order("sort_order");
   return (data ?? []).map((s) => {
     const row = s as unknown as { id: string; title: string; slug: string; description: string | null; articles: { count: number }[] };
@@ -292,7 +296,11 @@ export async function getAllSeries(): Promise<SeriesSummary[]> {
 /** One series + its published articles, in path order. */
 export async function getSeriesBySlug(slug: string) {
   const db = await createClient();
-  const { data: series } = await db.from("series").select("id, title, slug, description").eq("slug", slug).maybeSingle();
+  const { data: series } = await db
+    .from("series")
+    .select("id, title, slug, description, long_description")
+    .eq("slug", slug)
+    .maybeSingle();
   if (!series) return null;
   const { data: articles } = await db
     .from("articles")

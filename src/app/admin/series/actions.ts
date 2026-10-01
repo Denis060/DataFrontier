@@ -32,18 +32,22 @@ export async function saveSeries(fd: FormData): Promise<{ error: string } | { ok
   const fields = {
     title,
     description: str(fd, "description") || null,
+    long_description: str(fd, "long_description") || null,
     sort_order: Number(str(fd, "sort_order")) || 0,
   };
 
   const db = await createClient();
   const id = str(fd, "id");
-  const { error } = id
-    ? await db.from("series").update(fields).eq("id", id)
-    : await db.from("series").insert({ ...fields, slug: slugify(title) });
+  // An existing path keeps its slug (renaming it would break its URL), so read
+  // it back rather than re-deriving it from a possibly-edited title.
+  const { data, error } = id
+    ? await db.from("series").update(fields).eq("id", id).select("slug").maybeSingle()
+    : await db.from("series").insert({ ...fields, slug: slugify(title) }).select("slug").maybeSingle();
   if (error) return { error: error.message };
 
   revalidatePath("/admin/series");
   revalidatePath("/series");
+  if (data?.slug) revalidatePath(`/series/${data.slug}`);
   return { ok: true };
 }
 

@@ -1130,6 +1130,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           id: string
+          long_description: string | null
           slug: string
           sort_order: number
           title: string
@@ -1140,6 +1141,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          long_description?: string | null
           slug: string
           sort_order?: number
           title: string
@@ -1150,6 +1152,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          long_description?: string | null
           slug?: string
           sort_order?: number
           title?: string
