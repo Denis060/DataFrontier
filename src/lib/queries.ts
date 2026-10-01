@@ -429,6 +429,60 @@ export async function getMoreByAuthor(authorId: string, excludeId: string, limit
   return (data ?? []) as ArticleCard[];
 }
 
+export type Writer = {
+  id: string;
+  full_name: string;
+  slug: string;
+  title: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  articles: number;
+  followers: number;
+  latest: string | null;
+};
+
+/**
+ * Everyone with a published byline, most published first. Counts come from
+ * two flat reads rather than per-writer queries; the tables are small.
+ */
+export async function getWriters(): Promise<Writer[]> {
+  const db = await createClient();
+  const [{ data: arts }, { data: follows }] = await Promise.all([
+    db.from("articles").select("author_id, published_at").eq("status", "published"),
+    db.from("follows").select("author_id").not("author_id", "is", null),
+  ]);
+
+  const byAuthor = new Map<string, { n: number; latest: string | null }>();
+  for (const a of arts ?? []) {
+    const cur = byAuthor.get(a.author_id) ?? { n: 0, latest: null };
+    cur.n++;
+    if (a.published_at && (!cur.latest || a.published_at > cur.latest)) cur.latest = a.published_at;
+    byAuthor.set(a.author_id, cur);
+  }
+  if (byAuthor.size === 0) return [];
+
+  const followers = new Map<string, number>();
+  for (const f of follows ?? []) if (f.author_id) followers.set(f.author_id, (followers.get(f.author_id) ?? 0) + 1);
+
+  // Only real writer accounts. A byline can belong to a reader-role profile
+  // (e.g. a seeded placeholder), and listing that as a writer would invent one.
+  const { data: profiles } = await db
+    .from("profiles")
+    .select("id, full_name, slug, title, bio, avatar_url")
+    .in("id", [...byAuthor.keys()])
+    .in("role", ["author", "editor", "admin"]);
+
+  return (profiles ?? [])
+    .filter((p): p is typeof p & { slug: string } => !!p.slug)
+    .map((p) => ({
+      ...p,
+      articles: byAuthor.get(p.id)!.n,
+      latest: byAuthor.get(p.id)!.latest,
+      followers: followers.get(p.id) ?? 0,
+    }))
+    .sort((a, b) => b.articles - a.articles);
+}
+
 /** Recent pieces in distinct formats, to show would-be writers the range. */
 export async function getFormatExamples(limit = 3) {
   const db = await createClient();
