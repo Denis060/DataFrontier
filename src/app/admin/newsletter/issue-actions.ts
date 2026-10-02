@@ -7,6 +7,7 @@ import { requireStaff } from "@/lib/admin";
 import { hasRole } from "@/lib/auth";
 import { SECTION_DEFS, renderIssue, type IssueContent } from "@/lib/newsletter";
 import { sendMail } from "@/lib/email";
+import { dispatchIssue } from "@/lib/dispatch";
 import type { Json } from "@/lib/supabase/database.types";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://everydaydatascience.com";
@@ -174,4 +175,65 @@ export async function unscheduleIssue(id: string): Promise<{ error: string } | {
   revalidatePath("/admin/newsletter");
   revalidatePath(`/admin/newsletter/${id}`);
   return { ok: true };
+}
+
+/**
+ * Render the issue exactly as subscribers will see it, from the form as it is
+ * now (saved or not). Nothing is stored or sent.
+ */
+export async function previewIssue(fd: FormData): Promise<{ html: string } | { error: string }> {
+  await requireEditor();
+  const title = String(fd.get("title") ?? "").trim() || "Untitled issue";
+  const summary = String(fd.get("summary") ?? "").trim() || null;
+  const { html } = renderIssue(
+    title,
+    summary,
+    contentFromForm(fd),
+    `${SITE}/api/newsletter/unsubscribe?token=preview`,
+    `${SITE}/newsletter`,
+  );
+  return { html };
+}
+
+/**
+ * Send to every confirmed subscriber now. Marks the issue scheduled for this
+ * moment, then runs the same resumable, idempotent dispatcher the cron uses, so
+ * a large list keeps draining on the next cron tick and nobody gets it twice.
+ */
+export async function sendIssueNow(id: string): Promise<{ error: string } | { ok: true; sent: number; remaining: number }> {
+  await requireEditor();
+  const db = await createClient();
+  const { data, error } = await db
+    .from("newsletter_issues")
+    .update({ status: "scheduled", scheduled_for: new Date().toISOString() })
+    .eq("id", id)
+    .in("status", ["draft", "scheduled"])
+    .select("id")
+    .maybeSingle();
+  if (error) return { error: error.message };
+  if (!data) return { error: "This issue has already been sent or is sending." };
+
+  let result = { sent: 0, remaining: 0 };
+  try {
+    const r = await dispatchIssue(id);
+    result = { sent: r.sent, remaining: r.remaining };
+  } catch (e) {
+    // It's scheduled for now, so the cron will pick it up even if this run fails.
+    return { error: `Queued, but the first batch failed: ${e instanceof Error ? e.message : "unknown error"}. The scheduler will retry.` };
+  }
+
+  revalidatePath("/admin/newsletter");
+  revalidatePath(`/admin/newsletter/${id}`);
+  return { ok: true, ...result };
+}
+
+/** Delete a draft. Scheduled issues must be unscheduled first; sent ones are history. */
+export async function deleteIssue(id: string): Promise<{ error: string } | never> {
+  await requireEditor();
+  const db = await createClient();
+  const { data, error } = await db.from("newsletter_issues").delete().eq("id", id).eq("status", "draft").select("id").maybeSingle();
+  if (error) return { error: error.message };
+  if (!data) return { error: "Only a draft can be deleted. Unschedule it first if it's scheduled." };
+  revalidatePath("/admin/newsletter");
+  redirect("/admin/newsletter");
 }
