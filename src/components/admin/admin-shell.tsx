@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileText, GraduationCap, Inbox, LayoutDashboard, LayoutGrid, LogOut, Mail, MessageSquare, Settings, Users, Wrench } from "lucide-react";
+import { FileText, GraduationCap, Inbox, LayoutDashboard, LayoutGrid, LogOut, Shapes, Mail, MessageSquare, Settings, Users, Wrench } from "lucide-react";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { createClient } from "@/lib/supabase/server";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -14,6 +14,7 @@ const NAV = [
   { href: "/admin/comments", label: "Comments", icon: MessageSquare, roles: ["admin", "editor"] },
   { href: "/admin/applications", label: "Applications", icon: Inbox, roles: ["admin", "editor"] },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail, roles: ["admin", "editor"] },
+  { href: "/admin/manage", label: "Site content", icon: Shapes, roles: ["admin", "editor"] },
   { href: "/admin/users", label: "People", icon: Users, roles: ["admin"] },
   { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["admin"] },
 ] as const;
