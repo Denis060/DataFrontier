@@ -6,6 +6,7 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { IssueComposer, type IssueDraft } from "@/components/admin/issue-composer";
 import { IssueStats } from "@/components/admin/issue-stats";
 import { SECTION_DEFS } from "@/lib/newsletter";
+import { composerSources } from "@/app/admin/newsletter/sources";
 
 export const metadata = { title: "Edit issue | Newsroom", robots: { index: false } };
 
@@ -21,6 +22,7 @@ export default async function EditIssuePage({
 
   const [{ id }, { saved }] = await Promise.all([params, searchParams]);
   const db = await createClient();
+  const sources = await composerSources();
   const { data: row } = await db
     .from("newsletter_issues")
     .select("id, title, summary, status, scheduled_for, content, recipients, delivered_count, opened_count, bounced_count, complained_count")
@@ -52,7 +54,7 @@ export default async function EditIssuePage({
           />
         </div>
       )}
-      <IssueComposer issue={issue} sections={SECTION_DEFS} justSaved={saved === "1"} />
+      <IssueComposer issue={issue} sections={SECTION_DEFS} justSaved={saved === "1"} sources={sources} />
     </AdminShell>
   );
 }

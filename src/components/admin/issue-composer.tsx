@@ -3,7 +3,17 @@
 import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { saveIssue, scheduleIssue, unscheduleIssue, sendTestIssue } from "@/app/admin/newsletter/issue-actions";
+import {
+  deleteIssue,
+  previewIssue,
+  saveIssue,
+  scheduleIssue,
+  sendIssueNow,
+  sendTestIssue,
+  unscheduleIssue,
+} from "@/app/admin/newsletter/issue-actions";
+import type { ComposerSources } from "@/app/admin/newsletter/sources";
+import { useUpload } from "@/components/admin/use-upload";
 
 type SectionDef = { key: string; label: string; hint?: string; hasImage?: boolean; hasUrl?: boolean };
 
@@ -24,10 +34,12 @@ export function IssueComposer({
   issue,
   sections,
   justSaved,
+  sources,
 }: {
   issue: IssueDraft;
   sections: SectionDef[];
   justSaved: boolean;
+  sources: ComposerSources;
 }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -41,7 +53,74 @@ export function IssueComposer({
     issue.scheduled_for ? toLocalInput(issue.scheduled_for) : "",
   );
 
+  const [preview, setPreview] = useState<string | null>(null);
+  const [previewWidth, setPreviewWidth] = useState<"phone" | "desktop">("desktop");
+  const [previewing, startPreview] = useTransition();
+  const [sending, startSend] = useTransition();
+  const [sendMsg, setSendMsg] = useState<string | null>(null);
+  const { upload, uploading, error: uploadError } = useUpload();
+
   const locked = ["sending", "sent"].includes(issue.status);
+
+  /** Set an uncontrolled field's value (the form is uncontrolled by design). */
+  function setField(name: string, value: string, onlyIfEmpty = false) {
+    const el = formRef.current?.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null;
+    if (!el || (onlyIfEmpty && el.value.trim())) return;
+    el.value = value;
+  }
+
+  /** Fill a section from one of our own articles or cheat sheets. */
+  function fillFromOurs(key: string, value: string) {
+    if (!value) return;
+    if (key === "cheat_sheet") {
+      const c = sources.cheatSheets.find((x) => x.url === value);
+      if (!c) return;
+      setField(`${key}_url`, c.url);
+      if (c.image) setField(`${key}_image`, c.image);
+      setField(`${key}_text`, `**${c.title}**${c.description ? `. ${c.description}` : ""}`, true);
+      return;
+    }
+    const a = sources.articles.find((x) => x.url === value);
+    if (!a) return;
+    setField(`${key}_url`, a.url);
+    setField(`${key}_text`, `**${a.title}**${a.excerpt ? `. ${a.excerpt}` : ""}`, true);
+  }
+
+  function onPreview() {
+    setError(null);
+    const data = new FormData(formRef.current!);
+    startPreview(async () => {
+      const res = await previewIssue(data);
+      if ("error" in res) setError(res.error);
+      else setPreview(res.html);
+    });
+  }
+
+  function onSendNow() {
+    if (!issue.id) return;
+    const n = sources.audience;
+    const who = `${n} confirmed ${n === 1 ? "subscriber" : "subscribers"}`;
+    if (!confirm(`Send "${issue.title}" now to ${who}?\n\nSave your latest edits first. This can't be undone.`)) return;
+    setError(null);
+    startSend(async () => {
+      const res = await sendIssueNow(issue.id!);
+      if ("error" in res) return setError(res.error);
+      setSendMsg(
+        res.remaining > 0
+          ? `Sending: ${res.sent} delivered so far, ${res.remaining} queued for the next few minutes.`
+          : `Sent to ${res.sent} ${res.sent === 1 ? "subscriber" : "subscribers"}.`,
+      );
+      router.refresh();
+    });
+  }
+
+  function onDelete() {
+    if (!issue.id || !confirm("Delete this draft? This can't be undone.")) return;
+    startSave(async () => {
+      const res = await deleteIssue(issue.id!);
+      if (res?.error) setError(res.error);
+    });
+  }
   const scheduled = issue.status === "scheduled";
 
   function onSave(e: React.FormEvent) {
@@ -159,21 +238,109 @@ export function IssueComposer({
               placeholder="Text (supports **bold**, *italic*)"
               className={`${field} resize-none`}
             />
+            {def.hasUrl && !locked && (def.key === "cheat_sheet" ? sources.cheatSheets : sources.articles).length > 0 && (
+              <select
+                defaultValue=""
+                onChange={(e) => {
+                  fillFromOurs(def.key, e.target.value);
+                  e.target.value = "";
+                }}
+                className={`${field} mt-2 text-[12px]`}
+                aria-label={`Fill ${def.label} from one of ours`}
+              >
+                <option value="">
+                  {def.key === "cheat_sheet" ? "Use one of our cheat sheets…" : "Use one of our articles…"}
+                </option>
+                {(def.key === "cheat_sheet" ? sources.cheatSheets : sources.articles).map((o) => (
+                  <option key={o.url} value={o.url}>
+                    {o.title}
+                  </option>
+                ))}
+              </select>
+            )}
             {def.hasUrl && (
               <input name={`${def.key}_url`} defaultValue={sec(def.key).url ?? ""} disabled={locked} placeholder="Link URL (optional)" className={`${field} mt-2 font-mono text-[12px]`} />
             )}
             {def.hasImage && (
-              <input name={`${def.key}_image`} defaultValue={sec(def.key).image_url ?? ""} disabled={locked} placeholder="Image URL (optional)" className={`${field} mt-2 font-mono text-[12px]`} />
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <input name={`${def.key}_image`} defaultValue={sec(def.key).image_url ?? ""} disabled={locked} placeholder="Image URL (optional)" className={`${field} min-w-0 flex-1 font-mono text-[12px]`} />
+                {!locked && (
+                  <label className="cursor-pointer rounded border border-border px-3 py-2 text-[12px] whitespace-nowrap hover:border-border-strong hover:bg-surface-1">
+                    {uploading ? "Uploading…" : "Upload image"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = "";
+                        if (!file) return;
+                        const url = await upload(file, "article-images");
+                        if (url) setField(`${def.key}_image`, url);
+                      }}
+                    />
+                  </label>
+                )}
+                {uploadError && <p className="w-full text-[12px] text-red">{uploadError}</p>}
+              </div>
             )}
           </fieldset>
         ))}
 
-        {!locked && (
-          <button type="submit" disabled={saving} className="self-start rounded bg-gold px-5 py-2.5 text-[13px] font-bold text-on-accent hover:opacity-85 disabled:opacity-60">
-            {saving ? "Saving…" : "Save draft"}
+        <div className="flex flex-wrap items-center gap-3">
+          {!locked && (
+            <button type="submit" disabled={saving} className="rounded bg-gold px-5 py-2.5 text-[13px] font-bold text-on-accent hover:opacity-85 disabled:opacity-60">
+              {saving ? "Saving…" : "Save draft"}
+            </button>
+          )}
+          <button type="button" onClick={onPreview} disabled={previewing} className="rounded border border-border px-5 py-2.5 text-[13px] font-semibold hover:border-border-strong hover:bg-surface-1 disabled:opacity-60">
+            {previewing ? "Rendering…" : "Preview email"}
           </button>
-        )}
+          {issue.id && issue.status === "draft" && (
+            <button type="button" onClick={onDelete} className="ml-auto text-[12px] text-red hover:underline">
+              Delete draft
+            </button>
+          )}
+        </div>
       </form>
+
+      {preview !== null && (
+        <div
+          role="dialog"
+          aria-label="Email preview"
+          className="fixed inset-0 z-[200] flex flex-col bg-black/60 p-3 sm:p-6"
+          onClick={() => setPreview(null)}
+        >
+          <div className="mx-auto flex h-full w-full max-w-[760px] flex-col overflow-hidden rounded-lg bg-bg" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 border-b border-border px-4 py-2.5">
+              <p className="font-mono text-[10px] uppercase tracking-[1.5px] text-muted">Preview, as subscribers see it</p>
+              <div className="ml-auto flex gap-1 text-[12px]">
+                {(["desktop", "phone"] as const).map((w) => (
+                  <button
+                    key={w}
+                    type="button"
+                    onClick={() => setPreviewWidth(w)}
+                    className={`rounded px-2.5 py-1 ${previewWidth === w ? "bg-gold-dim font-semibold text-gold" : "text-muted hover:text-ink"}`}
+                  >
+                    {w === "desktop" ? "Desktop" : "Phone"}
+                  </button>
+                ))}
+              </div>
+              <button type="button" onClick={() => setPreview(null)} className="text-[13px] font-semibold text-muted hover:text-ink">
+                Close
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto bg-surface-2 p-3">
+              <iframe
+                title="Email preview"
+                srcDoc={preview}
+                sandbox=""
+                className={`mx-auto block h-full min-h-[70vh] w-full rounded border border-border bg-white ${previewWidth === "phone" ? "max-w-[390px]" : ""}`}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Test send — available in any state, including after sending */}
       {issue.id && (
@@ -230,6 +397,20 @@ export function IssueComposer({
           <p className="mt-2 text-[11px] text-muted">
             Save your latest edits before scheduling. Times are your local timezone.
           </p>
+          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
+            <button
+              type="button"
+              onClick={onSendNow}
+              disabled={sending}
+              className="rounded border border-gold/50 px-4 py-2 text-[13px] font-bold text-gold hover:bg-gold-dim disabled:opacity-60"
+            >
+              {sending
+                ? "Sending…"
+                : `Send now to ${sources.audience} ${sources.audience === 1 ? "subscriber" : "subscribers"}`}
+            </button>
+            <span className="text-[11px] text-muted">Asks you to confirm first.</span>
+          </div>
+          {sendMsg && <p className="mt-2 text-[12px] text-teal">{sendMsg}</p>}
         </div>
       )}
     </div>
