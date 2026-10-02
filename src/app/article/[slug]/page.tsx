@@ -25,6 +25,7 @@ import {
   getFollowState,
   getMostRead,
   getArticleCorrections,
+  getArticleTagsAndCoauthors,
 } from "@/lib/queries";
 import { getCurrentProfile } from "@/lib/auth";
 import { sameAsLinks } from "@/lib/socials";
@@ -165,7 +166,7 @@ export default async function ArticlePage({ params }: Props) {
     notFound();
   }
 
-  const [related, moreByAuthor, comments, reactions, bookmarked, authorFollow, mostRead, corrections] = await Promise.all([
+  const [related, moreByAuthor, comments, reactions, bookmarked, authorFollow, mostRead, corrections, extra] = await Promise.all([
     getRelated(article.id, article.category_id),
     getMoreByAuthor(article.author_id, article.id),
     getComments(article.id),
@@ -174,6 +175,7 @@ export default async function ArticlePage({ params }: Props) {
     getFollowState({ authorId: article.author_id }, profile?.id ?? null),
     getMostRead(5, article.id),
     getArticleCorrections(article.id),
+    getArticleTagsAndCoauthors(article.id),
   ]);
 
   const seriesNav = article.series_id ? await getArticleSeriesNav(article.series_id, article.id) : null;
@@ -312,6 +314,24 @@ export default async function ArticlePage({ params }: Props) {
                   </span>
                 </Link>
               )}
+              {/* Co-authors share the byline. */}
+              {extra.coauthors.length > 0 && (
+                <span className="text-[13px] text-muted">
+                  with{" "}
+                  {extra.coauthors.map((c, i) => (
+                    <span key={c.full_name}>
+                      {i > 0 && (i === extra.coauthors.length - 1 ? " and " : ", ")}
+                      {c.slug ? (
+                        <Link href={`/author/${c.slug}`} className="font-semibold text-ink hover:text-gold">
+                          {c.full_name}
+                        </Link>
+                      ) : (
+                        <span className="font-semibold text-ink">{c.full_name}</span>
+                      )}
+                    </span>
+                  ))}
+                </span>
+              )}
               <span className="flex w-full items-center gap-2.5 font-mono text-[11px] text-muted sm:ml-auto sm:w-auto">
                 {article.reading_time && <span>{article.reading_time} min read</span>}
                 {article.kicker && (
@@ -350,6 +370,21 @@ export default async function ArticlePage({ params }: Props) {
               <ArticleBody html={article.body_html} source={article.body} />
             ) : (
               <p className="text-muted">This article has no body yet.</p>
+            )}
+
+            {extra.tags.length > 0 && (
+              <ul className="mt-10 flex flex-wrap gap-2" aria-label="Tags">
+                {extra.tags.map((t) => (
+                  <li key={t.slug}>
+                    <Link
+                      href={`/tag/${t.slug}`}
+                      className="rounded-full border border-border px-3 py-1 font-mono text-[11px] text-muted transition-colors hover:border-gold/40 hover:text-gold"
+                    >
+                      #{t.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             )}
 
             {corrections.length > 0 && (

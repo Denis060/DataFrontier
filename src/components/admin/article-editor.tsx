@@ -32,6 +32,11 @@ export type EditorArticle = {
   meta_description: string;
   canonical_url: string;
   review_note: string;
+  /** Comma-separated tag names. */
+  tags: string;
+  coauthor_ids: string[];
+  /** The primary author (null for a new article: it's the current user). */
+  author_id: string | null;
 };
 
 const field =
@@ -43,6 +48,7 @@ export function ArticleEditor({
   categories,
   formats,
   series,
+  writers = [],
   canPublish,
   justSaved,
 }: {
@@ -50,6 +56,7 @@ export function ArticleEditor({
   categories: Option[];
   formats: Option[];
   series: Option[];
+  writers?: { id: string; full_name: string }[];
   canPublish: boolean;
   justSaved: boolean;
 }) {
@@ -473,6 +480,47 @@ export function ArticleEditor({
               />
             </div>
           </div>
+
+          <div>
+            <label className={label} htmlFor="tags">
+              Tags
+            </label>
+            <input
+              id="tags"
+              name="tags"
+              defaultValue={article.tags}
+              placeholder="rag, evaluation, python"
+              className={field}
+            />
+            <p className="mt-1 text-[10px] leading-snug text-muted">
+              Comma-separated, up to 8. Each tag gets its own page listing every article with it.
+            </p>
+          </div>
+
+          {writers.filter((w) => w.id !== article.author_id).length > 0 && (
+            <fieldset>
+              <legend className={label}>Co-authors</legend>
+              <div className="max-h-40 overflow-y-auto rounded border border-border bg-surface-1 px-3 py-2">
+                {writers
+                  .filter((w) => w.id !== article.author_id)
+                  .map((w) => (
+                    <label key={w.id} className="flex items-center gap-2 py-1 text-[13px]">
+                      <input
+                        type="checkbox"
+                        name="coauthors"
+                        value={w.id}
+                        defaultChecked={article.coauthor_ids.includes(w.id)}
+                        className="size-3.5 accent-[var(--df-gold)]"
+                      />
+                      {w.full_name}
+                    </label>
+                  ))}
+              </div>
+              <p className="mt-1 text-[10px] leading-snug text-muted">
+                They share the byline and the piece appears on their author page.
+              </p>
+            </fieldset>
+          )}
 
           <div>
             <label className={label} htmlFor="kicker">

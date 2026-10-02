@@ -232,6 +232,11 @@ export async function saveArticle(formData: FormData): Promise<Result> {
     }
   }
 
+  if (articleId) {
+    const err = await syncTagsAndCoauthors(db, articleId, authorId ?? profile.id, formData);
+    if (err) return { error: err };
+  }
+
   // Close the review loop by email. Best-effort, after the save succeeded.
   const to = patch.status;
   const editUrl = `${SITE}/admin/articles/${articleId}`;
@@ -264,6 +269,58 @@ export async function saveArticle(formData: FormData): Promise<Result> {
   revalidatePath(`/article/${slug}`);
   revalidatePath("/");
   redirect(`/admin/articles/${articleId}?saved=1`);
+}
+
+/**
+ * Replace an article's tags and co-authors from the form. Tag rows are shared
+ * vocabulary that only staff may create under RLS, so new tag names are
+ * created with the service role (names are trimmed, capped and slugged); the
+ * article's own links are written as the user, so RLS still decides whether
+ * they may change this article.
+ */
+async function syncTagsAndCoauthors(
+  db: Awaited<ReturnType<typeof createClient>>,
+  articleId: string,
+  primaryAuthorId: string,
+  formData: FormData,
+): Promise<string | null> {
+  const seen = new Set<string>();
+  const tags = String(formData.get("tags") ?? "")
+    .split(",")
+    .map((s) => s.trim().replace(/\s+/g, " ").slice(0, 40))
+    .filter(Boolean)
+    .map((name) => ({ name, slug: slugify(name) }))
+    .filter((t) => t.slug && !seen.has(t.slug) && seen.add(t.slug))
+    .slice(0, 8);
+
+  let tagIds: string[] = [];
+  if (tags.length) {
+    const admin = createAdminClient();
+    await admin.from("tags").upsert(tags, { onConflict: "slug", ignoreDuplicates: true });
+    const { data } = await admin.from("tags").select("id").in("slug", tags.map((t) => t.slug));
+    tagIds = (data ?? []).map((r) => r.id);
+  }
+  const { error: tagDel } = await db.from("article_tags").delete().eq("article_id", articleId);
+  if (tagDel) return `Couldn't save tags: ${tagDel.message}`;
+  if (tagIds.length) {
+    const { error } = await db.from("article_tags").insert(tagIds.map((tag_id) => ({ article_id: articleId, tag_id })));
+    if (error) return `Couldn't save tags: ${error.message}`;
+  }
+
+  // Co-authors: only writer accounts, never the primary author.
+  const wanted = [...new Set(formData.getAll("coauthors").map(String))].filter((id) => id && id !== primaryAuthorId);
+  let ids: string[] = [];
+  if (wanted.length) {
+    const { data } = await db.from("profiles").select("id").in("id", wanted).in("role", ["author", "editor", "admin"]);
+    ids = (data ?? []).map((r) => r.id);
+  }
+  const { error: coDel } = await db.from("article_authors").delete().eq("article_id", articleId);
+  if (coDel) return `Couldn't save co-authors: ${coDel.message}`;
+  if (ids.length) {
+    const { error } = await db.from("article_authors").insert(ids.map((profile_id) => ({ article_id: articleId, profile_id })));
+    if (error) return `Couldn't save co-authors: ${error.message}`;
+  }
+  return null;
 }
 
 export async function deleteArticle(id: string): Promise<Result> {
