@@ -349,8 +349,10 @@ export function IssueComposer({
             <div className="flex-1 overflow-auto bg-surface-2 p-3">
               <iframe
                 title="Email preview"
-                srcDoc={preview}
-                sandbox=""
+                // Links open in a new tab, like a mail client; without this they
+                // loaded the whole site inside the frame, unstyled.
+                srcDoc={preview.replace("<head>", '<head><base target="_blank">')}
+                sandbox="allow-popups allow-popups-to-escape-sandbox"
                 className={`mx-auto block h-full min-h-[70vh] w-full rounded border border-border bg-white ${previewWidth === "phone" ? "max-w-[390px]" : ""}`}
               />
             </div>
