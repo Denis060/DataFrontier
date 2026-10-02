@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getChrome, getHomeData, getUnreadCount, menuFor } from "@/lib/queries";
+import { getChrome, getHomeData, getMostRead, getUnreadCount, getWriters, menuFor } from "@/lib/queries";
 import { getCurrentProfile } from "@/lib/auth";
 import { sameAsLinks } from "@/lib/socials";
 
@@ -32,6 +32,7 @@ import {
   CareersBand,
   CategoryStrip,
   EditorSection,
+  MostRead,
   PromiseStrip,
   StartHere,
 } from "@/components/home/bands";
@@ -40,7 +41,12 @@ import { SiteFooter } from "@/components/home/site-footer";
 export const revalidate = 60;
 
 export default async function Home() {
-  const [d, profile] = await Promise.all([getHomeData(), getCurrentProfile()]);
+  const [d, profile, writers, mostRead] = await Promise.all([
+    getHomeData(),
+    getCurrentProfile(),
+    getWriters(),
+    getMostRead(5),
+  ]);
   const unread = await getUnreadCount(profile?.id ?? null);
   const s = d.settings;
   const siteName = s?.site_name ?? "Everyday Data Science";
@@ -108,6 +114,8 @@ export default async function Home() {
 
         <ArticleGrid columns={d.columns} />
 
+        <MostRead articles={mostRead} />
+
         <StartHere series={d.series} cheatSheets={d.cheatSheets} resources={d.resources} />
 
         {d.spotlight.length > 0 && s?.spotlight_headline && (
@@ -126,6 +134,7 @@ export default async function Home() {
           headline={s?.editor_headline ?? ""}
           bio={s?.editor_bio ?? ""}
           badges={badges}
+          writers={writers}
         />
       </main>
 

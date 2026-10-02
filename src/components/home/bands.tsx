@@ -2,7 +2,8 @@ import Link from "next/link";
 import { BookOpen, CodeXml, Earth, FileSearch, FileText, Heart, Route, Scale } from "lucide-react";
 import { Pill } from "@/components/pill";
 import { CoverImage } from "@/components/cover-image";
-import { reactionCount, type ArticleCard, type HomeData } from "@/lib/queries";
+import { reactionCount, type ArticleCard, type HomeData, type Writer } from "@/lib/queries";
+import { AuthorAvatar } from "@/components/author-avatar";
 
 /** "· ❤ N" meta, shown only once an article has reactions. */
 function Reactions({ a }: { a: ArticleCard }) {
@@ -165,6 +166,47 @@ export function ArticleGrid({ columns }: { columns: ArticleCard[][] }) {
         <GridSection key={m.title} {...m} articles={columns[i] ?? []} />
       ))}
     </div>
+  );
+}
+
+/* ─── MOST READ ──────────────────────────────────────────── */
+
+/** Top five by views, with big rank numerals. Hidden until there's data. */
+export function MostRead({ articles }: { articles: ArticleCard[] }) {
+  if (articles.length < 3) return null;
+  return (
+    <section className="border-b border-border px-5 py-12 sm:px-8 lg:px-12">
+      <h2 className="mb-7 flex items-center gap-2.5 font-mono text-[11px] font-medium uppercase tracking-[2px] text-gold after:h-px after:flex-1 after:bg-border after:content-['']">
+        Most read
+      </h2>
+      <ol className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-5">
+        {articles.map((a, i) => (
+          <li key={a.id}>
+            <Link href={`/article/${a.slug}`} className="group flex gap-4 lg:flex-col lg:gap-2">
+              <span
+                aria-hidden
+                className="w-7 shrink-0 font-serif text-[40px] leading-none font-black text-gold/40 transition-colors group-hover:text-gold lg:w-auto lg:text-[48px]"
+              >
+                {i + 1}
+              </span>
+              <span className="min-w-0">
+                {a.format && (
+                  <span className="mb-1 block font-mono text-[9px] uppercase tracking-[1.5px] text-muted">
+                    {a.format.name}
+                  </span>
+                )}
+                <span className="block font-serif text-[16px] leading-[1.3] font-bold transition-opacity group-hover:opacity-75">
+                  {a.title}
+                </span>
+                <span className="mt-1.5 block text-[11px] text-muted">
+                  {a.author?.full_name} · {a.reading_time} min
+                </span>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 
@@ -432,11 +474,14 @@ export function EditorSection({
   headline,
   bio,
   badges,
+  writers = [],
 }: {
   editor: { full_name: string; title: string | null; slug: string | null; avatar_url?: string | null } | null;
   headline: string;
   bio: string;
   badges: Badge[];
+  /** Everyone with a byline, so the section reads as a publication, not one person. */
+  writers?: Writer[];
 }) {
   if (!editor) return null;
   const initials = editor.full_name.split(" ").slice(0, 2).map((w) => w[0]).join("");
@@ -492,6 +537,36 @@ export function EditorSection({
             </Link>
           )}
         </div>
+
+        {writers.length > 0 && (
+          <div className="mt-8 border-t border-border pt-6">
+            <p className="mb-3 font-mono text-[10px] uppercase tracking-[2px] text-muted">
+              Writing on Everyday Data Science
+            </p>
+            <div className="flex flex-wrap items-center gap-2.5">
+              {writers.slice(0, 8).map((w) => (
+                <Link
+                  key={w.id}
+                  href={`/author/${w.slug}`}
+                  title={w.full_name}
+                  className="flex items-center gap-2 rounded-full border border-border bg-bg py-1 pr-4 pl-1 text-[13px] font-medium transition-colors hover:border-gold/40"
+                >
+                  <AuthorAvatar name={w.full_name} src={w.avatar_url} className="size-7 text-[10px]" />
+                  {w.full_name}
+                </Link>
+              ))}
+              <Link
+                href="/write"
+                className="rounded-full border border-dashed border-gold/50 px-4 py-1.5 text-[13px] font-semibold text-gold transition-colors hover:bg-gold-dim"
+              >
+                + Join them
+              </Link>
+              <Link href="/authors" className="ml-1 text-[13px] text-muted hover:text-gold">
+                All writers →
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

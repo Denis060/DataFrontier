@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { BrandIcon } from "@/components/brand-icons";
 import { createClient } from "@/lib/supabase/client";
 import type { OAuthProvider } from "@/lib/auth";
+import { useDraftKind } from "@/lib/write-draft";
 
 type Mode = "signin" | "signup";
 
@@ -28,6 +29,17 @@ export function AuthForm({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  // Set once sign-up succeeds but the email still needs confirming.
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [resend, setResend] = useState<"idle" | "sending" | "sent" | string>("idle");
+  // Arriving from the pitch form: say why the account is needed, and that the
+  // pitch is safe (write-form parks it in localStorage).
+  const forPitch = next === "/write";
+  // "Republish my post" vs "Pitch a new piece", read from the parked draft.
+  const draftKind = useDraftKind();
+  const republish = forPitch && draftKind === "republish";
+  const thing = republish ? "republish request" : "pitch";
+  const redirectTo = () => `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -44,15 +56,21 @@ export function AuthForm({
         options: {
           // The handle_new_user trigger reads full_name from here; without it
           // the name falls back to the email prefix.
-          data: { full_name: name.trim() },
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+          // `pitch` switches the confirmation email to its pitch wording
+          // (see scripts/apply-auth-emails.mjs).
+          data: {
+            full_name: name.trim(),
+            ...(forPitch ? { pitch: true } : {}),
+            ...(republish ? { republish: true } : {}),
+          },
+          emailRedirectTo: redirectTo(),
         },
       });
       setPending(false);
       if (error) return setError(error.message);
       // With email confirmation on, no session comes back — the user must
       // click the link. Saying "check your inbox" is the honest response.
-      if (!data.session) return setNotice("Check your inbox to confirm your email.");
+      if (!data.session) return setSentTo(email.trim());
     } else {
       const { error } = await db.auth.signInWithPassword({ email, password });
       setPending(false);
@@ -80,18 +98,96 @@ export function AuthForm({
     }
   }
 
+  async function resendConfirmation() {
+    if (!sentTo) return;
+    setResend("sending");
+    const { error } = await createClient().auth.resend({
+      type: "signup",
+      email: sentTo,
+      options: { emailRedirectTo: redirectTo() },
+    });
+    // Supabase rate-limits resends; show its message rather than pretend.
+    setResend(error ? error.message : "sent");
+  }
+
+  if (sentTo) {
+    return (
+      <div className="w-full max-w-[440px]" aria-live="polite">
+        <p className="mb-3 font-mono text-[10px] uppercase tracking-[2px] text-teal">One more step</p>
+        <h1 className="mb-3 font-serif text-[32px] leading-tight font-black tracking-[-0.8px]">
+          Check your inbox
+        </h1>
+        <p className="text-[15px] leading-relaxed text-muted">
+          We sent a confirmation link to <strong className="font-semibold text-ink">{sentTo}</strong>{" "}
+          from <strong className="font-semibold text-ink">Everyday Data Science</strong>. Click it to
+          activate your account.
+        </p>
+        {forPitch && (
+          <p className="mt-4 rounded-md border border-gold/30 bg-gold-dim px-4 py-3 text-[13px] leading-relaxed">
+            <strong className="font-semibold">Your {thing} is saved.</strong> The link brings you back to
+            the Write for us page with everything you typed, ready to send.
+          </p>
+        )}
+        <p className="mt-4 text-[13px] text-muted">
+          Not there in a minute? Check your Spam or Promotions folder.
+        </p>
+        <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px]">
+          {resend === "sent" ? (
+            <span className="text-teal">Sent again. It can take a minute.</span>
+          ) : (
+            <button
+              type="button"
+              onClick={resendConfirmation}
+              disabled={resend === "sending"}
+              className="font-semibold text-gold hover:underline disabled:opacity-60"
+            >
+              {resend === "sending" ? "Sending…" : "Resend the email"}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setSentTo(null);
+              setResend("idle");
+            }}
+            className="text-muted hover:text-ink"
+          >
+            Wrong address? Start again
+          </button>
+        </div>
+        {resend !== "idle" && resend !== "sending" && resend !== "sent" && (
+          <p className="mt-2 text-[12px] text-red">{resend}</p>
+        )}
+      </div>
+    );
+  }
+
   const input =
     "w-full rounded border border-border bg-surface-1 px-4 py-3 text-sm outline-none transition-colors placeholder:text-muted focus:border-gold/40 focus:bg-surface-2";
 
   return (
     <div className="w-full max-w-[400px]">
       <h1 className="mb-2 font-serif text-[32px] leading-tight font-black tracking-[-0.8px]">
-        {mode === "signin" ? "Welcome back" : "Create your account"}
+        {mode === "signin"
+          ? forPitch
+            ? republish
+              ? "Sign in to republish your post"
+              : "Sign in to send your pitch"
+            : "Welcome back"
+          : forPitch
+            ? republish
+              ? "Create your account to republish your post"
+              : "Create your account to send your pitch"
+            : "Create your account"}
       </h1>
       <p className="mb-8 text-sm text-muted">
-        {mode === "signin"
-          ? "Sign in to comment, save articles, and access the newsroom."
-          : "Join Everyday Data Science to comment and follow the work."}
+        {forPitch
+          ? mode === "signin"
+            ? "You'll go straight back to the Write for us page. Anything you typed in this browser is still there."
+            : `It's free and takes a minute. Your ${thing} is saved and will be waiting when you get back.`
+          : mode === "signin"
+            ? "Sign in to comment, save articles, and access the newsroom."
+            : "Join Everyday Data Science to comment and follow the work."}
       </p>
 
       {providers.length > 0 && (

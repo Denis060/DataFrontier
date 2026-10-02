@@ -416,6 +416,73 @@ export async function getLibrary(profileId: string): Promise<ArticleCard[]> {
 }
 
 /** Other pieces by the same author, for the article rail. */
+/** Corrections on one article, oldest first (the order they happened). */
+export async function getArticleCorrections(articleId: string) {
+  const db = await createClient();
+  const { data } = await db
+    .from("corrections")
+    .select("id, corrected_on, note")
+    .eq("article_id", articleId)
+    .order("corrected_on", { ascending: true });
+  return data ?? [];
+}
+
+/** Every public correction, newest first, with its article. RLS hides drafts. */
+export async function getCorrectionsLog() {
+  const db = await createClient();
+  const { data } = await db
+    .from("corrections")
+    .select("id, corrected_on, note, article:articles(title, slug)")
+    .order("corrected_on", { ascending: false })
+    .order("created_at", { ascending: false });
+  return (data ?? []) as unknown as {
+    id: string;
+    corrected_on: string;
+    note: string;
+    article: { title: string; slug: string } | null;
+  }[];
+}
+
+export type PredictionStatus = "open" | "held" | "wrong";
+export type Prediction = {
+  id: string;
+  claim: string;
+  status: PredictionStatus;
+  verdict_note: string | null;
+  checked_on: string | null;
+  article: { title: string; slug: string; published_at: string | null } | null;
+};
+
+/** Published predictions for the scoreboard. RLS returns only published ones to readers. */
+export async function getScoreboard(): Promise<Prediction[]> {
+  const db = await createClient();
+  const { data } = await db
+    .from("predictions")
+    .select("id, claim, status, verdict_note, checked_on, article:articles(title, slug, published_at)")
+    .eq("published", true)
+    .order("checked_on", { ascending: false, nullsFirst: false })
+    .order("sort_order", { ascending: true });
+  return (data ?? []) as unknown as Prediction[];
+}
+
+/**
+ * Most-read published articles by lifetime views. A ranking, so it may
+ * repeat pieces shown elsewhere on the page; that's the point of it.
+ */
+export async function getMostRead(limit = 5, excludeId?: string) {
+  const db = await createClient();
+  let q = db
+    .from("articles")
+    .select(ARTICLE_SELECT)
+    .eq("status", "published")
+    .gt("view_count", 0)
+    .order("view_count", { ascending: false })
+    .limit(limit);
+  if (excludeId) q = q.neq("id", excludeId);
+  const { data } = await q;
+  return (data ?? []) as ArticleCard[];
+}
+
 export async function getMoreByAuthor(authorId: string, excludeId: string, limit = 3) {
   const db = await createClient();
   const { data } = await db
@@ -427,6 +494,60 @@ export async function getMoreByAuthor(authorId: string, excludeId: string, limit
     .order("published_at", { ascending: false })
     .limit(limit);
   return (data ?? []) as ArticleCard[];
+}
+
+export type Writer = {
+  id: string;
+  full_name: string;
+  slug: string;
+  title: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  articles: number;
+  followers: number;
+  latest: string | null;
+};
+
+/**
+ * Everyone with a published byline, most published first. Counts come from
+ * two flat reads rather than per-writer queries; the tables are small.
+ */
+export async function getWriters(): Promise<Writer[]> {
+  const db = await createClient();
+  const [{ data: arts }, { data: follows }] = await Promise.all([
+    db.from("articles").select("author_id, published_at").eq("status", "published"),
+    db.from("follows").select("author_id").not("author_id", "is", null),
+  ]);
+
+  const byAuthor = new Map<string, { n: number; latest: string | null }>();
+  for (const a of arts ?? []) {
+    const cur = byAuthor.get(a.author_id) ?? { n: 0, latest: null };
+    cur.n++;
+    if (a.published_at && (!cur.latest || a.published_at > cur.latest)) cur.latest = a.published_at;
+    byAuthor.set(a.author_id, cur);
+  }
+  if (byAuthor.size === 0) return [];
+
+  const followers = new Map<string, number>();
+  for (const f of follows ?? []) if (f.author_id) followers.set(f.author_id, (followers.get(f.author_id) ?? 0) + 1);
+
+  // Only real writer accounts. A byline can belong to a reader-role profile
+  // (e.g. a seeded placeholder), and listing that as a writer would invent one.
+  const { data: profiles } = await db
+    .from("profiles")
+    .select("id, full_name, slug, title, bio, avatar_url")
+    .in("id", [...byAuthor.keys()])
+    .in("role", ["author", "editor", "admin"]);
+
+  return (profiles ?? [])
+    .filter((p): p is typeof p & { slug: string } => !!p.slug)
+    .map((p) => ({
+      ...p,
+      articles: byAuthor.get(p.id)!.n,
+      latest: byAuthor.get(p.id)!.latest,
+      followers: followers.get(p.id) ?? 0,
+    }))
+    .sort((a, b) => b.articles - a.articles);
 }
 
 /** Recent pieces in distinct formats, to show would-be writers the range. */

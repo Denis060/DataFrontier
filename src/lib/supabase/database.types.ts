@@ -497,6 +497,38 @@ export type Database = {
           },
         ]
       }
+      corrections: {
+        Row: {
+          article_id: string
+          corrected_on: string
+          created_at: string
+          id: string
+          note: string
+        }
+        Insert: {
+          article_id: string
+          corrected_on?: string
+          created_at?: string
+          id?: string
+          note: string
+        }
+        Update: {
+          article_id?: string
+          corrected_on?: string
+          created_at?: string
+          id?: string
+          note?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "corrections_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_events: {
         Row: {
           created_at: string
@@ -988,6 +1020,53 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      predictions: {
+        Row: {
+          article_id: string
+          checked_on: string | null
+          claim: string
+          created_at: string
+          id: string
+          published: boolean
+          sort_order: number
+          status: string
+          updated_at: string
+          verdict_note: string | null
+        }
+        Insert: {
+          article_id: string
+          checked_on?: string | null
+          claim: string
+          created_at?: string
+          id?: string
+          published?: boolean
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          verdict_note?: string | null
+        }
+        Update: {
+          article_id?: string
+          checked_on?: string | null
+          claim?: string
+          created_at?: string
+          id?: string
+          published?: boolean
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          verdict_note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "predictions_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
             referencedColumns: ["id"]
           },
         ]
