@@ -109,6 +109,7 @@ export type Database = {
       }
       articles: {
         Row: {
+          guest_authors: Json
           author_id: string
           body: string | null
           body_html: string | null
@@ -140,6 +141,7 @@ export type Database = {
           view_count: number
         }
         Insert: {
+          guest_authors?: Json
           author_id: string
           body?: string | null
           body_html?: string | null
@@ -171,6 +173,7 @@ export type Database = {
           view_count?: number
         }
         Update: {
+          guest_authors?: Json
           author_id?: string
           body?: string | null
           body_html?: string | null
