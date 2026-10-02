@@ -420,6 +420,51 @@ export async function getLibrary(profileId: string): Promise<ArticleCard[]> {
 }
 
 /** Other pieces by the same author, for the article rail. */
+/** An article's tags and co-authors, for the byline and tag chips. */
+export async function getArticleTagsAndCoauthors(articleId: string) {
+  const db = await createClient();
+  const [tags, coauthors, guests] = await Promise.all([
+    db.from("article_tags").select("tag:tags(name, slug)").eq("article_id", articleId),
+    db.from("article_authors").select("profile:profiles(full_name, slug)").eq("article_id", articleId),
+    // Separate read: the column arrives with migration 20261005120000, and a
+    // missing column must not take the article page down with it.
+    db.from("articles").select("guest_authors").eq("id", articleId).maybeSingle(),
+  ]);
+  const rawGuests = guests.error ? [] : (guests.data?.guest_authors as unknown);
+  return {
+    guests: (Array.isArray(rawGuests) ? (rawGuests as { name?: unknown; url?: unknown }[]) : [])
+      .filter((g) => typeof g?.name === "string" && g.name.trim())
+      .map((g) => ({
+        name: String(g.name),
+        url: typeof g.url === "string" && /^https?:\/\//i.test(g.url) ? g.url : null,
+      })),
+    tags: ((tags.data ?? []) as unknown as { tag: { name: string; slug: string } | null }[])
+      .map((r) => r.tag)
+      .filter((t): t is { name: string; slug: string } => !!t),
+    coauthors: ((coauthors.data ?? []) as unknown as { profile: { full_name: string; slug: string | null } | null }[])
+      .map((r) => r.profile)
+      .filter((p): p is { full_name: string; slug: string | null } => !!p),
+  };
+}
+
+/** A tag and its published articles, newest first. */
+export async function getTagPage(slug: string, page = 1) {
+  const db = await createClient();
+  const { data: tag } = await db.from("tags").select("id, name, slug").eq("slug", slug).maybeSingle();
+  if (!tag) return null;
+  const { data: links } = await db.from("article_tags").select("article_id").eq("tag_id", tag.id);
+  const ids = (links ?? []).map((l) => l.article_id).filter((x): x is string => !!x);
+  if (!ids.length) return { tag, items: [] as ArticleCard[], total: 0, page, perPage: PER_PAGE };
+  const { data, count } = await db
+    .from("articles")
+    .select(ARTICLE_SELECT, { count: "exact" })
+    .eq("status", "published")
+    .in("id", ids)
+    .order("published_at", { ascending: false })
+    .range(...range(page, PER_PAGE));
+  return { tag, items: (data ?? []) as ArticleCard[], total: count ?? 0, page, perPage: PER_PAGE };
+}
+
 /** Corrections on one article, oldest first (the order they happened). */
 export async function getArticleCorrections(articleId: string) {
   const db = await createClient();

@@ -101,6 +101,19 @@ export async function saveArticle(formData: FormData): Promise<Result> {
   // Only a real http(s) URL may become the canonical; anything else would
   // point search engines somewhere broken.
   const canonical = ((formData.get("canonical_url") as string) || "").trim();
+
+  // Guest co-authors: name required, link optional but must be a real link.
+  const guestNames = formData.getAll("guest_name").map((v) => String(v).trim().slice(0, 80));
+  const guestUrls = formData.getAll("guest_url").map((v) => String(v).trim());
+  const guests: { name: string; url: string }[] = [];
+  for (let i = 0; i < guestNames.length && guests.length < 4; i++) {
+    if (!guestNames[i]) continue;
+    const url = guestUrls[i] ?? "";
+    if (url && !/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(url)) {
+      return { error: `The link for ${guestNames[i]} must be a full link starting with https://` };
+    }
+    guests.push({ name: guestNames[i], url });
+  }
   if (canonical && !/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(canonical)) {
     return { error: "“Originally published at” must be a full link starting with https://" };
   }
@@ -128,6 +141,7 @@ export async function saveArticle(formData: FormData): Promise<Result> {
     meta_title: ((formData.get("meta_title") as string) || "").trim() || null,
     meta_description: ((formData.get("meta_description") as string) || "").trim() || null,
     canonical_url: canonical || null,
+    guest_authors: guests,
   } satisfies ArticleUpdate;
 
   // Resolve the status transition, if any, and gate it.
@@ -232,6 +246,11 @@ export async function saveArticle(formData: FormData): Promise<Result> {
     }
   }
 
+  if (articleId) {
+    const err = await syncTagsAndCoauthors(db, articleId, authorId ?? profile.id, formData);
+    if (err) return { error: err };
+  }
+
   // Close the review loop by email. Best-effort, after the save succeeded.
   const to = patch.status;
   const editUrl = `${SITE}/admin/articles/${articleId}`;
@@ -264,6 +283,58 @@ export async function saveArticle(formData: FormData): Promise<Result> {
   revalidatePath(`/article/${slug}`);
   revalidatePath("/");
   redirect(`/admin/articles/${articleId}?saved=1`);
+}
+
+/**
+ * Replace an article's tags and co-authors from the form. Tag rows are shared
+ * vocabulary that only staff may create under RLS, so new tag names are
+ * created with the service role (names are trimmed, capped and slugged); the
+ * article's own links are written as the user, so RLS still decides whether
+ * they may change this article.
+ */
+async function syncTagsAndCoauthors(
+  db: Awaited<ReturnType<typeof createClient>>,
+  articleId: string,
+  primaryAuthorId: string,
+  formData: FormData,
+): Promise<string | null> {
+  const seen = new Set<string>();
+  const tags = String(formData.get("tags") ?? "")
+    .split(",")
+    .map((s) => s.trim().replace(/\s+/g, " ").slice(0, 40))
+    .filter(Boolean)
+    .map((name) => ({ name, slug: slugify(name) }))
+    .filter((t) => t.slug && !seen.has(t.slug) && seen.add(t.slug))
+    .slice(0, 8);
+
+  let tagIds: string[] = [];
+  if (tags.length) {
+    const admin = createAdminClient();
+    await admin.from("tags").upsert(tags, { onConflict: "slug", ignoreDuplicates: true });
+    const { data } = await admin.from("tags").select("id").in("slug", tags.map((t) => t.slug));
+    tagIds = (data ?? []).map((r) => r.id);
+  }
+  const { error: tagDel } = await db.from("article_tags").delete().eq("article_id", articleId);
+  if (tagDel) return `Couldn't save tags: ${tagDel.message}`;
+  if (tagIds.length) {
+    const { error } = await db.from("article_tags").insert(tagIds.map((tag_id) => ({ article_id: articleId, tag_id })));
+    if (error) return `Couldn't save tags: ${error.message}`;
+  }
+
+  // Co-authors: only writer accounts, never the primary author.
+  const wanted = [...new Set(formData.getAll("coauthors").map(String))].filter((id) => id && id !== primaryAuthorId);
+  let ids: string[] = [];
+  if (wanted.length) {
+    const { data } = await db.from("profiles").select("id").in("id", wanted).in("role", ["author", "editor", "admin"]);
+    ids = (data ?? []).map((r) => r.id);
+  }
+  const { error: coDel } = await db.from("article_authors").delete().eq("article_id", articleId);
+  if (coDel) return `Couldn't save co-authors: ${coDel.message}`;
+  if (ids.length) {
+    const { error } = await db.from("article_authors").insert(ids.map((profile_id) => ({ article_id: articleId, profile_id })));
+    if (error) return `Couldn't save co-authors: ${error.message}`;
+  }
+  return null;
 }
 
 export async function deleteArticle(id: string): Promise<Result> {

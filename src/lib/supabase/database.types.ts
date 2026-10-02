@@ -109,6 +109,7 @@ export type Database = {
       }
       articles: {
         Row: {
+          guest_authors: Json
           author_id: string
           body: string | null
           body_html: string | null
@@ -140,6 +141,7 @@ export type Database = {
           view_count: number
         }
         Insert: {
+          guest_authors?: Json
           author_id: string
           body?: string | null
           body_html?: string | null
@@ -171,6 +173,7 @@ export type Database = {
           view_count?: number
         }
         Update: {
+          guest_authors?: Json
           author_id?: string
           body?: string | null
           body_html?: string | null
@@ -841,6 +844,7 @@ export type Database = {
       }
       newsletter_issues: {
         Row: {
+          clicked_count: number
           bounced_count: number
           complained_count: number
           content: Json
@@ -859,6 +863,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          clicked_count?: number
           bounced_count?: number
           complained_count?: number
           content?: Json
@@ -877,6 +882,7 @@ export type Database = {
           title: string
         }
         Update: {
+          clicked_count?: number
           bounced_count?: number
           complained_count?: number
           content?: Json
@@ -898,6 +904,7 @@ export type Database = {
       }
       newsletter_sends: {
         Row: {
+          clicked_at: string | null
           created_at: string
           email: string
           error: string | null
@@ -910,6 +917,7 @@ export type Database = {
           subscriber_id: string
         }
         Insert: {
+          clicked_at?: string | null
           created_at?: string
           email: string
           error?: string | null
@@ -922,6 +930,7 @@ export type Database = {
           subscriber_id: string
         }
         Update: {
+          clicked_at?: string | null
           created_at?: string
           email?: string
           error?: string | null
@@ -952,6 +961,7 @@ export type Database = {
       }
       newsletter_subscribers: {
         Row: {
+          confirm_reminder_sent_at: string | null
           confirm_token: string
           confirmed_at: string | null
           created_at: string
@@ -963,6 +973,7 @@ export type Database = {
           welcome_followup_sent_at: string | null
         }
         Insert: {
+          confirm_reminder_sent_at?: string | null
           confirm_token?: string
           confirmed_at?: string | null
           created_at?: string
@@ -974,6 +985,7 @@ export type Database = {
           welcome_followup_sent_at?: string | null
         }
         Update: {
+          confirm_reminder_sent_at?: string | null
           confirm_token?: string
           confirmed_at?: string | null
           created_at?: string
@@ -1449,6 +1461,7 @@ export type Database = {
         Args: {
           p_event_id: string
           p_hard: boolean
+          p_link?: string
           p_resend_id: string
           p_type: string
         }

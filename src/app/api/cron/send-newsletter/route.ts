@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { dispatchIssue, dueIssueIds, sendWelcomeFollowups } from "@/lib/dispatch";
+import { dispatchIssue, dueIssueIds, sendConfirmReminders, sendWelcomeFollowups } from "@/lib/dispatch";
 
 // Long enough to drain a bounded batch; the dispatcher itself caps work per run.
 export const maxDuration = 300;
@@ -27,6 +27,8 @@ export async function GET(request: Request) {
 
   // Same tick also sends any due welcome-series follow-ups.
   const followups = await sendWelcomeFollowups();
+  // ...and the one-time reminder to unconfirmed sign-ups.
+  const reminders = await sendConfirmReminders();
 
-  return NextResponse.json({ processed: ids.length, results, followups });
+  return NextResponse.json({ processed: ids.length, results, followups, reminders });
 }

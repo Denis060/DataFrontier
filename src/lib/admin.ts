@@ -128,3 +128,30 @@ export async function listFormatsAndCategories() {
     series: (series.data ?? []).map((s) => ({ id: s.id, name: s.title })),
   };
 }
+
+/** People who can share a byline: writer accounts only. */
+export async function listWriterProfiles() {
+  const db = await createClient();
+  const { data } = await db
+    .from("profiles")
+    .select("id, full_name")
+    .in("role", ["author", "editor", "admin"])
+    .order("full_name");
+  return data ?? [];
+}
+
+/** An article's tags (as an editable comma list) and co-author ids. */
+export async function getArticleTagsAndCoauthors(articleId: string) {
+  const db = await createClient();
+  const [tags, coauthors] = await Promise.all([
+    db.from("article_tags").select("tag:tags(name)").eq("article_id", articleId),
+    db.from("article_authors").select("profile_id").eq("article_id", articleId),
+  ]);
+  return {
+    tags: ((tags.data ?? []) as unknown as { tag: { name: string } | null }[])
+      .map((r) => r.tag?.name)
+      .filter(Boolean)
+      .join(", "),
+    coauthorIds: (coauthors.data ?? []).map((r) => r.profile_id).filter((x): x is string => !!x),
+  };
+}

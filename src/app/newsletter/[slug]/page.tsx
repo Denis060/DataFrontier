@@ -1,10 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Fragment } from "react";
 import { Shell } from "@/components/layout/shell";
 import { getNewsletterIssueBySlug } from "@/lib/queries";
-import { SECTION_DEFS, type IssueContent } from "@/lib/newsletter";
+import { SECTION_DEFS, richText, type IssueContent, type RichStyle } from "@/lib/newsletter";
+import { issueExtras } from "@/lib/newsletter-extras";
+
+// Same formatter as the email, styled for the page (theme-aware colours).
+// Safe to inject: richText escapes all authored text before adding tags.
+const WEB: RichStyle = {
+  p: "margin:0 0 14px;font-size:16px;line-height:1.7",
+  list: "margin:0 0 14px;padding-left:22px;font-size:16px;line-height:1.7;list-style:revert",
+  li: "margin:0 0 4px",
+  link: "color:var(--df-gold);font-weight:700;text-decoration:underline",
+};
+const Rich = ({ text }: { text: string }) => <div dangerouslySetInnerHTML={{ __html: richText(text, WEB) }} />;
 
 export const revalidate = 300;
 
@@ -40,8 +50,10 @@ export default async function NewsletterIssuePage({
   const content = (issue.content ?? {}) as IssueContent;
   const sections = SECTION_DEFS.filter((def) => {
     const s = content[def.key];
-    return s && (s.text || s.url || s.image_url);
+    return def.key !== "closing_question" && s && (s.title || s.text || s.url || s.image_url);
   });
+  const question = content.closing_question;
+  const { writers } = await issueExtras(content);
 
   return (
     <Shell>
@@ -62,34 +74,45 @@ export default async function NewsletterIssuePage({
         </header>
 
         {content.intro && (
-          <p className="mt-8 text-[17px] leading-[1.7] text-ink">
-            <Inline text={content.intro} />
-          </p>
+          <div className="mt-8 text-[17px] text-ink">
+            <Rich text={content.intro} />
+          </div>
         )}
 
         <div className="mt-4">
           {sections.map((def) => {
             const s = content[def.key]!;
             return (
-              <section key={def.key} className="mt-10">
+              <section key={def.key} className="mt-8 rounded-lg border border-border bg-bg2 p-5 sm:p-6">
                 <h2 className="font-mono text-[11px] uppercase tracking-[1.5px] text-gold">{def.label}</h2>
+                {s.title && (
+                  <p className="mt-2 font-serif text-[21px] leading-snug font-black">
+                    {def.hasUrl && s.url ? (
+                      <a href={s.url} target="_blank" rel="noopener noreferrer" className="hover:text-gold">
+                        {s.title}
+                      </a>
+                    ) : (
+                      s.title
+                    )}
+                  </p>
+                )}
                 {def.hasImage && s.image_url && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={s.image_url}
-                    alt={s.text ? s.text.slice(0, 90) : def.label}
+                    alt={s.title || (s.text ? s.text.slice(0, 90) : def.label)}
                     className="mt-3 w-full rounded-md border border-border"
                   />
                 )}
                 {s.text && (
-                  <p className="mt-3 text-[16px] leading-[1.7] text-ink">
-                    <Inline text={s.text} />
-                  </p>
+                  <div className="mt-3 text-ink">
+                    <Rich text={s.text} />
+                  </div>
                 )}
                 {def.hasUrl && s.url && (
                   <p className="mt-3">
                     <a href={s.url} target="_blank" rel="noopener noreferrer" className="font-bold text-gold hover:underline">
-                      Read more →
+                      Read the full piece →
                     </a>
                   </p>
                 )}
@@ -97,6 +120,24 @@ export default async function NewsletterIssuePage({
             );
           })}
         </div>
+
+        {question && (question.title || question.text) && (
+          <section className="mt-8 border-l-[3px] border-gold bg-gold-dim px-5 py-4">
+            <h2 className="font-mono text-[11px] uppercase tracking-[1.5px] text-gold">Over to you</h2>
+            {question.title && <p className="mt-2 font-serif text-[19px] font-black">{question.title}</p>}
+            {question.text && (
+              <div className="mt-2">
+                <Rich text={question.text} />
+              </div>
+            )}
+          </section>
+        )}
+
+        {writers && writers.length > 0 && (
+          <p className="mt-8 text-[14px] text-muted">
+            This issue features work by <strong className="text-ink">{writers.join(", ")}</strong>.
+          </p>
+        )}
 
         <footer className="mt-14 border-t border-border pt-8">
           <p className="text-[15px] text-muted">
@@ -116,35 +157,3 @@ export default async function NewsletterIssuePage({
   );
 }
 
-/**
- * Minimal, XSS-safe inline formatter for section text: **bold**, *italic*, and
- * line breaks. Builds React nodes rather than injecting HTML, so authored text
- * can never inject markup.
- */
-function Inline({ text }: { text: string }) {
-  const lines = text.split("\n");
-  return (
-    <>
-      {lines.map((line, i) => (
-        <Fragment key={i}>
-          {i > 0 && <br />}
-          {formatLine(line)}
-        </Fragment>
-      ))}
-    </>
-  );
-}
-
-function formatLine(line: string) {
-  // Split on **bold** and *italic* while keeping the delimiters' content.
-  const parts = line.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).filter(Boolean);
-  return parts.map((part, i) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={i}>{part.slice(2, -2)}</strong>;
-    }
-    if (part.startsWith("*") && part.endsWith("*")) {
-      return <em key={i}>{part.slice(1, -1)}</em>;
-    }
-    return <Fragment key={i}>{part}</Fragment>;
-  });
-}

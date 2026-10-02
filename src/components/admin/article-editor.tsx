@@ -32,6 +32,13 @@ export type EditorArticle = {
   meta_description: string;
   canonical_url: string;
   review_note: string;
+  /** Comma-separated tag names. */
+  tags: string;
+  coauthor_ids: string[];
+  /** Credited people without a writer account. */
+  guest_authors: { name: string; url: string }[];
+  /** The primary author (null for a new article: it's the current user). */
+  author_id: string | null;
 };
 
 const field =
@@ -43,6 +50,7 @@ export function ArticleEditor({
   categories,
   formats,
   series,
+  writers = [],
   canPublish,
   justSaved,
 }: {
@@ -50,6 +58,7 @@ export function ArticleEditor({
   categories: Option[];
   formats: Option[];
   series: Option[];
+  writers?: { id: string; full_name: string }[];
   canPublish: boolean;
   justSaved: boolean;
 }) {
@@ -402,7 +411,9 @@ export function ArticleEditor({
         </div>
 
         {/* Sidebar: metadata */}
-        <aside className="flex flex-col gap-5 bg-bg2 px-5 py-6 sm:px-8">
+        {/* On wide screens the settings column stays put and scrolls on its
+            own, so the writing area scrolls without dragging it along. */}
+        <aside className="flex flex-col gap-5 bg-bg2 px-5 py-6 sm:px-8 lg:sticky lg:top-[65px] lg:h-[calc(100vh-65px)] lg:self-start lg:overflow-y-auto lg:border-l lg:border-border">
           <div>
             <label className={label} htmlFor="slug">
               Slug
@@ -473,6 +484,49 @@ export function ArticleEditor({
               />
             </div>
           </div>
+
+          <div>
+            <label className={label} htmlFor="tags">
+              Tags
+            </label>
+            <input
+              id="tags"
+              name="tags"
+              defaultValue={article.tags}
+              placeholder="rag, evaluation, python"
+              className={field}
+            />
+            <p className="mt-1 text-[10px] leading-snug text-muted">
+              Comma-separated, up to 8. Each tag gets its own page listing every article with it.
+            </p>
+          </div>
+
+          {writers.filter((w) => w.id !== article.author_id).length > 0 && (
+            <fieldset>
+              <legend className={label}>Co-authors</legend>
+              <div className="max-h-40 overflow-y-auto rounded border border-border bg-surface-1 px-3 py-2">
+                {writers
+                  .filter((w) => w.id !== article.author_id)
+                  .map((w) => (
+                    <label key={w.id} className="flex items-center gap-2 py-1 text-[13px]">
+                      <input
+                        type="checkbox"
+                        name="coauthors"
+                        value={w.id}
+                        defaultChecked={article.coauthor_ids.includes(w.id)}
+                        className="size-3.5 accent-[var(--df-gold)]"
+                      />
+                      {w.full_name}
+                    </label>
+                  ))}
+              </div>
+              <p className="mt-1 text-[10px] leading-snug text-muted">
+                They share the byline and the piece appears on their author page.
+              </p>
+            </fieldset>
+          )}
+
+          <GuestAuthors initial={article.guest_authors} labelClass={label} fieldClass={field} />
 
           <div>
             <label className={label} htmlFor="kicker">
@@ -579,5 +633,71 @@ export function ArticleEditor({
       </div>
       </fieldset>
     </form>
+  );
+}
+
+/**
+ * Guest co-authors: a name and an optional profile link each. Submitted as
+ * parallel guest_name / guest_url fields (FormData.getAll keeps their order).
+ */
+function GuestAuthors({
+  initial,
+  labelClass,
+  fieldClass,
+}: {
+  initial: { name: string; url: string }[];
+  labelClass: string;
+  fieldClass: string;
+}) {
+  const [rows, setRows] = useState(initial.length ? initial : []);
+  const update = (i: number, key: "name" | "url", v: string) =>
+    setRows((r) => r.map((row, j) => (j === i ? { ...row, [key]: v } : row)));
+
+  return (
+    <fieldset>
+      <legend className={labelClass}>Guest co-authors</legend>
+      <div className="flex flex-col gap-2">
+        {rows.map((row, i) => (
+          <div key={i} className="rounded border border-border bg-surface-1 p-2">
+            <input
+              name="guest_name"
+              value={row.name}
+              onChange={(e) => update(i, "name", e.target.value)}
+              placeholder="Full name"
+              maxLength={80}
+              className={`${fieldClass} mb-1.5`}
+            />
+            <input
+              name="guest_url"
+              type="url"
+              value={row.url}
+              onChange={(e) => update(i, "url", e.target.value)}
+              placeholder="https://linkedin.com/in/… (optional)"
+              className={`${fieldClass} font-mono text-[12px]`}
+            />
+            <button
+              type="button"
+              onClick={() => setRows((r) => r.filter((_, j) => j !== i))}
+              className="mt-1 text-[11px] text-red hover:underline"
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+        {rows.length < 4 && (
+          <button
+            type="button"
+            onClick={() => setRows((r) => [...r, { name: "", url: "" }])}
+            className="self-start rounded border border-border px-3 py-1.5 text-[12px] hover:border-border-strong hover:bg-surface-1"
+          >
+            + Add guest co-author
+          </button>
+        )}
+      </div>
+      <p className="mt-1 text-[10px] leading-snug text-muted">
+        For people without a writer account. Shown in the byline; the link (LinkedIn, website,
+        Scholar) is optional.
+      </p>
+    </fieldset>
   );
 }
