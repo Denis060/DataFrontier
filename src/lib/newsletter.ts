@@ -259,17 +259,30 @@ export function renderIssue(
     text.push(`\nMORE FROM EVERYDAY DATA SCIENCE\n${extras.more.map((m) => `- ${m.title}: ${m.url}`).join("\n")}\n`);
   }
 
-  if (extras.writers?.length) {
-    const names = extras.writers;
-    const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
-    html.push(`<p style="margin:8px 0 0;font-size:14px;line-height:1.6;color:${MUTED}">This issue features work by <strong style="color:${INK}">${esc(list)}</strong>.</p>`);
-    text.push(`\nThis issue features work by ${list}.\n`);
+  // Partner slot. No audience figures: the site never states numbers it can't stand behind.
+  if (extras.siteUrl) {
+    html.push(
+      `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px;border:1px solid ${LINE};border-radius:8px;background:#ffffff"><tr><td style="padding:16px 20px">
+        <p style="margin:0 0 4px;font-family:Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:${MUTED}">Partner with us</p>
+        <p style="margin:0 0 6px;font-family:${SERIF};font-size:17px;font-weight:700;color:${INK}">Reach people who build with AI and data</p>
+        <p style="margin:0;font-size:14px;line-height:1.6;color:${INK}">Sponsor an issue or a learning path. <a href="${esc(extras.siteUrl)}/advertise" style="${EMAIL_STYLE.link}">See how it works →</a> or just reply to this email.</p>
+      </td></tr></table>`,
+    );
   }
+
+  // Credited in the footer ("brought to you by"), like a masthead.
+  const names = extras.writers ?? [];
+  const writersLine = names.length
+    ? names.length === 1
+      ? names[0]
+      : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`
+    : null;
+  if (writersLine) text.push(`\nThis issue was brought to you by ${writersLine}.\n`);
 
   // Preheader = the inbox preview line. Prefer the summary, then intro, then a
   // safe default; never leak "View in browser…" into the preview.
   const preheader = (summary || content.intro || "The Everyday Brief").slice(0, 140);
-  const body = shell(title, preheader, html.join("\n"), unsubscribeUrl, webUrl, extras.siteUrl);
+  const body = shell(title, preheader, html.join("\n"), unsubscribeUrl, webUrl, extras.siteUrl, writersLine);
 
   const plainText = [
     title,
@@ -298,6 +311,7 @@ function shell(
   unsubscribeUrl: string,
   webUrl: string,
   siteUrl?: string,
+  writers?: string | null,
 ): string {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${esc(title)}</title></head>
 <body style="margin:0;padding:0;background:#f3f1ec;-webkit-text-size-adjust:100%">
@@ -314,11 +328,22 @@ function shell(
           <h1 style="font-family:${SERIF};font-size:26px;line-height:1.15;color:${INK};margin:24px 0 8px">${esc(title)}</h1>
         </td></tr>
         <tr><td style="padding:8px 24px 24px">${bodyHtml}</td></tr>
-        <tr><td style="padding:20px 24px;border-top:1px solid ${LINE};font-family:${SERIF};font-size:12px;color:${MUTED};line-height:1.7">
-          Enjoyed this? Forward it to someone who builds.${siteUrl ? ` They can subscribe free at <a href="${esc(siteUrl)}/newsletter" style="color:${MUTED}">${esc(siteUrl.replace(/^https?:\/\//, ""))}/newsletter</a>.` : ""}<br>
-          <a href="${esc(webUrl)}" style="color:${MUTED}">View in browser</a> ·
-          Everyday Data Science · Practical AI, ML &amp; data science for people who build.<br>
-          <a href="${esc(unsubscribeUrl)}" style="color:${MUTED}">Unsubscribe</a>
+        <tr><td style="padding:0 24px 24px">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${INK};border-radius:8px"><tr><td align="center" style="padding:26px 22px;font-family:${SERIF};color:#f3f1ec;line-height:1.7">
+            ${writers ? `<p style="margin:0 0 14px;font-size:15px;font-weight:700;color:#f3f1ec">This issue was brought to you by ${esc(writers)}.</p>` : ""}
+            <p style="margin:0 0 14px;font-size:14px">
+              <a href="${esc(webUrl)}" style="color:#d4a64a">View in browser</a>
+              ${siteUrl ? ` · <a href="${esc(siteUrl)}/write" style="color:#d4a64a">Write for us</a>` : ""}
+              · <a href="${esc(unsubscribeUrl)}" style="color:#d4a64a">Unsubscribe</a>
+            </p>
+            ${
+              siteUrl
+                ? `<p style="margin:0 0 14px;font-size:14px;color:#f3f1ec">Looking for more? <a href="${esc(siteUrl)}/series" style="color:#d4a64a">Learning paths</a> and <a href="${esc(siteUrl)}/cheat-sheets" style="color:#d4a64a">cheat sheets</a> on the site.</p>
+            <p style="margin:0 0 14px;font-size:13px;color:#c9c4b8">Enjoyed this? Forward it to someone who builds. They can subscribe free at <a href="${esc(siteUrl)}/newsletter" style="color:#d4a64a">${esc(siteUrl.replace(/^https?:\/\//, ""))}/newsletter</a>.</p>`
+                : ""
+            }
+            <p style="margin:0;font-size:12px;color:#9a9486">© ${new Date().getFullYear()} Everyday Data Science · Practical AI, ML &amp; data science for people who build.</p>
+          </td></tr></table>
         </td></tr>
       </table>
     </td></tr>
