@@ -158,6 +158,9 @@ export async function saveArticle(formData: FormData): Promise<Result> {
   // also ignores writer edits to it).
   const reviewNote = staff ? ((formData.get("review_note") as string) || "").trim() || null : undefined;
 
+  // The writer's "what I changed" note when resubmitting.
+  const authorNote = ((formData.get("author_note") as string) || "").trim().slice(0, 2000) || null;
+
   if (TRANSITIONS.has(intent)) {
     const to = intent as ArticleStatus;
     // An outline's guidance lines must be written over before anyone else
@@ -170,8 +173,19 @@ export async function saveArticle(formData: FormData): Promise<Result> {
       return { error: "Only an editor or admin can publish. Submit for review instead." };
     }
     patch.status = to;
-    if (staff && to === "changes_requested") patch.review_note = reviewNote ?? null;
-    if (staff && to === "published") patch.review_note = null;
+    if (staff && to === "changes_requested") {
+      patch.review_note = reviewNote ?? null;
+      // What it looked like when sent back, so the editor can see the edits
+      // on resubmit. A fresh round starts with no writer's note.
+      patch.review_snapshot = body;
+      patch.author_note = null;
+    }
+    if (to === "in_review") patch.author_note = authorNote;
+    if (staff && to === "published") {
+      patch.review_note = null;
+      patch.review_snapshot = null;
+      patch.author_note = null;
+    }
 
     if (to === "published" && id) {
       const { data: cur } = await db.from("articles").select("published_at").eq("id", id).single();
@@ -195,7 +209,14 @@ export async function saveArticle(formData: FormData): Promise<Result> {
     if (!staff && existing && ["published", "archived"].includes(existing.status)) {
       return { error: "This article is live. Ask an editor to make changes to it." };
     }
-    const { error } = await db.from("articles").update(patch).eq("id", id);
+    let { error } = await db.from("articles").update(patch).eq("id", id);
+    // Before migration 20261006120000 the review-loop columns don't exist;
+    // save without them rather than failing the whole save.
+    if (error && /author_note|review_snapshot/.test(error.message)) {
+      delete patch.author_note;
+      delete patch.review_snapshot;
+      ({ error } = await db.from("articles").update(patch).eq("id", id));
+    }
     if (error) return { error: humanize(error.message) };
     // Slug changed: record a 301 from the old URL to the new one so links and
     // any ranking survive. Clear the reverse entry to avoid a redirect loop.
@@ -263,8 +284,14 @@ export async function saveArticle(formData: FormData): Promise<Result> {
     if (to === "in_review") {
       await notify(
         await newsroomInbox(),
-        `Ready for review: ${fields.title}`,
-        reviewSubmittedEmail({ title: fields.title, writer: profile.full_name, editUrl }),
+        `${prevStatus === "changes_requested" ? "Revised" : "Ready for review"}: ${fields.title}`,
+        reviewSubmittedEmail({
+          title: fields.title,
+          writer: profile.full_name,
+          editUrl,
+          resubmitted: prevStatus === "changes_requested",
+          note: authorNote,
+        }),
       );
     } else if (authorId && authorId !== profile.id && (to === "changes_requested" || firstPublish)) {
       const writer = await personFor(authorId);

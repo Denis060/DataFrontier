@@ -20,7 +20,8 @@ export type Workspace = {
   totals: { views: number; reactions: number; comments: number; published: number };
   profile: {
     slug: string | null;
-    checklist: { label: string; done: boolean }[];
+    /** field: the id on /admin/profile that fixes it. */
+    checklist: { label: string; done: boolean; field: string }[];
   };
 };
 
@@ -79,11 +80,11 @@ export async function getWorkspace(profileId: string): Promise<Workspace> {
     profile: {
       slug: p?.slug ?? null,
       checklist: [
-        { label: "Profile photo", done: !!p?.avatar_url },
-        { label: "Title (e.g. ML Engineer at …)", done: !!p?.title?.trim() },
-        { label: "Short bio", done: (p?.bio?.trim().length ?? 0) >= 40 },
-        { label: "LinkedIn", done: has("linkedin") },
-        { label: "ORCID, Google Scholar or GitHub", done: has("orcid") || has("scholar") || has("github") },
+        { label: "Profile photo", done: !!p?.avatar_url, field: "avatar" },
+        { label: "Title (e.g. ML Engineer at …)", done: !!p?.title?.trim(), field: "title" },
+        { label: "Short bio", done: (p?.bio?.trim().length ?? 0) >= 40, field: "bio" },
+        { label: "LinkedIn", done: has("linkedin"), field: "linkedin" },
+        { label: "ORCID, Google Scholar or GitHub", done: has("orcid") || has("scholar") || has("github"), field: "orcid" },
       ],
     },
   };

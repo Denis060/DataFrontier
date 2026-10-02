@@ -127,7 +127,9 @@ export type Database = {
           meta_title: string | null
           og_image: string | null
           published_at: string | null
+          author_note: string | null
           review_note: string | null
+          review_snapshot: string | null
           reading_time: number | null
           search_tsv: unknown
           series_id: string | null
@@ -159,7 +161,9 @@ export type Database = {
           meta_title?: string | null
           og_image?: string | null
           published_at?: string | null
+          author_note?: string | null
           review_note?: string | null
+          review_snapshot?: string | null
           reading_time?: number | null
           search_tsv?: unknown
           series_id?: string | null
@@ -191,7 +195,9 @@ export type Database = {
           meta_title?: string | null
           og_image?: string | null
           published_at?: string | null
+          author_note?: string | null
           review_note?: string | null
+          review_snapshot?: string | null
           reading_time?: number | null
           search_tsv?: unknown
           series_id?: string | null

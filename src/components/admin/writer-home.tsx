@@ -1,10 +1,17 @@
 import Link from "next/link";
-import { ArrowRight, Check, Eye, Heart, MessageSquare, PenLine, Users } from "lucide-react";
+import { ArrowRight, Eye, Heart, MessageSquare, PenLine, Users } from "lucide-react";
 import type { Workspace, WorkspacePiece } from "@/lib/workspace";
+import { ProfileChecklist } from "@/components/admin/profile-checklist";
+import { PublishedCelebration } from "@/components/admin/published-celebration";
 
 // Fixed locale and zone so server and browser render the same text.
 const day = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "";
+
+/** Published within the last `days` days. Rendered per request, so "now" is fine. */
+function isRecent(iso: string | null, days: number) {
+  return !!iso && Date.now() - new Date(iso).getTime() < days * 864e5;
+}
 
 /**
  * A writer's home in the newsroom: what needs their attention, their numbers,
@@ -18,6 +25,10 @@ export function WriterHome({ name, data }: { name: string; data: Workspace }) {
   const review = data.pieces.filter((p) => p.status === "in_review");
   const live = data.pieces.filter((p) => p.status === "published");
   const todo = data.profile.checklist.filter((c) => !c.done).length;
+  // The newest piece that went live in the last two weeks gets a moment.
+  const fresh = [...live]
+    .filter((p) => isRecent(p.published_at, 14))
+    .sort((a, b) => (b.published_at ?? "").localeCompare(a.published_at ?? ""))[0];
 
   return (
     <div className="mx-auto w-full max-w-[1100px] px-4 py-8 sm:px-8 sm:py-10">
@@ -36,6 +47,8 @@ export function WriterHome({ name, data }: { name: string; data: Workspace }) {
           Start a new piece
         </Link>
       </header>
+
+      {fresh && <PublishedCelebration piece={fresh} first={live.length === 1} />}
 
       {sentBack.length > 0 && (
         <section className="mb-6 rounded-lg border border-red/30 bg-red-dim p-4 sm:p-5" aria-label="Needs your attention">
@@ -99,21 +112,7 @@ export function WriterHome({ name, data }: { name: string; data: Workspace }) {
               <p className="font-serif text-lg font-black">Your author page</p>
               {todo > 0 && <span className="font-mono text-[11px] text-gold">{todo} to do</span>}
             </div>
-            <ul className="flex flex-col gap-2">
-              {data.profile.checklist.map((c) => (
-                <li key={c.label} className="flex items-center gap-2.5 text-[13px]">
-                  <span
-                    className={`flex size-5 shrink-0 items-center justify-center rounded-full border ${
-                      c.done ? "border-teal bg-teal-dim text-teal" : "border-border text-transparent"
-                    }`}
-                    aria-hidden
-                  >
-                    <Check className="size-3" />
-                  </span>
-                  <span className={c.done ? "text-muted line-through" : ""}>{c.label}</span>
-                </li>
-              ))}
-            </ul>
+            <ProfileChecklist items={data.profile.checklist} />
             <div className="mt-4 flex flex-col gap-2">
               <Link
                 href="/admin/profile"
