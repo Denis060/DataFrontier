@@ -8,6 +8,8 @@ import { getCurrentProfile, hasRole } from "@/lib/auth";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { InsightsPanel, type Insights } from "@/components/admin/insights-panel";
 import { AuthorPerformance } from "@/components/admin/author-performance";
+import { WriterHome } from "@/components/admin/writer-home";
+import { getWorkspace } from "@/lib/workspace";
 import { sentCounts } from "@/lib/newsletter-stats";
 
 export const metadata: Metadata = { title: "Newsroom", robots: { index: false } };
@@ -74,8 +76,8 @@ async function getInsights(db: Awaited<ReturnType<typeof createClient>>): Promis
   return { totalViews, publishedCount: articles.length, confirmedSubs: confirmed.length, newSubs30, avgOpenRate, topArticles, sources, recentIssues, growth };
 }
 
-export default async function AdminPage() {
-  const profile = await getCurrentProfile();
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
+  const [profile, { view }] = await Promise.all([getCurrentProfile(), searchParams]);
 
   // The proxy keeps anonymous users out. Role is enforced here, because the
   // proxy only knows there is a session — not what it is allowed to do.
@@ -93,6 +95,25 @@ export default async function AdminPage() {
           ← Back to the site
         </Link>
       </main>
+    );
+  }
+
+  // Writers get their own workspace. Staff can open theirs with ?view=writer
+  // (also how the writer experience is checked without a writer account).
+  if (profile.role === "author" || view === "writer") {
+    const data = await getWorkspace(profile.id);
+    return (
+      <AdminShell role={profile.role} name={profile.full_name}>
+        {view === "writer" && profile.role !== "author" && (
+          <p className="border-b border-gold/30 bg-gold-dim px-4 py-2 text-center text-[12px]">
+            You&apos;re seeing the writer workspace for your own pieces.{" "}
+            <Link href="/admin" className="font-semibold text-gold hover:underline">
+              Back to the newsroom overview
+            </Link>
+          </p>
+        )}
+        <WriterHome name={profile.full_name} data={data} />
+      </AdminShell>
     );
   }
 
@@ -184,6 +205,9 @@ export default async function AdminPage() {
           >
             Manage all articles
             <ArrowRight className="size-4" aria-hidden />
+          </Link>
+          <Link href="/admin?view=writer" className="text-[13px] text-gold hover:underline">
+            Your writer workspace →
           </Link>
         </div>
 

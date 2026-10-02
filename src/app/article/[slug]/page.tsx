@@ -39,26 +39,11 @@ import { Comments } from "@/components/article/comments";
 import { ViewCounter } from "@/components/article/view-counter";
 import { SiteHeader } from "@/components/home/site-header";
 import { SiteFooter } from "@/components/home/site-footer";
+import { clampTitle } from "@/lib/seo-title";
 
 type Props = { params: Promise<{ slug: string }> };
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-const TITLE_SUFFIX = " | Everyday Data Science";
-
-/**
- * Search engines truncate the <title> near 60 characters, so keywords at the
- * end vanish from the SERP. Keep it tight: append the site suffix only if the
- * result still fits, otherwise drop it (and trim a long headline at a word
- * boundary). Editors front-load keywords via the `meta_title` override.
- */
-function clampTitle(base: string): string {
-  const withSuffix = base + TITLE_SUFFIX;
-  if (withSuffix.length <= 60) return withSuffix;
-  if (base.length <= 60) return base;
-  const cut = base.slice(0, 60);
-  const sp = cut.lastIndexOf(" ");
-  return (sp > 30 ? cut.slice(0, sp) : cut).trimEnd();
-}
 
 /** Strip Markdown to plain text for a meta-description fallback. */
 function plainText(md: string): string {

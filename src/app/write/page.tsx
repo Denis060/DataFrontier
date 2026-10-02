@@ -57,6 +57,12 @@ export default async function WritePage() {
         ).data
       : null;
   const isWriter = !!profile && profile.role !== "reader";
+  // A pitch saved with the account at sign-up (see auth-form), restored if
+  // this browser has no parked copy. Cleared once the pitch is sent.
+  const savedDraft =
+    profile?.role === "reader" && application?.status !== "pending"
+      ? (((await (await createClient()).auth.getUser()).data.user?.user_metadata?.pitch_draft as Record<string, string> | undefined) ?? null)
+      : null;
   const pending = application?.status === "pending";
 
   return (
@@ -175,6 +181,7 @@ export default async function WritePage() {
               isReader={profile?.role === "reader"}
               application={application}
               authorSlug={profile?.slug ?? null}
+              savedDraft={savedDraft}
             />
           </section>
         </aside>

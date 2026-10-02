@@ -17,6 +17,22 @@ function readKind(): DraftKind | null {
   }
 }
 
+/** The parked pitch, trimmed to a sane size for auth user metadata. */
+export function parkedDraft(): Record<string, string> | null {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const draft = JSON.parse(raw) as Record<string, unknown>;
+    return Object.fromEntries(
+      Object.entries(draft)
+        .filter(([, v]) => typeof v === "string" && v)
+        .map(([k, v]) => [k, (v as string).slice(0, 4000)]),
+    );
+  } catch {
+    return null;
+  }
+}
+
 function subscribe(onChange: () => void) {
   window.addEventListener("storage", onChange);
   return () => window.removeEventListener("storage", onChange);

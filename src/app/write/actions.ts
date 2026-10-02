@@ -17,9 +17,6 @@ export async function applyToWrite(_prev: ApplyState, formData: FormData): Promi
     return { ok: false, message: "Please sign in first, then submit your application." };
   }
 
-  if (!(await rateLimit("apply", { limit: 3, windowSeconds: 3600 }))) {
-    return { ok: false, message: "Too many attempts. Please try again later." };
-  }
   if (profile.role !== "reader") {
     return { ok: false, message: "You already have contributor access." };
   }
@@ -36,6 +33,11 @@ export async function applyToWrite(_prev: ApplyState, formData: FormData): Promi
   if (bio.length < 40) return { ok: false, message: "Tell us a bit more about yourself (40+ characters)." };
   if (topics.length < 10) return { ok: false, message: "What topics do you want to cover?" };
 
+  // Rate-limit only real attempts, so fixing a too-short answer isn't counted.
+  if (!(await rateLimit("apply", { limit: 3, windowSeconds: 3600 }))) {
+    return { ok: false, message: "Too many attempts. Please try again later." };
+  }
+
   // A republish request rides in writing_links as a "Republish: <url>" first
   // line (see parseApplicationLinks), so it needs no schema change.
   const links = [republish ? `${REPUBLISH_PREFIX}${original}` : "", otherLinks].filter(Boolean).join("\n") || null;
@@ -50,6 +52,9 @@ export async function applyToWrite(_prev: ApplyState, formData: FormData): Promi
     return { ok: false, message: "You already have an application under review." };
   }
   if (error) return { ok: false, message: "Something went wrong. Try again." };
+
+  // The pitch is sent; drop the copy saved with the account at sign-up.
+  await db.auth.updateUser({ data: { pitch_draft: null } }).catch(() => null);
 
   // Tell both sides. Before this, a pitch landed silently: the applicant got
   // nothing and the owner only knew by checking the admin list. Sends are

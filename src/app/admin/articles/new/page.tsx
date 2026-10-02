@@ -23,6 +23,8 @@ const EMPTY: EditorArticle = {
   meta_description: "",
   canonical_url: "",
   review_note: "",
+  author_note: "",
+  review_snapshot: "",
   tags: "",
   coauthor_ids: [],
   guest_authors: [],

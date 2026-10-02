@@ -46,6 +46,8 @@ export default async function EditArticlePage({
     meta_description: row.meta_description ?? "",
     canonical_url: row.canonical_url ?? "",
     review_note: row.review_note ?? "",
+    author_note: row.author_note ?? "",
+    review_snapshot: row.review_snapshot ?? "",
     tags: extra.tags,
     coauthor_ids: extra.coauthorIds,
     guest_authors: Array.isArray(row.guest_authors) ? (row.guest_authors as { name: string; url: string }[]) : [],

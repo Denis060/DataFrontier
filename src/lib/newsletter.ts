@@ -14,6 +14,7 @@ export type IssueContent = {
   practical_tip?: IssueSection;
   worth_reading?: IssueSection;
   africa_ai?: IssueSection;
+  writer_spotlight?: IssueSection;
   opportunity?: IssueSection;
   closing_question?: IssueSection;
 };
@@ -53,6 +54,13 @@ export const SECTION_DEFS: SectionDef[] = [
     key: "africa_ai",
     label: "Africa AI",
     hint: "An AI or data story from Africa readers won't find elsewhere.",
+    hasImage: true,
+    hasUrl: true,
+  },
+  {
+    key: "writer_spotlight",
+    label: "Writer spotlight",
+    hint: "Introduce one of our writers: who they are, what they work on, and a piece of theirs to read.",
     hasImage: true,
     hasUrl: true,
   },
@@ -216,13 +224,19 @@ export function renderIssue(
         }</h2>`,
       );
     }
-    if (def.hasImage && sec.image_url && safeHref(sec.image_url)) {
+    if (def.key === "writer_spotlight" && sec.image_url && safeHref(sec.image_url)) {
+      // A portrait, not a banner: small and round beside nothing else, so it
+      // stays a face even in clients that stack everything.
+      parts.push(
+        `<img src="${esc(sec.image_url)}" alt="${esc(sec.title || "Writer")}" width="88" height="88" style="width:88px;height:88px;border-radius:44px;object-fit:cover;display:block;margin:0 0 12px;border:2px solid #e9dcc0">`,
+      );
+    } else if (def.hasImage && sec.image_url && safeHref(sec.image_url)) {
       const alt = sec.title || (sec.text ? sec.text.slice(0, 90) : def.label);
       const img = `<img src="${esc(sec.image_url)}" alt="${esc(alt)}" width="520" style="max-width:100%;height:auto;border-radius:6px;border:1px solid ${LINE};display:block;margin:0 0 14px">`;
       parts.push(href ? `<a href="${esc(href)}">${img}</a>` : img);
     }
     if (sec.text) parts.push(richText(sec.text));
-    if (href) parts.push(`<p style="margin:4px 0 0"><a href="${esc(href)}" style="${EMAIL_STYLE.link}">Read the full piece →</a></p>`);
+    if (href) parts.push(`<p style="margin:4px 0 0"><a href="${esc(href)}" style="${EMAIL_STYLE.link}">${def.key === "writer_spotlight" ? "See their author page" : "Read the full piece"} →</a></p>`);
 
     html.push(
       `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px;border:1px solid ${LINE};border-radius:8px;background:#ffffff"><tr><td style="padding:18px 20px">${parts.join("\n")}</td></tr></table>`,
