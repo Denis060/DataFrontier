@@ -18,6 +18,9 @@ import {
   Quote,
 } from "lucide-react";
 import { useUpload } from "@/components/admin/use-upload";
+import { Callout, CALLOUT_TONES, type CalloutTone } from "@/components/admin/callout-node";
+
+const TONE_LABEL: Record<CalloutTone, string> = { tip: "Tip", note: "Note", warning: "Warning" };
 
 /**
  * WYSIWYG editing over a Markdown string. Initialised from `initialMarkdown`
@@ -41,6 +44,7 @@ export function RichEditor({
     extensions: [
       StarterKit.configure({ link: { openOnClick: false } }),
       Image,
+      Callout,
       Markdown.configure({ html: false, transformPastedText: true }),
     ],
     content: initialMarkdown,
@@ -66,6 +70,15 @@ export function RichEditor({
     if (!file) return;
     const url = await upload(file);
     if (url) editor!.chain().focus().setImage({ src: url }).run();
+  }
+
+  // Wrap the current paragraph(s) in a callout; click again to unwrap, or
+  // pick another tone to switch.
+  function callout(tone: CalloutTone) {
+    const chain = editor!.chain().focus();
+    if (editor!.isActive("callout", { tone })) chain.lift("callout").run();
+    else if (editor!.isActive("callout")) chain.updateAttributes("callout", { tone }).run();
+    else chain.wrapIn("callout", { tone }).run();
   }
 
   function toggleLink() {
@@ -110,6 +123,21 @@ export function RichEditor({
         <button type="button" onClick={toggleLink} className={btn(editor.isActive("link"))} aria-label="Link">
           <LinkIcon className="size-4" />
         </button>
+        <span className="mx-1 h-5 w-px bg-border" />
+        {CALLOUT_TONES.map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => callout(t)}
+            title={`${TONE_LABEL[t]} box: wraps the current paragraph. Click again to remove.`}
+            className={`inline-flex h-8 items-center rounded px-2 text-[12px] font-semibold transition-colors ${
+              editor.isActive("callout", { tone: t }) ? "bg-gold-dim text-gold" : "text-muted hover:bg-surface-1 hover:text-ink"
+            }`}
+          >
+            {TONE_LABEL[t]}
+          </button>
+        ))}
+        <span className="mx-1 h-5 w-px bg-border" />
         <label className={`${btn(false)} cursor-pointer`} aria-label="Insert image" title="Insert image">
           {uploading ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
           <input type="file" accept="image/*" className="hidden" onChange={(e) => { pickImage(e.target.files?.[0]); e.target.value = ""; }} />
