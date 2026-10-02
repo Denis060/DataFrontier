@@ -168,6 +168,10 @@ export async function saveArticle(formData: FormData): Promise<Result> {
     if ((to === "in_review" || to === "published") && /\[(?:Write here|Replace)\b/i.test(body)) {
       return { error: "Some outline notes still say [Write here: …]. Write those sections (or delete them) before submitting." };
     }
+    // Every piece is filed somewhere before anyone reviews or reads it.
+    if ((to === "in_review" || to === "published") && (!fields.category_id || !fields.format_id)) {
+      return { error: "Pick a category and a format before sending this for review." };
+    }
     const authorMoves: ArticleStatus[] = ["in_review"];
     if (!staff && !authorMoves.includes(to)) {
       return { error: "Only an editor or admin can publish. Submit for review instead." };

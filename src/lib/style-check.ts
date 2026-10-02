@@ -49,6 +49,13 @@ const AI_PHRASES: { re: RegExp; label: string }[] = [
   { re: /\belevate (your|the)\b/gi, label: "elevate your" },
   { re: /\bin conclusion\b/gi, label: "in conclusion" },
   { re: /\bplays? a (crucial|pivotal|vital) role\b/gi, label: "plays a crucial role" },
+  { re: /\bsupercharg(e|es|ed|ing)\b/gi, label: "supercharge" },
+  { re: /\b(the )?(AI|data|tech|digital|ML|machine learning) landscape\b/gi, label: "the AI landscape" },
+  { re: /\bin the (world|age) of\b/gi, label: "in the world of" },
+  { re: /\bin an (era|age) of\b/gi, label: "in an era of" },
+  { re: /\bdata is the new oil\b/gi, label: "data is the new oil" },
+  // The "it's not X, it's Y" pivot, within one sentence.
+  { re: /\b(it'?s|this is|that'?s) not (just |only |merely )?[^.!?\n]{1,60}?[,;:] (it'?s|this is|that'?s|but)\b/gi, label: "it's not X, it's Y" },
 ];
 
 // Chatbot leftovers that should never reach readers.
@@ -57,6 +64,22 @@ const LEFTOVER =
 const PLACEHOLDER = /\[(?:write here|replace|insert|your|add|citation needed)\b[^\]]*\]/gi;
 
 const words = (s: string) => (s.match(/\b[\w'’-]+\b/g) ?? []).length;
+
+/** Paragraphs longer than this are hard to read on a phone. */
+const LONG_PARAGRAPH = 120;
+
+/**
+ * Word count and reading time, on the same basis as the saved reading_time
+ * (~200 words a minute, code blocks excluded; see saveArticle).
+ */
+export function draftStats(markdown: string): { words: number; minutes: number } {
+  const n = (markdown ?? "")
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/[#>*_`~\-|]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean).length;
+  return { words: n, minutes: Math.max(1, Math.round(n / 200)) };
+}
 
 export function checkStyle(markdown: string): StyleIssue[] {
   const md = markdown ?? "";
@@ -160,15 +183,43 @@ export function checkStyle(markdown: string): StyleIssue[] {
   }
 
   // 5. Walls of text.
-  const long = prose.split(/\n\s*\n/).filter((p) => !/^\s*([-*]|\d+\.|#|>|\|)/.test(p) && words(p) > 140);
+  const long = prose.split(/\n\s*\n/).filter((p) => !/^\s*([-*]|\d+\.|#|>|\|)/.test(p) && words(p) > LONG_PARAGRAPH);
   if (long.length) {
     issues.push({
       id: "long",
       level: "tip",
       title: `${long.length} very long paragraph${long.length === 1 ? "" : "s"}`,
-      detail: "Paragraphs over ~140 words are hard to read on a phone. Split at the turn in the argument.",
+      detail: `Paragraphs over ~${LONG_PARAGRAPH} words are hard to read on a phone. Split at the turn in the argument.`,
       count: long.length,
+      examples: long.slice(0, 2).map((p) => `${p.trim().slice(0, 60)}…`),
     });
+  }
+
+  // 6. Length. Most published pieces take 6 to 12 minutes (writer's guide).
+  const { minutes } = draftStats(md);
+  if (total_words > 300 && (minutes < 4 || minutes > 12)) {
+    issues.push({
+      id: "length",
+      level: "tip",
+      title: minutes < 4 ? `Short: about ${minutes} min read` : `Long: about ${minutes} min read`,
+      detail:
+        minutes < 4
+          ? "Most of our pieces take 6 to 12 minutes. Is there evidence, an example or a \"what would make me wrong\" section to add?"
+          : "Most of our pieces take 6 to 12 minutes. Cut anything a reader could skip, or split it into a series.",
+    });
+  }
+
+  // 7. A closing question invites replies (optional, after the takeaways).
+  if (total_words > 600) {
+    const tail = prose.trim().split(/\n\s*\n/).slice(-6).join(" ");
+    if (!/\?\s*$|\?["”')\]]?\s/m.test(tail)) {
+      issues.push({
+        id: "question",
+        level: "tip",
+        title: "Ask readers something",
+        detail: "Optional: end with one direct question to readers (after the takeaways). It brings comments and replies.",
+      });
+    }
   }
 
   return issues;

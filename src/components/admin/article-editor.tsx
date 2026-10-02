@@ -11,6 +11,8 @@ import { RichEditor } from "@/components/admin/rich-editor";
 import { StyleCheck } from "@/components/admin/style-check";
 import { WritingHelp } from "@/components/admin/writing-help";
 import { ReviewDiff } from "@/components/admin/review-diff";
+import { SeoDescriptionHint, SeoTitleHint } from "@/components/admin/seo-hints";
+import { SubmitCheck } from "@/components/admin/submit-check";
 import { OUTLINES } from "@/lib/outlines";
 import { useUpload } from "@/components/admin/use-upload";
 import { hasRichIncompatibleSyntax } from "@/lib/mdx-guard";
@@ -155,7 +157,14 @@ export function ArticleEditor({
 
   /** Set the intent, then submit the whole form — so the body is always saved,
    *  whatever button was clicked. */
-  function submitWith(intent: string) {
+  // Sending to the editor goes through the pre-submit sheet first.
+  const [checking, setChecking] = useState<HTMLFormElement | null>(null);
+
+  function submitWith(intent: string, checked = false) {
+    if (intent === "in_review" && !checked) {
+      setChecking(formRef.current);
+      return;
+    }
     setError(null);
     if (intentRef.current) intentRef.current.value = intent;
     formRef.current?.requestSubmit();
@@ -171,6 +180,17 @@ export function ArticleEditor({
       className="flex min-h-screen flex-col"
     >
       {article.id && <input type="hidden" name="id" value={article.id} />}
+      {checking && (
+        <SubmitCheck
+          form={checking}
+          body={body}
+          onCancel={() => setChecking(null)}
+          onConfirm={() => {
+            setChecking(null);
+            submitWith("in_review", true);
+          }}
+        />
+      )}
       {/* Which button was pressed: "save" or a target status. */}
       <input ref={intentRef} type="hidden" name="intent" defaultValue="save" />
 
@@ -360,6 +380,7 @@ export function ArticleEditor({
         <div className="flex min-w-0 flex-col border-border lg:border-r">
           <div className="border-b border-border px-5 py-5 sm:px-8">
             <input
+              id="title"
               name="title"
               defaultValue={article.title}
               required
@@ -395,7 +416,7 @@ export function ArticleEditor({
                 <button
                   type="button"
                   disabled={hasComponents}
-                  title={hasComponents ? "This article uses callouts (:::). Edit it in Markdown." : undefined}
+                  title={hasComponents ? "This article uses Markdown the rich editor can't keep (custom ::: blocks). Edit it in Markdown." : undefined}
                   onClick={() => {
                     setWriteMode("rich");
                     setRichKey((k) => k + 1);
@@ -701,7 +722,7 @@ export function ArticleEditor({
             />
           </div>
 
-          <div>
+          <div id="cover" className="scroll-mt-24">
             <span className={label}>Cover image</span>
             <CoverUpload name="cover_image" defaultUrl={article.cover_image} />
           </div>
@@ -729,9 +750,7 @@ export function ArticleEditor({
               placeholder="Front-load the keyword, aim for ~60 chars"
               className={field}
             />
-            <p className="mt-1 mb-3 text-[10px] leading-snug text-muted">
-              Shown in Google results. Leave blank to use the headline.
-            </p>
+            <SeoTitleHint formRef={formRef} />
             <label className="mb-1 block text-[11px] text-muted" htmlFor="meta_description">Meta description</label>
             <textarea
               id="meta_description"
@@ -742,6 +761,7 @@ export function ArticleEditor({
               placeholder="~155 characters. Leave blank to use the excerpt."
               className={`${field} resize-none`}
             />
+            <SeoDescriptionHint formRef={formRef} />
             <label className="mt-3 mb-1 block text-[11px] text-muted" htmlFor="canonical_url">
               Originally published at
             </label>

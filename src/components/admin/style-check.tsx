@@ -3,7 +3,7 @@
 import { useDeferredValue, useMemo, useState } from "react";
 import { Check, ChevronDown, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { checkStyle } from "@/lib/style-check";
+import { checkStyle, draftStats } from "@/lib/style-check";
 
 const DOT: Record<string, string> = { fix: "bg-red", warn: "bg-gold", tip: "bg-teal" };
 
@@ -17,6 +17,7 @@ export function StyleCheck({ body, onApply }: { body: string; onApply: (next: st
   const issues = useMemo(() => checkStyle(deferred), [deferred]);
   const [open, setOpen] = useState(true);
   const toFix = issues.filter((i) => i.level === "fix").length;
+  const stats = useMemo(() => draftStats(deferred), [deferred]);
 
   if (!deferred.trim()) return null;
 
@@ -41,6 +42,11 @@ export function StyleCheck({ body, onApply }: { body: string; onApply: (next: st
         )}
         <ChevronDown className={`size-4 text-muted transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
       </button>
+
+      <p className="border-t border-border px-3 py-1.5 font-mono text-[10px] text-muted">
+        {stats.words.toLocaleString("en-US")} words · about {stats.minutes} min read
+        <span className="text-muted/70"> · we aim for 6 to 12</span>
+      </p>
 
       {open && (
         <div className="border-t border-border px-3 py-3">
