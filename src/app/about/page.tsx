@@ -18,7 +18,7 @@ export const revalidate = 300;
 // Phrased to hold across the archive (most pieces link sources and say what
 // would prove them wrong; tutorials ship runnable code), matching the
 // homepage promise strip.
-const STANDARDS = [
+const STANDARDS: { icon: typeof FileSearch; title: string; body: string; link?: { href: string; label: string } }[] = [
   {
     icon: FileSearch,
     title: "Sources you can check",
@@ -28,6 +28,7 @@ const STANDARDS = [
     icon: Scale,
     title: "We say what would prove us wrong",
     body: "Most pieces end by naming the result that would overturn them. A conclusion you cannot test is an opinion.",
+    link: { href: "/scoreboard", label: "See the scoreboard" },
   },
   {
     icon: CodeXml,
@@ -43,6 +44,7 @@ const STANDARDS = [
     icon: PencilLine,
     title: "When we're wrong, we say so",
     body: "If a piece gets something wrong, we fix it in the article and note what changed, rather than quietly editing it away.",
+    link: { href: "/corrections", label: "Read the corrections log" },
   },
 ];
 
@@ -81,11 +83,16 @@ export default async function AboutPage() {
             The standards every piece is edited against, whoever writes it.
           </p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {STANDARDS.map(({ icon: Icon, title, body }) => (
+            {STANDARDS.map(({ icon: Icon, title, body, link }) => (
               <div key={title} className="rounded-lg border border-border bg-bg2 p-5">
                 <Icon className="mb-3 size-5 text-gold" aria-hidden />
                 <p className="font-semibold">{title}</p>
                 <p className="mt-1.5 text-[13px] leading-relaxed text-muted">{body}</p>
+                {link && (
+                  <Link href={link.href} className="mt-3 inline-block text-[13px] font-semibold text-gold hover:underline">
+                    {link.label} →
+                  </Link>
+                )}
               </div>
             ))}
           </div>
