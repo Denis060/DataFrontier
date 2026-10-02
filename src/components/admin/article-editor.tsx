@@ -9,6 +9,8 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { CoverUpload } from "@/components/admin/cover-upload";
 import { RichEditor } from "@/components/admin/rich-editor";
 import { StyleCheck } from "@/components/admin/style-check";
+import { WritingHelp } from "@/components/admin/writing-help";
+import { ReviewDiff } from "@/components/admin/review-diff";
 import { OUTLINES } from "@/lib/outlines";
 import { useUpload } from "@/components/admin/use-upload";
 import { hasRichIncompatibleSyntax } from "@/lib/mdx-guard";
@@ -34,6 +36,10 @@ export type EditorArticle = {
   meta_description: string;
   canonical_url: string;
   review_note: string;
+  /** The writer's "what I changed" note on resubmit. */
+  author_note: string;
+  /** The body as it was when sent back, for the editor's "what changed" view. */
+  review_snapshot: string;
   /** Comma-separated tag names. */
   tags: string;
   coauthor_ids: string[];
@@ -155,7 +161,6 @@ export function ArticleEditor({
     formRef.current?.requestSubmit();
   }
 
-  const isDraftish = ["draft", "changes_requested"].includes(article.status);
 
   return (
     <form
@@ -170,13 +175,22 @@ export function ArticleEditor({
       <input ref={intentRef} type="hidden" name="intent" defaultValue="save" />
 
       <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-border bg-bg/90 px-5 py-3 backdrop-blur-xl sm:px-8">
-        <Link href="/admin/articles" className="text-[13px] text-muted hover:text-ink">
-          ← Articles
+        {/* Writers came from their workspace; take them back there. */}
+        <Link href={canPublish ? "/admin/articles" : "/admin"} className="text-[13px] text-muted hover:text-ink">
+          {canPublish ? "← Articles" : "← Your workspace"}
         </Link>
         {article.id && <StatusBadge status={article.status} />}
         {justSaved && <span className="text-[12px] text-teal">Saved</span>}
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
+          {!locked && (
+            <WritingHelp
+              getFormat={() => {
+                const sel = formRef.current?.elements.namedItem("format_id") as HTMLSelectElement | null;
+                return formats.find((f) => f.id === sel?.value)?.name ?? null;
+              }}
+            />
+          )}
           {/* Drafts open as a noindexed preview on the real page; the author
               and staff can read them there (RLS), nobody else can. */}
           {article.id && (
@@ -203,7 +217,36 @@ export function ArticleEditor({
           )}
 
           {/* Every transition saves the whole form first — see submitWith. */}
-          {isDraftish && (
+          {/* Resubmitting after changes: let the writer say what they changed. */}
+          {article.status === "changes_requested" && (
+            <details className="relative">
+              <summary className="cursor-pointer list-none rounded border border-gold/40 px-3.5 py-2 text-[13px] font-medium text-gold hover:bg-gold-dim">
+                Resubmit for review
+              </summary>
+              <div className="absolute right-0 z-30 mt-2 w-[min(90vw,380px)] rounded-md border border-border bg-bg p-3 shadow-xl">
+                <label htmlFor="author_note" className="mb-1.5 block font-mono text-[10px] uppercase tracking-[1.5px] text-muted">
+                  What did you change? (optional)
+                </label>
+                <textarea
+                  id="author_note"
+                  name="author_note"
+                  rows={4}
+                  placeholder="e.g. Expanded the excerpt, added the benchmark source, cut the intro."
+                  className="w-full resize-y rounded border border-border bg-surface-1 px-3 py-2 text-[13px] outline-none focus:border-gold/40"
+                />
+                <p className="mt-1 text-[11px] text-muted">The editor sees this, plus exactly which lines you edited.</p>
+                <button
+                  type="button"
+                  onClick={() => submitWith("in_review")}
+                  disabled={saving}
+                  className="mt-2 w-full rounded bg-gold px-3.5 py-2 text-[13px] font-bold text-on-accent hover:opacity-85 disabled:opacity-60"
+                >
+                  Send it back to the editor
+                </button>
+              </div>
+            </details>
+          )}
+          {article.status === "draft" && (
             <button
               type="button"
               onClick={() => submitWith("in_review")}
@@ -264,6 +307,35 @@ export function ArticleEditor({
             <p className="mt-1 text-muted">No note was left. Reply to the email you received if anything is unclear.</p>
           )}
           <p className="mt-1 text-muted">Make your edits, then press Submit for review again.</p>
+        </div>
+      )}
+
+      {/* The editor sees what came back: the writer's note and the edits. */}
+      {canPublish && article.status === "in_review" && (article.author_note || article.review_snapshot) && (
+        <div className="border-b border-gold/30 bg-gold-dim px-5 py-3 text-[13px] sm:px-8">
+          <p className="font-semibold">Revised after your request</p>
+          {article.review_note && (
+            <p className="mt-1 text-muted">
+              You asked: <span className="whitespace-pre-wrap text-ink">{article.review_note}</span>
+            </p>
+          )}
+          {article.author_note ? (
+            <p className="mt-1 text-muted">
+              The writer says: <span className="whitespace-pre-wrap text-ink">{article.author_note}</span>
+            </p>
+          ) : (
+            <p className="mt-1 text-muted">The writer didn&apos;t leave a note.</p>
+          )}
+          {article.review_snapshot && (
+            <details className="mt-2">
+              <summary className="cursor-pointer text-[13px] font-semibold text-gold hover:underline">
+                Show what changed in the text
+              </summary>
+              <div className="mt-3 max-h-[50vh] overflow-y-auto rounded-md border border-border bg-bg p-3">
+                <ReviewDiff before={article.review_snapshot} after={article.body} />
+              </div>
+            </details>
+          )}
         </div>
       )}
 

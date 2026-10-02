@@ -61,7 +61,7 @@ function AvatarField({ initial }: { initial: string }) {
   }
 
   return (
-    <div>
+    <div id="avatar" className="scroll-mt-24">
       <label className={label}>Avatar</label>
       <div className="flex items-center gap-4">
         {url ? (
@@ -157,6 +157,7 @@ export function AccountForm({ email, profile }: { email: string; profile: Accoun
         </Card>
 
         <Card title="Links">
+          <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <label className={label} htmlFor="linkedin">LinkedIn</label>
             <input id="linkedin" name="linkedin" defaultValue={s.linkedin ?? ""} placeholder="https://linkedin.com/in/…" className={`${field} font-mono text-[12px]`} />
@@ -173,12 +174,14 @@ export function AccountForm({ email, profile }: { email: string; profile: Accoun
             <label className={label} htmlFor="website">Website</label>
             <input id="website" name="website" defaultValue={s.website ?? ""} placeholder="https://…" className={`${field} font-mono text-[12px]`} />
           </div>
+          </div>
         </Card>
 
         <Card title="Research profiles">
           <p className="-mt-1 text-[11px] text-muted">
             These are strong credibility signals for search engines. Any you fill in are linked from your author page and its structured data.
           </p>
+          <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <label className={label} htmlFor="orcid">ORCID</label>
             <input id="orcid" name="orcid" defaultValue={s.orcid ?? ""} placeholder="https://orcid.org/0000-0000-0000-0000" className={`${field} font-mono text-[12px]`} />
@@ -195,9 +198,10 @@ export function AccountForm({ email, profile }: { email: string; profile: Accoun
             <label className={label} htmlFor="youtube">YouTube</label>
             <input id="youtube" name="youtube" defaultValue={s.youtube ?? ""} placeholder="https://youtube.com/@…" className={`${field} font-mono text-[12px]`} />
           </div>
+          </div>
         </Card>
 
-        <div className="flex items-center gap-3">
+        <div className="sticky bottom-0 z-10 -mx-1 flex items-center gap-3 border-t border-border bg-bg/95 px-1 py-3 backdrop-blur">
           <button type="submit" disabled={savingProfile} className="rounded bg-gold px-5 py-2.5 text-[13px] font-bold text-on-accent hover:opacity-85 disabled:opacity-60">
             {savingProfile ? "Saving…" : "Save profile"}
           </button>

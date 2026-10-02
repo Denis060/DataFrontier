@@ -271,10 +271,21 @@ const quote = (text: string) =>
   `<p style="margin:0 0 18px;padding:12px 16px;border-left:3px solid #8a6212;background:#f3efe6;white-space:pre-wrap">${escHtml(text)}</p>`;
 
 /** To the newsroom: a writer sent a piece for review. */
-export function reviewSubmittedEmail(a: { title: string; writer: string; editUrl: string }) {
+export function reviewSubmittedEmail(a: {
+  title: string;
+  writer: string;
+  editUrl: string;
+  resubmitted?: boolean;
+  note?: string | null;
+}) {
   return emailShell(
-    `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 14px">Ready for review: ${escHtml(a.title)}</h1>
-     <p style="margin:0 0 18px">${escHtml(a.writer)} sent this piece for review. Read it, then publish it or request changes with a note.</p>
+    `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 14px">${a.resubmitted ? "Revised" : "Ready for review"}: ${escHtml(a.title)}</h1>
+     <p style="margin:0 0 ${a.note ? 14 : 18}px">${
+       a.resubmitted
+         ? `${escHtml(a.writer)} made the changes you asked for and sent it back${a.note ? " with this note:" : "."} The editor shows exactly what changed.`
+         : `${escHtml(a.writer)} sent this piece for review. Read it, then publish it or request changes with a note.`
+     }</p>
+     ${a.note ? quote(a.note) : ""}
      ${button(a.editUrl, "Open it in the newsroom")}`,
     undefined,
     `${a.writer} sent a piece for review.`,
