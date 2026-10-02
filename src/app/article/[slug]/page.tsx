@@ -314,24 +314,40 @@ export default async function ArticlePage({ params }: Props) {
                   </span>
                 </Link>
               )}
-              {/* Co-authors share the byline. */}
-              {extra.coauthors.length > 0 && (
-                <span className="text-[13px] text-muted">
-                  with{" "}
-                  {extra.coauthors.map((c, i) => (
-                    <span key={c.full_name}>
-                      {i > 0 && (i === extra.coauthors.length - 1 ? " and " : ", ")}
-                      {c.slug ? (
-                        <Link href={`/author/${c.slug}`} className="font-semibold text-ink hover:text-gold">
-                          {c.full_name}
-                        </Link>
-                      ) : (
-                        <span className="font-semibold text-ink">{c.full_name}</span>
-                      )}
-                    </span>
-                  ))}
-                </span>
-              )}
+              {/* Co-authors share the byline: writers link to their author page,
+                  guests to their own profile when they gave one. */}
+              {(() => {
+                const people = [
+                  ...extra.coauthors.map((c) => ({
+                    name: c.full_name,
+                    href: c.slug ? `/author/${c.slug}` : null,
+                    external: false,
+                  })),
+                  ...extra.guests.map((g) => ({ name: g.name, href: g.url, external: true })),
+                ];
+                if (!people.length) return null;
+                return (
+                  <span className="text-[13px] text-muted">
+                    with{" "}
+                    {people.map((p, i) => (
+                      <span key={`${p.name}-${i}`}>
+                        {i > 0 && (i === people.length - 1 ? " and " : ", ")}
+                        {p.href ? (
+                          <Link
+                            href={p.href}
+                            {...(p.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                            className="font-semibold text-ink hover:text-gold"
+                          >
+                            {p.name}
+                          </Link>
+                        ) : (
+                          <span className="font-semibold text-ink">{p.name}</span>
+                        )}
+                      </span>
+                    ))}
+                  </span>
+                );
+              })()}
               <span className="flex w-full items-center gap-2.5 font-mono text-[11px] text-muted sm:ml-auto sm:w-auto">
                 {article.reading_time && <span>{article.reading_time} min read</span>}
                 {article.kicker && (

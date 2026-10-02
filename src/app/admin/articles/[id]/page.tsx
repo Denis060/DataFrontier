@@ -48,6 +48,7 @@ export default async function EditArticlePage({
     review_note: row.review_note ?? "",
     tags: extra.tags,
     coauthor_ids: extra.coauthorIds,
+    guest_authors: Array.isArray(row.guest_authors) ? (row.guest_authors as { name: string; url: string }[]) : [],
     author_id: row.author_id,
   };
 

@@ -35,6 +35,8 @@ export type EditorArticle = {
   /** Comma-separated tag names. */
   tags: string;
   coauthor_ids: string[];
+  /** Credited people without a writer account. */
+  guest_authors: { name: string; url: string }[];
   /** The primary author (null for a new article: it's the current user). */
   author_id: string | null;
 };
@@ -524,6 +526,8 @@ export function ArticleEditor({
             </fieldset>
           )}
 
+          <GuestAuthors initial={article.guest_authors} labelClass={label} fieldClass={field} />
+
           <div>
             <label className={label} htmlFor="kicker">
               Kicker
@@ -629,5 +633,71 @@ export function ArticleEditor({
       </div>
       </fieldset>
     </form>
+  );
+}
+
+/**
+ * Guest co-authors: a name and an optional profile link each. Submitted as
+ * parallel guest_name / guest_url fields (FormData.getAll keeps their order).
+ */
+function GuestAuthors({
+  initial,
+  labelClass,
+  fieldClass,
+}: {
+  initial: { name: string; url: string }[];
+  labelClass: string;
+  fieldClass: string;
+}) {
+  const [rows, setRows] = useState(initial.length ? initial : []);
+  const update = (i: number, key: "name" | "url", v: string) =>
+    setRows((r) => r.map((row, j) => (j === i ? { ...row, [key]: v } : row)));
+
+  return (
+    <fieldset>
+      <legend className={labelClass}>Guest co-authors</legend>
+      <div className="flex flex-col gap-2">
+        {rows.map((row, i) => (
+          <div key={i} className="rounded border border-border bg-surface-1 p-2">
+            <input
+              name="guest_name"
+              value={row.name}
+              onChange={(e) => update(i, "name", e.target.value)}
+              placeholder="Full name"
+              maxLength={80}
+              className={`${fieldClass} mb-1.5`}
+            />
+            <input
+              name="guest_url"
+              type="url"
+              value={row.url}
+              onChange={(e) => update(i, "url", e.target.value)}
+              placeholder="https://linkedin.com/in/… (optional)"
+              className={`${fieldClass} font-mono text-[12px]`}
+            />
+            <button
+              type="button"
+              onClick={() => setRows((r) => r.filter((_, j) => j !== i))}
+              className="mt-1 text-[11px] text-red hover:underline"
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+        {rows.length < 4 && (
+          <button
+            type="button"
+            onClick={() => setRows((r) => [...r, { name: "", url: "" }])}
+            className="self-start rounded border border-border px-3 py-1.5 text-[12px] hover:border-border-strong hover:bg-surface-1"
+          >
+            + Add guest co-author
+          </button>
+        )}
+      </div>
+      <p className="mt-1 text-[10px] leading-snug text-muted">
+        For people without a writer account. Shown in the byline; the link (LinkedIn, website,
+        Scholar) is optional.
+      </p>
+    </fieldset>
   );
 }

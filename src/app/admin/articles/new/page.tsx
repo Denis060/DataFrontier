@@ -25,6 +25,7 @@ const EMPTY: EditorArticle = {
   review_note: "",
   tags: "",
   coauthor_ids: [],
+  guest_authors: [],
   author_id: null, // set per request below: the writer is the primary author
 };
 

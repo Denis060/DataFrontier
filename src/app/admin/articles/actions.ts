@@ -101,6 +101,19 @@ export async function saveArticle(formData: FormData): Promise<Result> {
   // Only a real http(s) URL may become the canonical; anything else would
   // point search engines somewhere broken.
   const canonical = ((formData.get("canonical_url") as string) || "").trim();
+
+  // Guest co-authors: name required, link optional but must be a real link.
+  const guestNames = formData.getAll("guest_name").map((v) => String(v).trim().slice(0, 80));
+  const guestUrls = formData.getAll("guest_url").map((v) => String(v).trim());
+  const guests: { name: string; url: string }[] = [];
+  for (let i = 0; i < guestNames.length && guests.length < 4; i++) {
+    if (!guestNames[i]) continue;
+    const url = guestUrls[i] ?? "";
+    if (url && !/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(url)) {
+      return { error: `The link for ${guestNames[i]} must be a full link starting with https://` };
+    }
+    guests.push({ name: guestNames[i], url });
+  }
   if (canonical && !/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(canonical)) {
     return { error: "“Originally published at” must be a full link starting with https://" };
   }
@@ -128,6 +141,7 @@ export async function saveArticle(formData: FormData): Promise<Result> {
     meta_title: ((formData.get("meta_title") as string) || "").trim() || null,
     meta_description: ((formData.get("meta_description") as string) || "").trim() || null,
     canonical_url: canonical || null,
+    guest_authors: guests,
   } satisfies ArticleUpdate;
 
   // Resolve the status transition, if any, and gate it.
