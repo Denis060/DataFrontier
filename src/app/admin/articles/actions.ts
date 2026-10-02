@@ -160,6 +160,11 @@ export async function saveArticle(formData: FormData): Promise<Result> {
 
   if (TRANSITIONS.has(intent)) {
     const to = intent as ArticleStatus;
+    // An outline's guidance lines must be written over before anyone else
+    // reads it: block submitting or publishing while any remain.
+    if ((to === "in_review" || to === "published") && /\[Replace:/i.test(body)) {
+      return { error: "Some outline lines still say [Replace: …]. Write those sections (or delete them) before submitting." };
+    }
     const authorMoves: ArticleStatus[] = ["in_review"];
     if (!staff && !authorMoves.includes(to)) {
       return { error: "Only an editor or admin can publish. Submit for review instead." };
