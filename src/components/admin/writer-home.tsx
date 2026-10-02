@@ -116,7 +116,7 @@ export function WriterHome({ name, data }: { name: string; data: Workspace }) {
             </ul>
             <div className="mt-4 flex flex-col gap-2">
               <Link
-                href="/account"
+                href="/admin/profile"
                 className="rounded border border-border px-4 py-2.5 text-center text-[13px] font-semibold hover:border-border-strong hover:bg-surface-1"
               >
                 {todo > 0 ? "Complete your profile" : "Edit your profile"}
