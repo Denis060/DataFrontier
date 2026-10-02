@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FileText, GraduationCap, Inbox, LayoutDashboard, LayoutGrid, LogOut, Mail, MessageSquare, Settings, Users, Wrench } from "lucide-react";
 import { AdminNav } from "@/components/admin/admin-nav";
+import { createClient } from "@/lib/supabase/server";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { Role } from "@/lib/auth";
 
@@ -17,7 +18,27 @@ const NAV = [
   { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["admin"] },
 ] as const;
 
-export function AdminShell({
+/**
+ * What's waiting on an editor: pitches to decide, pieces to review, comments
+ * to approve. Counted on every admin page so nothing sits unnoticed.
+ */
+async function waiting(role: Role): Promise<Record<string, number>> {
+  if (role !== "admin" && role !== "editor") return {};
+  const db = await createClient();
+  const head = { count: "exact" as const, head: true };
+  const [apps, review, comments] = await Promise.all([
+    db.from("author_applications").select("id", head).eq("status", "pending"),
+    db.from("articles").select("id", head).eq("status", "in_review"),
+    db.from("comments").select("id", head).eq("is_approved", false),
+  ]);
+  return {
+    "/admin/applications": apps.count ?? 0,
+    "/admin/articles": review.count ?? 0,
+    "/admin/comments": comments.count ?? 0,
+  };
+}
+
+export async function AdminShell({
   role,
   name,
   children,
@@ -27,6 +48,7 @@ export function AdminShell({
   children: React.ReactNode;
 }) {
   const items = NAV.filter((n) => (n.roles as readonly string[]).includes(role));
+  const counts = await waiting(role);
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
@@ -41,7 +63,14 @@ export function AdminShell({
             <SignOut />
           </div>
         </div>
-        <AdminNav items={items.map(({ href, label, icon: Icon }) => ({ href, label, icon: <Icon className="size-4" aria-hidden /> }))} />
+        <AdminNav
+          items={items.map(({ href, label, icon: Icon }) => ({
+            href,
+            label,
+            icon: <Icon className="size-4" aria-hidden />,
+            badge: counts[href] ?? 0,
+          }))}
+        />
         <div className="mt-auto hidden flex-col gap-2 border-t border-border px-4 py-3 lg:flex">
           <div className="flex items-center justify-between gap-2">
             <span className="truncate text-[11px] text-muted">{name}</span>

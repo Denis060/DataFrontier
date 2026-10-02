@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
  * The admin menu, with the current section highlighted. Icons arrive as
  * rendered elements: component functions can't cross the server/client line.
  */
-export function AdminNav({ items }: { items: { href: string; label: string; icon: React.ReactNode }[] }) {
+export function AdminNav({ items }: { items: { href: string; label: string; icon: React.ReactNode; badge?: number }[] }) {
   const pathname = usePathname();
   // Overview matches exactly; every other section also owns its sub-pages.
   const isActive = (href: string) => (href === "/admin" ? pathname === href : pathname.startsWith(href));
@@ -27,6 +27,14 @@ export function AdminNav({ items }: { items: { href: string; label: string; icon
           >
             {n.icon}
             {n.label}
+            {!!n.badge && (
+              <span
+                aria-label={`${n.badge} waiting`}
+                className="ml-auto rounded-full bg-gold px-1.5 py-px font-mono text-[10px] font-bold text-on-accent"
+              >
+                {n.badge}
+              </span>
+            )}
           </Link>
         );
       })}

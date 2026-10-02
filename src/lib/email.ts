@@ -245,6 +245,77 @@ export function newApplicationAdminEmail(a: {
   );
 }
 
+const button = (href: string, label: string) =>
+  `<p style="margin:0 0 18px"><a href="${href}" style="display:inline-block;background:#8a6212;color:#fff;text-decoration:none;padding:12px 22px;border-radius:6px;font-weight:700">${label} &rarr;</a></p>`;
+const quote = (text: string) =>
+  `<p style="margin:0 0 18px;padding:12px 16px;border-left:3px solid #8a6212;background:#f3efe6;white-space:pre-wrap">${escHtml(text)}</p>`;
+
+/** To the newsroom: a writer sent a piece for review. */
+export function reviewSubmittedEmail(a: { title: string; writer: string; editUrl: string }) {
+  return emailShell(
+    `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 14px">Ready for review: ${escHtml(a.title)}</h1>
+     <p style="margin:0 0 18px">${escHtml(a.writer)} sent this piece for review. Read it, then publish it or request changes with a note.</p>
+     ${button(a.editUrl, "Open it in the newsroom")}`,
+    undefined,
+    `${a.writer} sent a piece for review.`,
+  );
+}
+
+/** To the writer: the editor asked for changes, with their note. */
+export function changesRequestedEmail(a: { name: string; title: string; note: string | null; editUrl: string }) {
+  const first = escHtml(a.name.split(" ")[0] || "there");
+  return emailShell(
+    `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 14px">A few changes before it goes live</h1>
+     <p style="margin:0 0 14px">Hi ${first}, thanks for <strong>${escHtml(a.title)}</strong>. Before we publish it, the editor has asked for some changes${a.note ? ":" : "."}</p>
+     ${a.note ? quote(a.note) : ""}
+     <p style="margin:0 0 18px">Make the edits in your draft, then press <strong>Submit for review</strong> again. Questions? Just reply to this email.</p>
+     ${button(a.editUrl, "Open your draft")}`,
+    undefined,
+    `Changes requested on ${a.title}.`,
+  );
+}
+
+/** To the writer: their piece is live. */
+export function articlePublishedEmail(a: { name: string; title: string; url: string }) {
+  const first = escHtml(a.name.split(" ")[0] || "there");
+  return emailShell(
+    `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 14px">You're published, ${first}</h1>
+     <p style="margin:0 0 14px"><strong>${escHtml(a.title)}</strong> is now live on Everyday Data Science, under your name.</p>
+     <p style="margin:0 0 18px">Sharing it with your network is the best way to get it read. Readers can follow you from the article, so they hear about your next piece.</p>
+     ${button(a.url, "See it live")}
+     <p style="margin:0">Thank you for writing with us.</p>`,
+    undefined,
+    `${a.title} is live.`,
+  );
+}
+
+/** To an applicant who wasn't accepted. Kind, short, and leaves the door open. */
+export function applicationDeclinedEmail(a: { name: string; note: string | null }) {
+  const first = escHtml(a.name.split(" ")[0] || "there");
+  return emailShell(
+    `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 14px">Thank you for your pitch, ${first}</h1>
+     <p style="margin:0 0 14px">We read it carefully, and it isn't the right fit for Everyday Data Science this time.</p>
+     ${a.note ? quote(a.note) : ""}
+     <p style="margin:0 0 18px">This isn't a no to you. A different angle, or a piece built on something you've worked on directly, is always welcome, and you can send a new pitch any time.</p>
+     ${button(`${SITE}/write`, "Send a new pitch")}
+     <p style="margin:0">Ibrahim · Everyday Data Science</p>`,
+    undefined,
+    "About your pitch to Everyday Data Science.",
+  );
+}
+
+/** To the newsroom: a reader comment is waiting for approval. */
+export function newCommentEmail(a: { who: string; article: string; body: string }) {
+  return emailShell(
+    `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 14px">New comment to approve</h1>
+     <p style="margin:0 0 10px">${escHtml(a.who)} commented on <strong>${escHtml(a.article)}</strong>:</p>
+     ${quote(a.body.length > 600 ? `${a.body.slice(0, 600)}…` : a.body)}
+     ${button(`${SITE}/admin/comments`, "Review comments")}`,
+    undefined,
+    `${a.who} commented on ${a.article}.`,
+  );
+}
+
 /**
  * Sent when an admin approves a writer application. Before this, approval
  * changed the role silently and the new author never found out.

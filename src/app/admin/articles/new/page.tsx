@@ -22,6 +22,7 @@ const EMPTY: EditorArticle = {
   meta_title: "",
   meta_description: "",
   canonical_url: "",
+  review_note: "",
 };
 
 export default async function NewArticlePage() {

@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createAdminClient, createClient } from "@/lib/supabase/server";
-import { authorApprovedEmail, sendEmail } from "@/lib/email";
+import { createClient } from "@/lib/supabase/server";
+import { applicationDeclinedEmail, authorApprovedEmail } from "@/lib/email";
+import { notify, personFor } from "@/lib/notify";
 import { requireStaff, ensureProfileSlug } from "@/lib/admin";
 import { hasRole } from "@/lib/auth";
 
@@ -53,25 +54,14 @@ export async function decideApplication(
     .eq("id", id);
   if (error) return { error: error.message };
 
-  // Tell the new author. Their address lives in auth.users, which only the
-  // service role can read. A failed send must not undo the approval.
+  // Tell the applicant either way. Their address lives in auth.users, which
+  // only the service role reads (personFor). A failed send never undoes the
+  // decision.
+  const person = await personFor(app.profile_id);
   if (decision === "approved") {
-    try {
-      const admin = createAdminClient();
-      const [{ data: user }, { data: prof }] = await Promise.all([
-        admin.auth.admin.getUserById(app.profile_id),
-        admin.from("profiles").select("full_name").eq("id", app.profile_id).maybeSingle(),
-      ]);
-      if (user?.user?.email) {
-        await sendEmail({
-          to: user.user.email,
-          subject: "You're approved to write for Everyday Data Science",
-          html: authorApprovedEmail(prof?.full_name ?? ""),
-        });
-      }
-    } catch {
-      /* approval stands either way */
-    }
+    await notify(person.email, "You're approved to write for Everyday Data Science", authorApprovedEmail(person.name));
+  } else {
+    await notify(person.email, "About your pitch to Everyday Data Science", applicationDeclinedEmail({ name: person.name, note: note.trim() || null }));
   }
 
   revalidatePath("/admin/applications");
