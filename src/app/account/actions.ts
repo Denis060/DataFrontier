@@ -37,6 +37,8 @@ export async function saveProfile(fd: FormData): Promise<{ error: string } | { o
   if (error) return { error: error.message };
 
   revalidatePath("/account");
+  revalidatePath("/admin/profile"); // the workspace profile checklist
+  revalidatePath("/admin");
   if (me.slug) revalidatePath(`/author/${me.slug}`);
   return { ok: true };
 }
