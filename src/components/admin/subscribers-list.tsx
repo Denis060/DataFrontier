@@ -1,8 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { deleteSubscriber, resendConfirmation, unsubscribe } from "@/app/admin/newsletter/subscribers/actions";
 
 type Row = {
+  id: string;
   email: string;
   status: string;
   source: string | null;
@@ -36,6 +39,7 @@ export function SubscribersList({ subscribers, initialFilter }: { subscribers: R
     (FILTERS as readonly string[]).includes(initialFilter ?? "") ? (initialFilter as (typeof FILTERS)[number]) : "all",
   );
   const [q, setQ] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
   const [limit, setLimit] = useState(PAGE);
 
   const counts = useMemo(() => {
@@ -100,6 +104,8 @@ export function SubscribersList({ subscribers, initialFilter }: { subscribers: R
         </button>
       </div>
 
+      {message && <p className="rounded border border-teal/30 bg-teal-dim px-3 py-2 text-[13px] text-teal">{message}</p>}
+
       {filtered.length === 0 ? (
         <p className="rounded border border-dashed border-border px-6 py-16 text-center text-sm text-muted">
           {q.trim() ? "No subscribers match your search." : "No subscribers yet."}
@@ -113,11 +119,12 @@ export function SubscribersList({ subscribers, initialFilter }: { subscribers: R
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Source</th>
                 <th className="px-4 py-3 font-medium">Subscribed</th>
+                <th className="px-4 py-3 font-medium"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {shown.map((r) => (
-                <tr key={r.email} className="hover:bg-surface-1">
+                <tr key={r.id} className="hover:bg-surface-1">
                   <td className="px-4 py-3 text-[13px]">{r.email}</td>
                   <td className="px-4 py-3">
                     <span className={`rounded px-2 py-0.5 font-mono text-[10px] uppercase tracking-[1px] ${STATUS_STYLE[r.status] ?? "bg-surface-2 text-muted"}`}>
@@ -126,6 +133,9 @@ export function SubscribersList({ subscribers, initialFilter }: { subscribers: R
                   </td>
                   <td className="px-4 py-3 text-[12px] text-muted">{r.source ?? "-"}</td>
                   <td className="px-4 py-3 font-mono text-[11px] text-muted">{fmt(r.created_at)}</td>
+                  <td className="px-4 py-3 text-right">
+                    <RowActions row={r} onMessage={setMessage} />
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -143,5 +153,47 @@ export function SubscribersList({ subscribers, initialFilter }: { subscribers: R
         </button>
       )}
     </div>
+  );
+}
+
+/** Per-subscriber actions; destructive ones ask first. */
+function RowActions({ row, onMessage }: { row: Row; onMessage: (m: string | null) => void }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const run = (fn: () => Promise<{ error: string } | { ok: true; message: string }>, confirmText?: string) => {
+    if (confirmText && !confirm(confirmText)) return;
+    start(async () => {
+      const r = await fn();
+      onMessage("error" in r ? r.error : r.message);
+      router.refresh();
+    });
+  };
+  const btn = "text-[12px] font-semibold transition-colors disabled:opacity-50";
+  return (
+    <span className="inline-flex flex-wrap justify-end gap-3 whitespace-nowrap">
+      {row.status === "pending" && (
+        <button type="button" disabled={pending} onClick={() => run(() => resendConfirmation(row.id))} className={`${btn} text-gold hover:underline`}>
+          Resend confirmation
+        </button>
+      )}
+      {row.status !== "unsubscribed" && (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => run(() => unsubscribe(row.id), `Stop sending the newsletter to ${row.email}?`)}
+          className={`${btn} text-muted hover:text-ink`}
+        >
+          Unsubscribe
+        </button>
+      )}
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() => run(() => deleteSubscriber(row.id), `Delete ${row.email} and their history? This can't be undone.`)}
+        className={`${btn} text-red hover:underline`}
+      >
+        Delete
+      </button>
+    </span>
   );
 }
