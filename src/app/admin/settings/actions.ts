@@ -40,6 +40,25 @@ export async function saveSettings(fd: FormData): Promise<{ error: string } | { 
     return { error: "Badges were malformed." };
   }
 
+  // Brand images and the publication's social profiles must be real links.
+  const url = (k: string) => {
+    const v = str(fd, k);
+    if (v && !/^https?:\/\/\S+$/i.test(v)) throw new Error(k);
+    return v;
+  };
+  let logoUrl: string | null, ogImage: string | null;
+  const socials: Record<string, string> = {};
+  try {
+    logoUrl = url("logo_url");
+    ogImage = url("default_og_image");
+    for (const k of ["x", "linkedin", "github", "youtube", "facebook", "instagram"]) {
+      const v = url(`social_${k}`);
+      if (v) socials[k] = v;
+    }
+  } catch (e) {
+    return { error: `${(e as Error).message.replace(/^social_/, "").replace(/_/g, " ")} must be a full link starting with https://` };
+  }
+
   const fields = {
     site_name: siteName,
     tagline: str(fd, "tagline"),
@@ -56,6 +75,9 @@ export async function saveSettings(fd: FormData): Promise<{ error: string } | { 
     editor_headline: str(fd, "editor_headline"),
     editor_bio: str(fd, "editor_bio"),
     editor_badges: editorBadges as unknown as Json,
+    logo_url: logoUrl,
+    default_og_image: ogImage,
+    socials: socials as unknown as Json,
   };
 
   const db = await createClient();

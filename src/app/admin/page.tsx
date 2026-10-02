@@ -95,14 +95,20 @@ export default async function AdminPage() {
   }
 
   const db = await createClient();
-  // RLS scopes these counts automatically: an author sees only their own
-  // drafts, an editor sees every one.
+  // RLS hides other writers' drafts, but every published article is public,
+  // so an author's counts are scoped explicitly to their own work.
+  const mine = !hasRole(profile.role, ["admin", "editor"]);
+  const count = (status: "draft" | "in_review" | "published") => {
+    const q = db.from("articles").select("id", { count: "exact", head: true }).eq("status", status);
+    return mine ? q.eq("author_id", profile.id) : q;
+  };
   const [drafts, review, published, subscribers] = await Promise.all([
-    db.from("articles").select("id", { count: "exact", head: true }).eq("status", "draft"),
-    db.from("articles").select("id", { count: "exact", head: true }).eq("status", "in_review"),
-    db.from("articles").select("id", { count: "exact", head: true }).eq("status", "published"),
+    count("draft"),
+    count("in_review"),
+    count("published"),
+    // Confirmed only, matching the insights panel (pending ones haven't opted in).
     hasRole(profile.role, ["admin"])
-      ? db.from("newsletter_subscribers").select("id", { count: "exact", head: true })
+      ? db.from("newsletter_subscribers").select("id", { count: "exact", head: true }).eq("status", "confirmed")
       : Promise.resolve({ count: null }),
   ]);
 
@@ -111,7 +117,7 @@ export default async function AdminPage() {
     { label: "In review", value: review.count ?? 0, href: "/admin/articles?status=in_review" },
     { label: "Published", value: published.count ?? 0, href: "/admin/articles?status=published" },
     ...(subscribers.count != null
-      ? [{ label: "Subscribers", value: subscribers.count, href: "/admin/newsletter/subscribers" }]
+      ? [{ label: "Subscribers", value: subscribers.count, href: "/admin/newsletter/subscribers?status=confirmed" }]
       : []),
   ];
 

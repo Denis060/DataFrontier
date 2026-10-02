@@ -13,11 +13,14 @@ export default async function AdminCommentsPage() {
 
   const db = await createClient();
   // Staff read all comments (RLS). Pending first, then most recent.
-  const { data } = await db
+  // Name the FK: comments reach profiles two ways (author, and via
+  // comment_likes), and an ambiguous embed fails the whole query.
+  const { data, error } = await db
     .from("comments")
-    .select("id, article_id, parent_id, body, is_approved, created_at, author:profiles(full_name), article:articles(title, slug)")
+    .select("id, article_id, parent_id, body, is_approved, created_at, author:profiles!comments_profile_id_fkey(full_name), article:articles(title, slug)")
     .order("created_at", { ascending: false });
 
+  if (error) throw new Error(`Loading comments failed: ${error.message}`);
   const rows = data ?? [];
   const pending = rows.filter((r) => !r.is_approved);
   const approved = rows.filter((r) => r.is_approved);

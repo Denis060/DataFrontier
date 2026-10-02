@@ -31,6 +31,7 @@ export type EditorArticle = {
   meta_title: string;
   meta_description: string;
   canonical_url: string;
+  review_note: string;
 };
 
 const field =
@@ -104,9 +105,28 @@ export function ArticleEditor({
     return () => clearTimeout(t);
   }, [body, tab]);
 
+  // Unsaved-changes guard: warn before leaving with edits that aren't saved.
+  // Any input in the form (including the rich editor's contenteditable)
+  // marks it dirty; a save clears it, and the save redirects on success.
+  const dirty = useRef(false);
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!dirty.current) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, []);
+
+  // A writer can't change a live piece (enforced in saveArticle and by the
+  // enforce_publish_rights trigger); the editor says so instead of failing.
+  const locked = !canPublish && ["published", "archived"].includes(article.status);
+
   function onSubmitForm(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    dirty.current = false;
     const data = new FormData(formRef.current!);
     startSave(async () => {
       const res = await saveArticle(data); // redirects on success
@@ -125,7 +145,13 @@ export function ArticleEditor({
   const isDraftish = ["draft", "changes_requested"].includes(article.status);
 
   return (
-    <form ref={formRef} onSubmit={onSubmitForm} className="flex min-h-screen flex-col">
+    <form
+      ref={formRef}
+      onSubmit={onSubmitForm}
+      onInput={() => (dirty.current = true)}
+      onChange={() => (dirty.current = true)}
+      className="flex min-h-screen flex-col"
+    >
       {article.id && <input type="hidden" name="id" value={article.id} />}
       {/* Which button was pressed: "save" or a target status. */}
       <input ref={intentRef} type="hidden" name="intent" defaultValue="save" />
@@ -138,16 +164,20 @@ export function ArticleEditor({
         {justSaved && <span className="text-[12px] text-teal">Saved</span>}
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
-          {article.id && article.status === "published" && (
+          {/* Drafts open as a noindexed preview on the real page; the author
+              and staff can read them there (RLS), nobody else can. */}
+          {article.id && (
             <Link
               href={`/article/${article.slug}`}
               target="_blank"
               className="inline-flex items-center gap-1.5 rounded border border-border px-3 py-2 text-[12px] text-muted hover:text-ink"
             >
-              <ExternalLink className="size-3.5" aria-hidden /> View
+              <ExternalLink className="size-3.5" aria-hidden />
+              {article.status === "published" ? "View" : "Preview on site"}
             </Link>
           )}
 
+          {!locked && (
           <button
             type="button"
             onClick={() => submitWith("save")}
@@ -157,6 +187,7 @@ export function ArticleEditor({
             {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
             Save
           </button>
+          )}
 
           {/* Every transition saves the whole form first — see submitWith. */}
           {isDraftish && (
@@ -180,23 +211,64 @@ export function ArticleEditor({
             </button>
           )}
           {article.id && canPublish && article.status === "in_review" && (
-            <button
-              type="button"
-              onClick={() => submitWith("changes_requested")}
-              disabled={saving}
-              className="rounded border border-red/40 px-3.5 py-2 text-[13px] font-medium text-red hover:bg-red-dim disabled:opacity-60"
-            >
-              Request changes
-            </button>
+            <details className="relative">
+              <summary className="cursor-pointer list-none rounded border border-red/40 px-3.5 py-2 text-[13px] font-medium text-red hover:bg-red-dim">
+                Request changes
+              </summary>
+              <div className="absolute right-0 z-30 mt-2 w-[min(90vw,380px)] rounded-md border border-border bg-bg p-3 shadow-xl">
+                <label htmlFor="review_note" className="mb-1.5 block font-mono text-[10px] uppercase tracking-[1.5px] text-muted">
+                  Note to the writer (emailed to them)
+                </label>
+                <textarea
+                  id="review_note"
+                  name="review_note"
+                  rows={5}
+                  defaultValue={article.review_note}
+                  placeholder="What needs to change, and why."
+                  className="w-full resize-y rounded border border-border bg-surface-1 px-3 py-2 text-[13px] outline-none focus:border-gold/40"
+                />
+                <button
+                  type="button"
+                  onClick={() => submitWith("changes_requested")}
+                  disabled={saving}
+                  className="mt-2 w-full rounded bg-red px-3.5 py-2 text-[13px] font-bold text-white hover:opacity-90 disabled:opacity-60"
+                >
+                  Send back with this note
+                </button>
+              </div>
+            </details>
           )}
         </div>
       </header>
+
+      {/* The writer sees why their piece came back. */}
+      {article.status === "changes_requested" && (
+        <div className="border-b border-red/30 bg-red-dim px-5 py-3 text-[13px] sm:px-8">
+          <p className="font-semibold text-red">The editor asked for changes</p>
+          {article.review_note ? (
+            <p className="mt-1 whitespace-pre-wrap text-ink">{article.review_note}</p>
+          ) : (
+            <p className="mt-1 text-muted">No note was left. Reply to the email you received if anything is unclear.</p>
+          )}
+          <p className="mt-1 text-muted">Make your edits, then press Submit for review again.</p>
+        </div>
+      )}
+
+      {locked && (
+        <p className="border-b border-gold/30 bg-gold-dim px-5 py-2.5 text-[13px] sm:px-8">
+          <strong className="font-semibold">This piece is live.</strong> Published articles are
+          changed by an editor, so every edit gets the same review. To fix something, email the
+          editor with the change you need.
+        </p>
+      )}
 
       {error && (
         <p className="border-b border-red/30 bg-red-dim px-5 py-2.5 text-[13px] text-red sm:px-8">
           {error}
         </p>
       )}
+
+      <fieldset disabled={locked} className="contents">
 
       <div className="grid flex-1 lg:grid-cols-[1fr_320px]">
         {/* Main column: title + body */}
@@ -505,6 +577,7 @@ export function ArticleEditor({
           )}
         </aside>
       </div>
+      </fieldset>
     </form>
   );
 }
