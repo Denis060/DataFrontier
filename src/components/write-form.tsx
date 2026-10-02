@@ -21,6 +21,30 @@ const KINDS = [
   { value: "republish", title: "Republish my post", hint: "Something already on your blog or Medium." },
 ];
 
+type Draft = Partial<Record<(typeof FIELDS)[number], string>>;
+
+/** Put saved values back into the (uncontrolled) fields. */
+function fill(form: HTMLFormElement, draft: Draft) {
+  for (const name of FIELDS) {
+    const value = draft[name];
+    if (!value) continue;
+    if (name === "kind") {
+      const radio = form.querySelector<HTMLInputElement>(`input[name="kind"][value="${value === "republish" ? "republish" : "new"}"]`);
+      if (radio) radio.checked = true;
+    } else {
+      const el = form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null;
+      if (el) el.value = value;
+    }
+  }
+}
+
+function read(form: HTMLFormElement): Draft {
+  const data = new FormData(form);
+  const draft: Draft = {};
+  for (const name of FIELDS) draft[name] = String(data.get(name) ?? "");
+  return draft;
+}
+
 type Application = { status: string; created_at: string; review_note: string | null } | null;
 
 // Fixed locale and zone so the server and browser render the same text.
@@ -34,36 +58,35 @@ export function WriteForm({
   isReader,
   application = null,
   authorSlug = null,
+  savedDraft = null,
 }: {
   signedIn: boolean;
   isReader: boolean;
   application?: Application;
   authorSlug?: string | null;
+  /** The pitch saved with the account at sign-up, for when the confirmation
+   *  link opens in another browser and localStorage is empty. */
+  savedDraft?: Draft | null;
 }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [state, action, pending] = useActionState<ApplyState, FormData>(applyToWrite, null);
+  // React resets a form after every action, even a failed one; keep what was
+  // sent so a validation error doesn't wipe the pitch.
+  const sent = useRef<Draft | null>(null);
 
   // Restore a parked draft straight into the fields (they're uncontrolled).
   useEffect(() => {
     const form = formRef.current;
     if (!form) return;
+    let draft: Draft | null = savedDraft;
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
-      if (!raw) return;
-      const draft = JSON.parse(raw) as Record<string, string>;
-      for (const name of FIELDS) {
-        const value = draft[name];
-        if (!value) continue;
-        if (name === "kind") {
-          const radio = form.querySelector<HTMLInputElement>(`input[name="kind"][value="${value === "republish" ? "republish" : "new"}"]`);
-          if (radio) radio.checked = true;
-        } else {
-          const el = form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null;
-          if (el) el.value = value;
-        }
-      }
+      if (raw) draft = JSON.parse(raw) as Draft;
     } catch {}
+    if (draft) fill(form, draft);
+    // Only on mount: later changes to savedDraft must not overwrite typing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -71,6 +94,11 @@ export function WriteForm({
       try {
         localStorage.removeItem(DRAFT_KEY);
       } catch {}
+    } else if (state && sent.current && formRef.current) {
+      // Wait for React's reset to land, then put the values back.
+      const form = formRef.current;
+      const draft = sent.current;
+      requestAnimationFrame(() => fill(form, draft));
     }
   }, [state]);
 
@@ -118,11 +146,8 @@ export function WriteForm({
   }
 
   function park(form: HTMLFormElement, to: string) {
-    const data = new FormData(form);
-    const draft: Record<string, string> = {};
-    for (const name of FIELDS) draft[name] = String(data.get(name) ?? "");
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(read(form)));
     } catch {}
     router.push(to);
   }
@@ -144,7 +169,9 @@ export function WriteForm({
         action={signedIn ? action : undefined}
         onSubmit={
           signedIn
-            ? undefined
+            ? (e) => {
+                sent.current = read(e.currentTarget);
+              }
             : (e) => {
                 e.preventDefault();
                 park(e.currentTarget, "/signup?next=/write");
