@@ -8,6 +8,7 @@ import { saveArticle, deleteArticle } from "@/app/admin/articles/actions";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { CoverUpload } from "@/components/admin/cover-upload";
 import { RichEditor } from "@/components/admin/rich-editor";
+import { StyleCheck } from "@/components/admin/style-check";
 import { useUpload } from "@/components/admin/use-upload";
 import { hasRichIncompatibleSyntax } from "@/lib/mdx-guard";
 
@@ -414,6 +415,16 @@ export function ArticleEditor({
         {/* On wide screens the settings column stays put and scrolls on its
             own, so the writing area scrolls without dragging it along. */}
         <aside className="flex flex-col gap-5 bg-bg2 px-5 py-6 sm:px-8 lg:sticky lg:top-[65px] lg:h-[calc(100vh-65px)] lg:self-start lg:overflow-y-auto lg:border-l lg:border-border">
+          {!locked && (
+            <StyleCheck
+              body={body}
+              onApply={(next) => {
+                setBody(next);
+                setRichKey((k) => k + 1); // remount the rich editor on the fixed text
+                dirty.current = true;
+              }}
+            />
+          )}
           <div>
             <label className={label} htmlFor="slug">
               Slug
