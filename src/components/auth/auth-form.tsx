@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react";
 import { BrandIcon } from "@/components/brand-icons";
 import { createClient } from "@/lib/supabase/client";
 import type { OAuthProvider } from "@/lib/auth";
-import { useDraftKind } from "@/lib/write-draft";
+import { parkedDraft, useDraftKind } from "@/lib/write-draft";
 
 type Mode = "signin" | "signup";
 
@@ -62,6 +62,9 @@ export function AuthForm({
             full_name: name.trim(),
             ...(forPitch ? { pitch: true } : {}),
             ...(republish ? { republish: true } : {}),
+            // The pitch itself rides with the account, so /write can restore it
+            // even if the confirmation link opens in another browser.
+            ...(forPitch ? { pitch_draft: parkedDraft() } : {}),
           },
           emailRedirectTo: redirectTo(),
         },
