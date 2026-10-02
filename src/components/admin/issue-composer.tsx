@@ -88,7 +88,13 @@ export function IssueComposer({
 
   function onPreview() {
     setError(null);
-    const data = new FormData(formRef.current!);
+    // FormData skips disabled controls, and a sent issue's fields are all
+    // disabled, so read every named field directly.
+    const data = new FormData();
+    for (const el of Array.from(formRef.current!.elements)) {
+      const f = el as HTMLInputElement | HTMLTextAreaElement;
+      if (f.name && f.type !== "file") data.append(f.name, f.value);
+    }
     startPreview(async () => {
       const res = await previewIssue(data);
       if ("error" in res) setError(res.error);
