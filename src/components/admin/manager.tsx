@@ -32,6 +32,7 @@ function initialValues(fields: Field[], row: Row | null): Values {
     else if (f.type === "tags") v[f.name] = Array.isArray(raw) ? raw.join(", ") : "";
     else if (f.type === "date" && !row && f.required) v[f.name] = new Date().toISOString().slice(0, 10);
     else if (f.name === "status" && !row) v[f.name] = "open";
+    else if (!row && f.defaultValue !== undefined) v[f.name] = f.defaultValue;
     else v[f.name] = raw == null ? "" : String(raw);
   }
   // Predictions and corrections start unpublished; everything else starts live.
@@ -193,6 +194,7 @@ function RowForm({
     <div>
       <div className="grid gap-4 sm:grid-cols-2">
         {res.fields.map((f) => {
+          if (f.showWhen && !f.showWhen.in.includes(String(values[f.showWhen.field] ?? ""))) return null;
           const id = `${resourceKey}-${row ? String(row.id) : "new"}-${f.name}`;
           const v = values[f.name];
           if (f.type === "checkbox") {

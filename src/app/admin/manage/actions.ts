@@ -22,6 +22,7 @@ function coerce(f: Field, raw: Value): { value: unknown } | { error: string } {
   if (f.type === "checkbox") return { value: raw === true || raw === "on" || raw === "true" };
 
   const s = typeof raw === "string" ? raw.trim() : "";
+  if (!s && f.defaultValue !== undefined) return coerce({ ...f, defaultValue: undefined }, f.defaultValue);
   if (!s) {
     if (f.required) return { error: `${f.label} is required.` };
     return { value: f.type === "tags" ? [] : null };
@@ -71,6 +72,11 @@ export async function saveRow(key: string, id: string | null, values: Record<str
   const row: Record<string, unknown> = {};
   for (const f of res.fields) {
     let raw = values[f.name] ?? null;
+    // A field that doesn't apply (e.g. an icon on a header link) is cleared.
+    if (f.showWhen && !f.showWhen.in.includes(String(values[f.showWhen.field] ?? ""))) {
+      row[f.name] = f.type === "checkbox" ? false : null;
+      continue;
+    }
     if (f.slugFrom && (typeof raw !== "string" || !raw.trim())) {
       const from = values[f.slugFrom];
       raw = typeof from === "string" ? slugify(from) : null;
