@@ -6,8 +6,12 @@ import { ArticlesList } from "@/components/admin/articles-list";
 
 export const metadata = { title: "Articles | Newsroom", robots: { index: false } };
 
-export default async function AdminArticlesPage() {
-  const profile = await requireStaff();
+export default async function AdminArticlesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const [profile, { status }] = await Promise.all([requireStaff(), searchParams]);
   // Fetch all (already author-scoped in listArticles); the client list filters,
   // searches, and pages.
   const articles = await listArticles(undefined, profile);
@@ -41,7 +45,8 @@ export default async function AdminArticlesPage() {
             </Link>
           </p>
         ) : (
-          <ArticlesList articles={articles} />
+          // The dashboard tiles link here with ?status=…; start on that filter.
+          <ArticlesList articles={articles} initialFilter={status} />
         )}
       </div>
     </AdminShell>

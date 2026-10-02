@@ -159,7 +159,12 @@ export async function saveArticle(formData: FormData): Promise<Result> {
   let articleId = id;
 
   if (id) {
-    const { data: existing } = await db.from("articles").select("slug").eq("id", id).single();
+    const { data: existing } = await db.from("articles").select("slug, status").eq("id", id).single();
+    // Live pieces change only through an editor (also enforced by the
+    // enforce_publish_rights trigger, migration 20261003120000).
+    if (!staff && existing && ["published", "archived"].includes(existing.status)) {
+      return { error: "This article is live. Ask an editor to make changes to it." };
+    }
     const { error } = await db.from("articles").update(patch).eq("id", id);
     if (error) return { error: humanize(error.message) };
     // Slug changed: record a 301 from the old URL to the new one so links and

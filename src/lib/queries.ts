@@ -229,16 +229,20 @@ export type CommentNode = {
  */
 export async function getComments(articleId: string) {
   const db = await createClient();
-  const [{ data }, { data: auth }] = await Promise.all([
+  const [{ data, error }, { data: auth }] = await Promise.all([
     db
       .from("comments")
       .select(
-        "id, body, parent_id, profile_id, is_approved, created_at, author:profiles(full_name, slug, avatar_url, role), likes:comment_likes(count)",
+        "id, body, parent_id, profile_id, is_approved, created_at, author:profiles!comments_profile_id_fkey(full_name, slug, avatar_url, role), likes:comment_likes(count)",
       )
       .eq("article_id", articleId)
       .order("created_at", { ascending: true }),
     db.auth.getUser(),
   ]);
+
+  // Readers shouldn't lose the article over this, but it must not be silent:
+  // an ambiguous embed hid every comment on the site for months.
+  if (error) console.error("getComments:", error.message);
 
   type Raw = Omit<CommentNode, "replies" | "like_count" | "liked"> & { likes: { count: number }[] };
   const raw = (data ?? []) as unknown as Raw[];

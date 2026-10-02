@@ -8,7 +8,12 @@ import { SubscribersList } from "@/components/admin/subscribers-list";
 
 export const metadata = { title: "Subscribers | Newsroom", robots: { index: false } };
 
-export default async function SubscribersPage() {
+export default async function SubscribersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const { status } = await searchParams;
   const profile = await requireStaff();
   // Subscriber emails are PII — admin only, matching the RLS on the table.
   if (!hasRole(profile.role, ["admin"])) redirect("/admin/newsletter");
@@ -37,7 +42,7 @@ export default async function SubscribersPage() {
           </Link>
         </header>
 
-        <SubscribersList subscribers={rows} />
+        <SubscribersList subscribers={rows} initialFilter={status} />
       </div>
     </AdminShell>
   );

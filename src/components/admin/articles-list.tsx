@@ -19,8 +19,10 @@ const PAGE = 25;
 const fmt = (iso: string) =>
   new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
-export function ArticlesList({ articles }: { articles: Row[] }) {
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
+export function ArticlesList({ articles, initialFilter }: { articles: Row[]; initialFilter?: string }) {
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]>(
+    (FILTERS as readonly string[]).includes(initialFilter ?? "") ? (initialFilter as (typeof FILTERS)[number]) : "all",
+  );
   const [q, setQ] = useState("");
   const [limit, setLimit] = useState(PAGE);
 
