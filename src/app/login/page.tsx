@@ -9,9 +9,9 @@ export const metadata: Metadata = { title: "Sign in", robots: { index: false } }
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; error?: string }>;
+  searchParams: Promise<{ next?: string; error?: string; confirmed?: string }>;
 }) {
-  const [{ next, error }, profile, providers] = await Promise.all([
+  const [{ next, error, confirmed }, profile, providers] = await Promise.all([
     searchParams,
     getCurrentProfile(),
     getEnabledProviders(),
@@ -23,6 +23,13 @@ export default async function LoginPage({
   return (
     <Shell>
       <div className="flex min-h-[70vh] flex-col items-center justify-center px-5 py-16 sm:px-8">
+        {/* A confirmation link opened in another browser lands here: the
+            email is confirmed, the visitor just needs to sign in. */}
+        {confirmed && !error && (
+          <p className="mb-6 w-full max-w-[400px] rounded border border-teal/30 bg-teal-dim px-4 py-3 text-[13px] text-teal">
+            <strong className="font-semibold">Your email is confirmed.</strong> Sign in to continue.
+          </p>
+        )}
         {/* The OAuth callback reports failures by redirecting here. */}
         {error && (
           <p className="mb-6 w-full max-w-[400px] rounded border border-red/30 bg-red-dim px-4 py-3 text-[13px] text-red">

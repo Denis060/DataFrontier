@@ -194,6 +194,8 @@ body::before {
 }
 .article-prose h2,
 .article-prose h3 {
+  /* Clear the sticky header when jumped to from the contents list. */
+  scroll-margin-top: 7rem;
   font-family: var(--font-serif), Georgia, serif;
   font-weight: 900;
   letter-spacing: -0.5px;

@@ -3,6 +3,12 @@ import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { ArticleBody } from "@/components/article/article-body";
 import { CoverImage } from "@/components/cover-image";
+import { AuthorBox } from "@/components/article/author-box";
+import { AuthorAvatar } from "@/components/author-avatar";
+import { ArticleTocInline, ArticleTocRail } from "@/components/article/article-toc";
+import { ReadingProgress } from "@/components/article/reading-progress";
+import { extractHeadings } from "@/lib/headings";
+import { renderMarkdown } from "@/lib/markdown";
 import {
   getArticle,
   getArticleReactions,
@@ -16,6 +22,9 @@ import {
   isBookmarked,
   menuFor,
   type ArticleCard,
+  getFollowState,
+  getMostRead,
+  getArticleCorrections,
 } from "@/lib/queries";
 import { getCurrentProfile } from "@/lib/auth";
 import { sameAsLinks } from "@/lib/socials";
@@ -60,8 +69,6 @@ const fmtDate = (iso: string | null) =>
     ? new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
     : null;
 
-const initials = (name: string) =>
-  name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -158,12 +165,15 @@ export default async function ArticlePage({ params }: Props) {
     notFound();
   }
 
-  const [related, moreByAuthor, comments, reactions, bookmarked] = await Promise.all([
+  const [related, moreByAuthor, comments, reactions, bookmarked, authorFollow, mostRead, corrections] = await Promise.all([
     getRelated(article.id, article.category_id),
     getMoreByAuthor(article.author_id, article.id),
     getComments(article.id),
     getArticleReactions(article.id),
     isBookmarked(article.id),
+    getFollowState({ authorId: article.author_id }, profile?.id ?? null),
+    getMostRead(5, article.id),
+    getArticleCorrections(article.id),
   ]);
 
   const seriesNav = article.series_id ? await getArticleSeriesNav(article.series_id, article.id) : null;
@@ -172,6 +182,11 @@ export default async function ArticlePage({ params }: Props) {
   const { settings } = chrome;
   const isDraft = article.status !== "published";
   const shareUrl = `${SITE_URL}/article/${article.slug}`;
+  // Sections for the contents list. Older rows may have no cached HTML yet,
+  // so fall back to rendering the Markdown (the same pipeline ArticleBody uses).
+  const headings = extractHeadings(
+    article.body_html || (article.body ? await renderMarkdown(article.body) : ""),
+  );
   // Credit the original home of a republished piece, but not a canonical
   // that just points back at this site.
   const originalHost = (() => {
@@ -247,11 +262,12 @@ export default async function ArticlePage({ params }: Props) {
       />
 
       {!isDraft && <ViewCounter slug={article.slug} />}
+      <ReadingProgress targetId="article-main" />
 
       <main className="flex-1">
        <CommentsProvider>
         <div className="mx-auto grid w-full max-w-[1240px] gap-12 px-5 py-12 sm:px-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:px-12 lg:py-16">
-          <article className="min-w-0 max-w-[760px] lg:col-start-1 lg:row-start-1">
+          <article id="article-main" className="min-w-0 max-w-[760px] lg:col-start-1 lg:row-start-1">
             {isDraft && (
               <p className="mb-6 rounded border border-gold/30 bg-gold-dim px-3 py-2 font-mono text-[11px] uppercase tracking-[1.5px] text-gold">
                 Preview, status: {article.status.replace("_", " ")}
@@ -268,6 +284,11 @@ export default async function ArticlePage({ params }: Props) {
               <time className="text-xs text-muted" dateTime={article.published_at ?? undefined}>
                 {fmtDate(article.published_at)}
               </time>
+              {corrections.length > 0 && (
+                <a href="#corrections" className="text-xs font-semibold text-gold hover:underline">
+                  Corrected
+                </a>
+              )}
             </div>
 
             <h1 className="mb-4 font-serif text-[clamp(30px,5vw,48px)] leading-[1.1] font-black tracking-[-0.6px]">
@@ -284,9 +305,7 @@ export default async function ArticlePage({ params }: Props) {
                   href={article.author.slug ? `/author/${article.author.slug}` : "#"}
                   className="flex items-center gap-2.5"
                 >
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-linear-135 from-gold to-[#8B6914] font-serif text-[13px] font-bold text-on-accent">
-                    {initials(article.author.full_name)}
-                  </span>
+                  <AuthorAvatar name={article.author.full_name} src={article.author.avatar_url} className="size-9 text-[13px]" />
                   <span className="flex flex-col">
                     <span className="text-[13px] font-semibold">{article.author.full_name}</span>
                     <span className="text-[11px] text-muted">{article.author.title}</span>
@@ -325,10 +344,37 @@ export default async function ArticlePage({ params }: Props) {
               </Link>
             )}
 
+            {headings.length >= 3 && <ArticleTocInline headings={headings} />}
+
             {article.body || article.body_html ? (
               <ArticleBody html={article.body_html} source={article.body} />
             ) : (
               <p className="text-muted">This article has no body yet.</p>
+            )}
+
+            {corrections.length > 0 && (
+              <aside
+                id="corrections"
+                className="mt-10 scroll-mt-28 rounded-md border border-gold/30 bg-gold-dim px-5 py-4"
+              >
+                <p className="mb-2 font-mono text-[10px] uppercase tracking-[2px] text-gold">
+                  {corrections.length === 1 ? "Correction" : "Corrections"}
+                </p>
+                <ul className="flex flex-col gap-2">
+                  {corrections.map((c) => (
+                    <li key={c.id} className="text-[14px] leading-relaxed">
+                      <time dateTime={c.corrected_on} className="font-semibold">
+                        {/* Date-only value: pin to midday UTC so no time zone shifts the day. */}
+                        {fmtDate(`${c.corrected_on}T12:00:00Z`)}:
+                      </time>{" "}
+                      {c.note}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/corrections" className="mt-2 inline-block text-[12px] text-muted hover:text-gold">
+                  How we handle corrections →
+                </Link>
+              </aside>
             )}
 
             {originalHost && (
@@ -363,6 +409,16 @@ export default async function ArticlePage({ params }: Props) {
             {/* Right where the text ends, before the reaction bar: the reader
                 who just finished is the one most likely to subscribe. An
                 invitation, never a gate. */}
+            {article.author && !isDraft && (
+              <AuthorBox
+                author={article.author}
+                authorId={article.author_id}
+                follow={authorFollow}
+                canFollow={!!profile && profile.id !== article.author_id}
+                path={`/article/${article.slug}`}
+              />
+            )}
+
             <InlineSubscribe slug={article.slug} />
 
             {/* Repeated at the foot: the reader who just finished is the one
@@ -424,6 +480,12 @@ export default async function ArticlePage({ params }: Props) {
           <aside className="flex flex-col gap-9 lg:col-start-2 lg:row-start-1 lg:sticky lg:top-28 lg:max-h-[calc(100vh-8rem)] lg:self-start lg:overflow-y-auto lg:pr-1">
             {/* Desktop only. On mobile the rail stacks beneath the article, so
                 this would sit immediately under the in-article share bar. */}
+            {headings.length >= 3 && (
+              <RailSection title="On this page" className="hidden lg:block">
+                <ArticleTocRail headings={headings} />
+              </RailSection>
+            )}
+
             <RailSection title="Share" className="hidden lg:block">
               <ShareBar url={shareUrl} title={article.title} />
             </RailSection>
@@ -441,6 +503,23 @@ export default async function ArticlePage({ params }: Props) {
                 {moreByAuthor.map((r) => (
                   <RailCard key={r.id} a={r} />
                 ))}
+              </RailSection>
+            )}
+
+            {mostRead.length >= 3 && (
+              <RailSection title="Most read">
+                <ol className="flex flex-col">
+                  {mostRead.map((r, i) => (
+                    <li key={r.id} className="border-b border-border last:border-b-0">
+                      <Link href={`/article/${r.slug}`} className="group flex gap-3 py-3">
+                        <span aria-hidden className="w-5 shrink-0 font-serif text-[22px] leading-none font-black text-gold/50 group-hover:text-gold">
+                          {i + 1}
+                        </span>
+                        <span className="font-serif text-[14px] leading-snug font-bold group-hover:opacity-75">{r.title}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ol>
               </RailSection>
             )}
 

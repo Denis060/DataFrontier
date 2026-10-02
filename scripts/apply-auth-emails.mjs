@@ -6,6 +6,7 @@
 // the Management API. Re-run any time the brand changes.
 //
 //   node --env-file=.env.local scripts/apply-auth-emails.mjs
+//   node scripts/apply-auth-emails.mjs --dry   (write the files only, apply nothing)
 //
 // Needs SUPABASE_ACCESS_TOKEN (a personal access token, sbp_...) in the env.
 // Writes a copy of each template to supabase/templates/ for reference.
@@ -20,15 +21,16 @@ import { writeFileSync, mkdirSync } from "node:fs";
 const REF = "tpfislnwpzxkisyqgedc";
 const TOKEN = process.env.SUPABASE_ACCESS_TOKEN;
 const SITE = "https://everydaydatascience.com";
-if (!TOKEN) {
+const DRY = process.argv.includes("--dry");
+if (!TOKEN && !DRY) {
   console.error("Missing SUPABASE_ACCESS_TOKEN. Run with: node --env-file=.env.local scripts/apply-auth-emails.mjs");
   process.exit(1);
 }
 
 const TAGLINE = "Practical AI, ML &amp; data science for people who build.";
 
-/** A compact "here's what you get" list — gold ticks, tight rows, email-safe. */
-function benefitList(items) {
+/** A compact "here's what you get" list: gold ticks, tight rows, email-safe. */
+function benefitList(items, title = "Once you're in") {
   if (!items || !items.length) return "";
   const rows = items
     .map(
@@ -37,12 +39,12 @@ function benefitList(items) {
         `<td style="padding:3px 0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:14px;line-height:1.5;color:#14171c">${t}</td></tr>`,
     )
     .join("");
-  return `<p style="margin:0 0 4px;font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:#5a6270;font-weight:700">Once you're in</p>
+  return `<p style="margin:0 0 4px;font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:#5a6270;font-weight:700">${title}</p>
           <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 20px">${rows}</table>`;
 }
 
 /** Outlook-safe, centered, ~520px shell with the Everyday Data Science wordmark. */
-function shell({ preheader, heading, body, buttonLabel, note, benefits }) {
+function shell({ preheader, heading, body, buttonLabel, note, benefits, benefitsHtml }) {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"></head>
 <body style="margin:0;padding:0;background:#f3f1ec;-webkit-text-size-adjust:100%">
@@ -59,7 +61,7 @@ function shell({ preheader, heading, body, buttonLabel, note, benefits }) {
           <p style="margin:0 0 22px">
             <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#8a6212;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 26px;border-radius:6px;font-family:-apple-system,Segoe UI,Roboto,sans-serif">${buttonLabel} &rarr;</a>
           </p>
-          ${benefitList(benefits)}
+          ${benefitsHtml ?? benefitList(benefits)}
           <p style="margin:0 0 6px;font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:12px;line-height:1.6;color:#5a6270">
             If the button doesn't work, copy and paste this link:
           </p>
@@ -78,36 +80,64 @@ function shell({ preheader, heading, body, buttonLabel, note, benefits }) {
 }
 
 const templates = {
+  // Three versions, chosen from user_metadata set by the sign-up form:
+  // pitch (came from /write), republish (picked "Republish my post"), or
+  // neither (a reader). Only truthiness tests (`if .Data.x`), never `eq`, so
+  // a missing key renders the fallback instead of erroring.
   confirmation: {
-    subject: "Confirm your email — Everyday Data Science",
+    subject: "Confirm your email · Everyday Data Science",
     file: "confirm-signup.html",
     html: shell({
-      preheader: "Confirm your email to activate your Everyday Data Science account.",
-      heading: "Confirm your email",
-      body: "Thanks for joining Everyday Data Science. Confirm your email address to activate your account and start reading.",
+      preheader:
+        "{{ if .Data.pitch }}{{ if .Data.republish }}One click and your republish request is ready to send.{{ else }}One click and your pitch is ready to send.{{ end }}{{ else }}Confirm your email to activate your Everyday Data Science account.{{ end }}",
+      heading:
+        "{{ if .Data.pitch }}{{ if .Data.republish }}Confirm your email to republish your post{{ else }}Confirm your email to send your pitch{{ end }}{{ else }}Confirm your email{{ end }}",
+      body:
+        "{{ if .Data.pitch }}{{ if .Data.republish }}Thanks for offering your post to Everyday Data Science. Confirm your email and we'll take you straight back to the Write for us page, where your republish request is saved and waiting. One more click sends it.{{ else }}Thanks for pitching to Everyday Data Science. Confirm your email and we'll take you straight back to the Write for us page, where your pitch is saved and waiting. One more click sends it.{{ end }}{{ else }}Thanks for joining Everyday Data Science. Confirm your email address to activate your account and start reading.{{ end }}",
       buttonLabel: "Confirm your email",
-      benefits: [
-        "The latest in AI, machine learning &amp; data science",
-        "Practical breakdowns and tips from people who build",
-        "Follow your favorite authors and topics — and get notified when they post",
-        "Join the conversation in the comments",
-      ],
+      benefitsHtml:
+        "{{ if .Data.pitch }}{{ if .Data.republish }}" +
+        benefitList(
+          [
+            "A real person reads every request",
+            "You get a confirmation email the moment it's sent",
+            "If it's a fit: your post republished under your byline, with search engines pointed back to your original",
+          ],
+          "What happens next",
+        ) +
+        "{{ else }}" +
+        benefitList(
+          [
+            "A real person reads every pitch",
+            "You get a confirmation email the moment it's sent",
+            "If it's a fit: an author account, a byline, and an author page",
+          ],
+          "What happens next",
+        ) +
+        "{{ end }}{{ else }}" +
+        benefitList([
+          "The latest in AI, machine learning &amp; data science",
+          "Practical breakdowns and tips from people who build",
+          "Follow your favorite authors and topics, and get notified when they post",
+          "Join the conversation in the comments",
+        ]) +
+        "{{ end }}",
       note: "If you didn't create this account, you can safely ignore this email.",
     }),
   },
   recovery: {
-    subject: "Reset your password — Everyday Data Science",
+    subject: "Reset your password · Everyday Data Science",
     file: "reset-password.html",
     html: shell({
       preheader: "Reset your Everyday Data Science password.",
       heading: "Reset your password",
       body: "We received a request to reset the password for your Everyday Data Science account. Choose a new one below.",
       buttonLabel: "Reset password",
-      note: "If you didn't request this, ignore this email — your password won't change.",
+      note: "If you didn't request this, ignore this email. Your password won't change.",
     }),
   },
   magic_link: {
-    subject: "Your sign-in link — Everyday Data Science",
+    subject: "Your sign-in link · Everyday Data Science",
     file: "magic-link.html",
     html: shell({
       preheader: "Your one-time sign-in link for Everyday Data Science.",
@@ -118,7 +148,7 @@ const templates = {
     }),
   },
   email_change: {
-    subject: "Confirm your new email — Everyday Data Science",
+    subject: "Confirm your new email · Everyday Data Science",
     file: "email-change.html",
     html: shell({
       preheader: "Confirm the new email for your Everyday Data Science account.",
@@ -145,6 +175,10 @@ const templates = {
 mkdirSync("supabase/templates", { recursive: true });
 for (const t of Object.values(templates)) {
   writeFileSync(`supabase/templates/${t.file}`, t.html);
+}
+if (DRY) {
+  console.log("Dry run: wrote supabase/templates/*.html, applied nothing.");
+  process.exit(0);
 }
 
 const payload = {
