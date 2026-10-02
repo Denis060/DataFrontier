@@ -23,7 +23,7 @@ export type IssueDraft = {
   summary: string;
   status: string;
   scheduled_for: string | null;
-  content: Record<string, { text?: string; url?: string; image_url?: string }> & { intro?: string };
+  content: Record<string, { title?: string; text?: string; url?: string; image_url?: string }> & { intro?: string };
 };
 
 const field =
@@ -76,14 +76,17 @@ export function IssueComposer({
       const c = sources.cheatSheets.find((x) => x.url === value);
       if (!c) return;
       setField(`${key}_url`, c.url);
+      setField(`${key}_title`, c.title);
       if (c.image) setField(`${key}_image`, c.image);
-      setField(`${key}_text`, `**${c.title}**${c.description ? `. ${c.description}` : ""}`, true);
+      if (c.description) setField(`${key}_text`, c.description, true);
       return;
     }
     const a = sources.articles.find((x) => x.url === value);
     if (!a) return;
     setField(`${key}_url`, a.url);
-    setField(`${key}_text`, `**${a.title}**${a.excerpt ? `. ${a.excerpt}` : ""}`, true);
+    setField(`${key}_title`, a.title);
+    if (a.image) setField(`${key}_image`, a.image, true);
+    if (a.excerpt) setField(`${key}_text`, a.excerpt, true);
   }
 
   function onPreview() {
@@ -236,13 +239,20 @@ export function IssueComposer({
           <fieldset key={def.key} className="rounded-md border border-border p-4">
             <legend className="px-1 font-mono text-[10px] uppercase tracking-[1.5px] text-gold">{def.label}</legend>
             {def.hint && <p className="mb-2 text-[12px] leading-relaxed text-muted">{def.hint}</p>}
+            <input
+              name={`${def.key}_title`}
+              defaultValue={sec(def.key).title ?? ""}
+              disabled={locked}
+              placeholder={def.key === "closing_question" ? "The question (optional headline)" : "Headline (links to the piece when there's a link)"}
+              className={`${field} mb-2 font-serif text-[15px] font-bold`}
+            />
             <textarea
               name={`${def.key}_text`}
               defaultValue={sec(def.key).text ?? ""}
-              rows={3}
+              rows={5}
               disabled={locked}
-              placeholder="Text (supports **bold**, *italic*)"
-              className={`${field} resize-none`}
+              placeholder={"Text. Blank line = new paragraph.\n- starts a bullet list, 1. a numbered list\n**bold**, *italic*, [link text](https://…)"}
+              className={`${field} resize-y`}
             />
             {def.hasUrl && !locked && (def.key === "cheat_sheet" ? sources.cheatSheets : sources.articles).length > 0 && (
               <select
