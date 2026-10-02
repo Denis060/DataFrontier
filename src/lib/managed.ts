@@ -35,6 +35,10 @@ export type Field = {
   slugFrom?: string;
   /** Full-width on wide screens. */
   wide?: boolean;
+  /** Prefilled on new items, and used when left blank (NOT NULL columns). */
+  defaultValue?: string;
+  /** Only show (and save) this field when another field has one of these values. */
+  showWhen?: { field: string; in: string[] };
 };
 
 export type Resource = {
@@ -58,7 +62,7 @@ export type Resource = {
 };
 
 const ORDER = (column: string, ascending = true) => ({ column, ascending });
-const sortField: Field = { name: "sort_order", label: "Order", type: "number", help: "Lower numbers come first." };
+const sortField: Field = { name: "sort_order", label: "Order", type: "number", defaultValue: "0", help: "Lower numbers come first. Leave 0 if it doesn't matter." };
 const active = (label = "Show on the site"): Field => ({ name: "is_active", label, type: "checkbox" });
 
 export const RESOURCES: Resource[] = [
@@ -84,11 +88,39 @@ export const RESOURCES: Resource[] = [
         ],
       },
       { name: "label", label: "Label", type: "text", required: true },
-      { name: "url", label: "Link", type: "text", required: true, placeholder: "/about or https://…" },
+      {
+        name: "url",
+        label: "Link",
+        type: "text",
+        required: true,
+        placeholder: "/events or https://…",
+        help: "A page on this site (starts with /, e.g. /events) or a full https:// link to another site.",
+      },
       sortField,
-      { name: "is_button", label: "Show as a button (header)", type: "checkbox" },
-      { name: "is_external", label: "Opens another site", type: "checkbox" },
-      { name: "icon", label: "Icon name (social)", type: "text", placeholder: "x, linkedin, github, youtube" },
+      {
+        name: "is_button",
+        label: "Show as a gold button",
+        type: "checkbox",
+        showWhen: { field: "location", in: ["header"] },
+      },
+      { name: "is_external", label: "Opens in a new tab (another site)", type: "checkbox" },
+      {
+        name: "icon",
+        label: "Which icon",
+        type: "select",
+        showWhen: { field: "location", in: ["social"] },
+        options: [
+          { value: "x", label: "X" },
+          { value: "twitter", label: "Twitter" },
+          { value: "linkedin", label: "LinkedIn" },
+          { value: "github", label: "GitHub" },
+          { value: "youtube", label: "YouTube" },
+          { value: "facebook", label: "Facebook" },
+          { value: "instagram", label: "Instagram" },
+          { value: "orcid", label: "ORCID" },
+          { value: "scholar", label: "Google Scholar" },
+        ],
+      },
       active(),
     ],
     orderBy: [ORDER("location"), ORDER("sort_order")],
