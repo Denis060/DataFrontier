@@ -133,6 +133,8 @@ export function ArticleEditor({
   // A writer can't change a live piece (enforced in saveArticle and by the
   // enforce_publish_rights trigger); the editor says so instead of failing.
   const locked = !canPublish && ["published", "archived"].includes(article.status);
+  // Outline notes still to be written over (see lib/outlines).
+  const outlineNotesLeft = (body.match(/\[Write here\b/gi) ?? []).length;
 
   function onSubmitForm(e: React.FormEvent) {
     e.preventDefault();
@@ -383,9 +385,36 @@ export function ArticleEditor({
                 ))}
               </div>
               <p className="mt-2 text-[11px] text-muted">
-                Fills in the sections every piece needs. Replace each [Replace: …] line; the style check
-                flags any you miss.
+                Or just start typing below for a blank page. An outline gives you the sections every
+                piece needs, with a short note in each telling you what to write.
               </p>
+            </div>
+          )}
+
+          {/* While an outline's notes remain, say plainly what they are and how many are left. */}
+          {tab === "write" && outlineNotesLeft > 0 && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border bg-gold-dim px-5 py-2.5 text-[12px] sm:px-8">
+              <p className="min-w-0 flex-1">
+                <strong className="font-semibold">You&apos;re using an outline.</strong> Click each{" "}
+                <span className="font-mono">[Write here: …]</span> note, delete it, and write that part in your own
+                words.{" "}
+                <span className="font-semibold text-gold">
+                  {outlineNotesLeft} {outlineNotesLeft === 1 ? "note" : "notes"} left
+                </span>
+              </p>
+              {!article.id && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!confirm("Remove the outline and start with a blank page?")) return;
+                    setBody("");
+                    setRichKey((k) => k + 1);
+                  }}
+                  className="shrink-0 font-semibold text-muted underline-offset-2 hover:text-ink hover:underline"
+                >
+                  Start blank instead
+                </button>
+              )}
             </div>
           )}
 

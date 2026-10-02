@@ -54,7 +54,7 @@ const AI_PHRASES: { re: RegExp; label: string }[] = [
 // Chatbot leftovers that should never reach readers.
 const LEFTOVER =
   /^\s*(?:certainly|sure|absolutely|of course)[!,.].*$|^.*\b(?:I hope this helps|as an AI( language model)?|let me know if you(?:'d| would) like|here(?:'s| is) (?:a|an|the) (?:revised|polished|improved|rewritten) version)\b.*$/gim;
-const PLACEHOLDER = /\[(?:replace|insert|your|add|citation needed)\b[^\]]*\]/gi;
+const PLACEHOLDER = /\[(?:write here|replace|insert|your|add|citation needed)\b[^\]]*\]/gi;
 
 const words = (s: string) => (s.match(/\b[\w'’-]+\b/g) ?? []).length;
 
