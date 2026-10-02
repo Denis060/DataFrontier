@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/server";
-import { sendMail, welcomeFollowupEmail } from "@/lib/email";
+import { confirmEmail, links, sendMail, welcomeFollowupEmail } from "@/lib/email";
 import { renderIssue, type IssueContent } from "@/lib/newsletter";
 import { issueExtras } from "@/lib/newsletter-extras";
 
@@ -98,7 +98,10 @@ export async function dispatchIssue(issueId: string): Promise<{ sent: number; re
       .from("newsletter_sends")
       .select("id", { count: "exact", head: true })
       .eq("issue_id", issueId)
-      .eq("status", "sent");
+      // Count everything that went out: the webhook may already have moved
+      // some rows on to delivered/bounced/complained (it's seconds behind),
+      // and counting only "sent" under-reported recipients.
+      .in("status", ["sent", "delivered", "bounced", "complained"]);
     await db
       .from("newsletter_issues")
       .update({ status: "sent", sent_at: new Date().toISOString(), recipients: sent ?? 0 })
@@ -196,4 +199,51 @@ export async function dueIssueIds(): Promise<string[]> {
     .select("id, status, scheduled_for")
     .or(`and(status.eq.scheduled,scheduled_for.lte.${nowIso}),status.eq.sending`);
   return (data ?? []).map((i) => i.id);
+}
+
+/**
+ * One reminder to people who subscribed but never clicked their confirmation
+ * link: sent 1 to 7 days after signing up, at most once (confirm_reminder_sent_at).
+ * Half the list was stuck in "pending"; a single nudge recovers many of them.
+ * Does nothing until migration 20261004120000 adds the tracking column.
+ */
+export async function sendConfirmReminders(): Promise<{ sent: number }> {
+  const db = createAdminClient();
+  const now = Date.now();
+  const { data: due, error } = await db
+    .from("newsletter_subscribers")
+    .select("id, email, confirm_token, unsubscribe_token")
+    .eq("status", "pending")
+    .is("confirm_reminder_sent_at", null)
+    .lte("created_at", new Date(now - 86_400_000).toISOString())
+    .gte("created_at", new Date(now - 7 * 86_400_000).toISOString())
+    .limit(100);
+  if (error || !due || due.length === 0) return { sent: 0 };
+
+  const { data: suppressed } = await db.from("email_suppressions").select("email");
+  const blocked = new Set((suppressed ?? []).map((s) => s.email.toLowerCase()));
+
+  let sent = 0;
+  for (const sub of due) {
+    // Mark first so a mid-run crash can't send twice.
+    await db.from("newsletter_subscribers").update({ confirm_reminder_sent_at: new Date().toISOString() }).eq("id", sub.id);
+    if (blocked.has(sub.email.toLowerCase())) continue;
+    const unsubscribeUrl = links.unsubscribe(sub.unsubscribe_token);
+    try {
+      await sendMail({
+        to: sub.email,
+        subject: "Still want The Everyday Brief? One click to confirm",
+        html: confirmEmail(links.confirm(sub.confirm_token), unsubscribeUrl),
+        text: `You signed up for The Everyday Brief but haven't confirmed yet. Confirm here: ${links.confirm(sub.confirm_token)}\n\nIf you didn't sign up, ignore this email and you won't hear from us again.`,
+        headers: {
+          "List-Unsubscribe": `<${unsubscribeUrl}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
+      });
+      sent++;
+    } catch {
+      /* already marked; skip */
+    }
+  }
+  return { sent };
 }

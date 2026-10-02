@@ -48,11 +48,15 @@ export async function POST(request: Request) {
   const hard = event.type === "email.bounced" && event.data?.bounce?.type === "Permanent";
 
   const db = createAdminClient();
+  // p_link only on clicks: the 4-argument call keeps working whether or not
+  // migration 20261004120000 (which adds p_link) has been applied yet.
+  const link = event.type === "email.clicked" ? event.data?.click?.link?.slice(0, 2000) : undefined;
   const { error } = await db.rpc("record_email_event", {
     p_event_id: headers["svix-id"],
     p_resend_id: resendId,
     p_type: event.type,
     p_hard: hard,
+    ...(link ? { p_link: link } : {}),
   });
   if (error) {
     // 500 → Resend retries; our idempotency makes that safe.
@@ -67,5 +71,6 @@ type ResendEvent = {
   data?: {
     email_id?: string;
     bounce?: { type?: string; subType?: string; message?: string };
+    click?: { link?: string };
   };
 };

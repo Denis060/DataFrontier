@@ -30,6 +30,25 @@ const resend = apiKey ? new Resend(apiKey) : null;
 type SendArgs = { to: string | string[]; subject: string; html: string };
 
 /**
+ * Where replies go. The sending address (news.everydaydatascience.com) has no
+ * inbox, so without this every "just hit reply" would vanish. Uses the contact
+ * email from site settings, read once per server instance.
+ */
+let replyToCache: Promise<string | undefined> | null = null;
+function replyTo(): Promise<string | undefined> {
+  replyToCache ??= (async () => {
+    try {
+      const { createAdminClient } = await import("@/lib/supabase/server");
+      const { data } = await createAdminClient().from("site_settings").select("contact_email").eq("id", true).maybeSingle();
+      return data?.contact_email ?? undefined;
+    } catch {
+      return undefined;
+    }
+  })();
+  return replyToCache;
+}
+
+/**
  * Sends via Resend, or degrades to a logged no-op when RESEND_API_KEY is
  * absent — so the subscription flow works in development before the key lands,
  * and the confirm URL is printed to the server console instead of emailed.
@@ -40,7 +59,7 @@ export async function sendEmail({ to, subject, html }: SendArgs) {
     console.info(`[email:skipped] no RESEND_API_KEY — would send "${subject}" to ${to}`);
     return { skipped: true as const };
   }
-  const { error } = await resend.emails.send({ from, to, subject, html });
+  const { error } = await resend.emails.send({ from, to, subject, html, replyTo: await replyTo() });
   if (error) throw new Error(`Resend: ${error.message}`);
   return { skipped: false as const };
 }
@@ -68,7 +87,7 @@ export async function sendMail({ to, subject, html, text, headers, idempotencyKe
     return { id: `mock_${idempotencyKey ?? to}`, skipped: true as const };
   }
   const { data, error } = await resend.emails.send(
-    { from, to, subject, html, text, headers },
+    { from, to, subject, html, text, headers, replyTo: await replyTo() },
     idempotencyKey ? { idempotencyKey } : undefined,
   );
   if (error) throw new Error(`Resend: ${error.message}`);
@@ -82,8 +101,9 @@ export async function sendBatch(emails: SendArgs[]) {
     return { skipped: true as const, sent: 0 };
   }
   let sent = 0;
+  const reply = await replyTo();
   for (let i = 0; i < emails.length; i += 100) {
-    const chunk = emails.slice(i, i + 100).map((e) => ({ from, ...e }));
+    const chunk = emails.slice(i, i + 100).map((e) => ({ from, replyTo: reply, ...e }));
     const { error } = await resend.batch.send(chunk);
     if (error) throw new Error(`Resend batch: ${error.message}`);
     sent += chunk.length;

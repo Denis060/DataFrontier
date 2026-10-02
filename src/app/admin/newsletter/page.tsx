@@ -1,3 +1,4 @@
+import { sentCounts } from "@/lib/newsletter-stats";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { requireStaff } from "@/lib/admin";
@@ -19,7 +20,9 @@ export default async function AdminNewsletterPage() {
     db.from("newsletter_subscribers").select("id", { count: "exact", head: true }).eq("status", "pending"),
   ]);
 
-  const issues = issuesRes.data ?? [];
+  const raw = issuesRes.data ?? [];
+  const ledger = await sentCounts(db, raw.filter((i) => i.status === "sent" || i.status === "sending").map((i) => i.id));
+  const issues = raw.map((i) => ({ ...i, recipients: ledger.get(i.id) ?? i.recipients }));
 
   return (
     <AdminShell role={profile.role} name={profile.full_name}>

@@ -8,6 +8,7 @@ import { getCurrentProfile, hasRole } from "@/lib/auth";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { InsightsPanel, type Insights } from "@/components/admin/insights-panel";
 import { AuthorPerformance } from "@/components/admin/author-performance";
+import { sentCounts } from "@/lib/newsletter-stats";
 
 export const metadata: Metadata = { title: "Newsroom", robots: { index: false } };
 
@@ -22,7 +23,7 @@ async function getInsights(db: Awaited<ReturnType<typeof createClient>>): Promis
       .eq("status", "published")
       .order("view_count", { ascending: false }),
     db.from("newsletter_subscribers").select("source, created_at, confirmed_at, status"),
-    db.from("newsletter_issues").select("title, sent_at, recipients, delivered_count, opened_count").eq("status", "sent").order("sent_at", { ascending: false }),
+    db.from("newsletter_issues").select("id, title, sent_at, recipients, delivered_count, opened_count").eq("status", "sent").order("sent_at", { ascending: false }),
   ]);
 
   type ArtRow = { slug: string; title: string; view_count: number | null; reactions: { count: number }[]; comments: { count: number }[] };
@@ -60,12 +61,13 @@ async function getInsights(db: Awaited<ReturnType<typeof createClient>>): Promis
     .slice(0, 5);
 
   const sent = issues.data ?? [];
+  const ledger = await sentCounts(db, sent.slice(0, 5).map((i) => i.id));
   const rates = sent.filter((i) => (i.delivered_count ?? 0) > 0).map((i) => (i.opened_count ?? 0) / (i.delivered_count ?? 1));
   const avgOpenRate = rates.length ? Math.round((rates.reduce((s, r) => s + r, 0) / rates.length) * 100) : null;
   const recentIssues = sent.slice(0, 5).map((i) => ({
     title: i.title,
     sentAt: i.sent_at,
-    recipients: i.recipients ?? 0,
+    recipients: ledger.get(i.id) ?? i.recipients ?? 0,
     openRate: (i.delivered_count ?? 0) > 0 ? Math.round(((i.opened_count ?? 0) / (i.delivered_count ?? 1)) * 100) : null,
   }));
 
