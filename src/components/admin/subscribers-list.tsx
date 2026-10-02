@@ -31,8 +31,10 @@ function toCsv(rows: Row[]): string {
   return [head.join(","), ...lines].join("\n");
 }
 
-export function SubscribersList({ subscribers }: { subscribers: Row[] }) {
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
+export function SubscribersList({ subscribers, initialFilter }: { subscribers: Row[]; initialFilter?: string }) {
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]>(
+    (FILTERS as readonly string[]).includes(initialFilter ?? "") ? (initialFilter as (typeof FILTERS)[number]) : "all",
+  );
   const [q, setQ] = useState("");
   const [limit, setLimit] = useState(PAGE);
 

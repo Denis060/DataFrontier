@@ -104,9 +104,28 @@ export function ArticleEditor({
     return () => clearTimeout(t);
   }, [body, tab]);
 
+  // Unsaved-changes guard: warn before leaving with edits that aren't saved.
+  // Any input in the form (including the rich editor's contenteditable)
+  // marks it dirty; a save clears it, and the save redirects on success.
+  const dirty = useRef(false);
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!dirty.current) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, []);
+
+  // A writer can't change a live piece (enforced in saveArticle and by the
+  // enforce_publish_rights trigger); the editor says so instead of failing.
+  const locked = !canPublish && ["published", "archived"].includes(article.status);
+
   function onSubmitForm(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    dirty.current = false;
     const data = new FormData(formRef.current!);
     startSave(async () => {
       const res = await saveArticle(data); // redirects on success
@@ -125,7 +144,13 @@ export function ArticleEditor({
   const isDraftish = ["draft", "changes_requested"].includes(article.status);
 
   return (
-    <form ref={formRef} onSubmit={onSubmitForm} className="flex min-h-screen flex-col">
+    <form
+      ref={formRef}
+      onSubmit={onSubmitForm}
+      onInput={() => (dirty.current = true)}
+      onChange={() => (dirty.current = true)}
+      className="flex min-h-screen flex-col"
+    >
       {article.id && <input type="hidden" name="id" value={article.id} />}
       {/* Which button was pressed: "save" or a target status. */}
       <input ref={intentRef} type="hidden" name="intent" defaultValue="save" />
@@ -148,6 +173,7 @@ export function ArticleEditor({
             </Link>
           )}
 
+          {!locked && (
           <button
             type="button"
             onClick={() => submitWith("save")}
@@ -157,6 +183,7 @@ export function ArticleEditor({
             {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
             Save
           </button>
+          )}
 
           {/* Every transition saves the whole form first — see submitWith. */}
           {isDraftish && (
@@ -192,11 +219,21 @@ export function ArticleEditor({
         </div>
       </header>
 
+      {locked && (
+        <p className="border-b border-gold/30 bg-gold-dim px-5 py-2.5 text-[13px] sm:px-8">
+          <strong className="font-semibold">This piece is live.</strong> Published articles are
+          changed by an editor, so every edit gets the same review. To fix something, email the
+          editor with the change you need.
+        </p>
+      )}
+
       {error && (
         <p className="border-b border-red/30 bg-red-dim px-5 py-2.5 text-[13px] text-red sm:px-8">
           {error}
         </p>
       )}
+
+      <fieldset disabled={locked} className="contents">
 
       <div className="grid flex-1 lg:grid-cols-[1fr_320px]">
         {/* Main column: title + body */}
@@ -505,6 +542,7 @@ export function ArticleEditor({
           )}
         </aside>
       </div>
+      </fieldset>
     </form>
   );
 }
