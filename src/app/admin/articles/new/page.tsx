@@ -25,7 +25,7 @@ const EMPTY: EditorArticle = {
   review_note: "",
   tags: "",
   coauthor_ids: [],
-  author_id: null,
+  author_id: null, // set per request below: the writer is the primary author
 };
 
 export default async function NewArticlePage() {
@@ -34,7 +34,7 @@ export default async function NewArticlePage() {
 
   return (
     <ArticleEditor
-      article={EMPTY}
+      article={{ ...EMPTY, author_id: profile.id }}
       categories={categories}
       formats={formats}
       series={series}
