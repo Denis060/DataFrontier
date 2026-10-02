@@ -101,7 +101,11 @@ export default async function NewsletterIssuePage({
                   <img
                     src={s.image_url}
                     alt={s.title || (s.text ? s.text.slice(0, 90) : def.label)}
-                    className="mt-3 w-full rounded-md border border-border"
+                    className={
+                      def.key === "writer_spotlight"
+                        ? "mt-3 size-[88px] rounded-full border-2 border-gold/30 object-cover"
+                        : "mt-3 w-full rounded-md border border-border"
+                    }
                   />
                 )}
                 {s.text && (
@@ -112,7 +116,7 @@ export default async function NewsletterIssuePage({
                 {def.hasUrl && s.url && (
                   <p className="mt-3">
                     <a href={s.url} target="_blank" rel="noopener noreferrer" className="font-bold text-gold hover:underline">
-                      Read the full piece →
+                      {def.key === "writer_spotlight" ? "See their author page →" : "Read the full piece →"}
                     </a>
                   </p>
                 )}

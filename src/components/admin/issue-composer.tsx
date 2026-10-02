@@ -72,6 +72,19 @@ export function IssueComposer({
   /** Fill a section from one of our own articles or cheat sheets. */
   function fillFromOurs(key: string, value: string) {
     if (!value) return;
+    if (key === "writer_spotlight") {
+      const w = sources.writers.find((x) => x.url === value);
+      if (!w) return;
+      setField(`${key}_title`, w.name);
+      setField(`${key}_url`, w.url);
+      if (w.image) setField(`${key}_image`, w.image);
+      const intro = [w.title, w.bio].filter(Boolean).join(". ");
+      const read = w.latest ? `
+
+Read their latest: [${w.latest.title}](${w.latest.url})` : "";
+      setField(`${key}_text`, `${intro}${read}`.trim(), true);
+      return;
+    }
     if (key === "cheat_sheet") {
       const c = sources.cheatSheets.find((x) => x.url === value);
       if (!c) return;
@@ -254,7 +267,7 @@ export function IssueComposer({
               placeholder={"Text. Blank line = new paragraph.\n- starts a bullet list, 1. a numbered list\n**bold**, *italic*, [link text](https://…)"}
               className={`${field} resize-y`}
             />
-            {def.hasUrl && !locked && (def.key === "cheat_sheet" ? sources.cheatSheets : sources.articles).length > 0 && (
+            {def.hasUrl && !locked && (def.key === "cheat_sheet" ? sources.cheatSheets : def.key === "writer_spotlight" ? sources.writers : sources.articles).length > 0 && (
               <select
                 defaultValue=""
                 onChange={(e) => {
@@ -265,13 +278,23 @@ export function IssueComposer({
                 aria-label={`Fill ${def.label} from one of ours`}
               >
                 <option value="">
-                  {def.key === "cheat_sheet" ? "Use one of our cheat sheets…" : "Use one of our articles…"}
+                  {def.key === "cheat_sheet"
+                    ? "Use one of our cheat sheets…"
+                    : def.key === "writer_spotlight"
+                      ? "Pick a writer to feature…"
+                      : "Use one of our articles…"}
                 </option>
-                {(def.key === "cheat_sheet" ? sources.cheatSheets : sources.articles).map((o) => (
-                  <option key={o.url} value={o.url}>
-                    {o.title}
-                  </option>
-                ))}
+                {def.key === "writer_spotlight"
+                  ? sources.writers.map((w) => (
+                      <option key={w.url} value={w.url}>
+                        {w.name}
+                      </option>
+                    ))
+                  : (def.key === "cheat_sheet" ? sources.cheatSheets : sources.articles).map((o) => (
+                      <option key={o.url} value={o.url}>
+                        {o.title}
+                      </option>
+                    ))}
               </select>
             )}
             {def.hasUrl && (
