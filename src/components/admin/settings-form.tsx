@@ -20,7 +20,14 @@ export type Settings = {
   editor_headline: string | null;
   editor_bio: string | null;
   editor_badges: Badge[];
+  logo_url: string | null;
+  default_og_image: string | null;
+  socials: Record<string, string>;
 };
+
+// The publication's own profiles. Used in search-engine data (schema.org
+// sameAs); the footer icons are managed separately under Site content → Menus.
+export const SITE_SOCIALS = ["x", "linkedin", "github", "youtube", "facebook", "instagram"] as const;
 
 const field =
   "w-full rounded border border-border bg-surface-1 px-3 py-2.5 text-sm outline-none transition-colors focus:border-gold/40 focus:bg-surface-2";
@@ -82,6 +89,23 @@ export function SettingsForm({ settings }: { settings: Settings }) {
         <Text name="tagline" label="Tagline" defaultValue={s.tagline ?? ""} />
         <Text name="established_year" label="Established year" type="number" defaultValue={s.established_year?.toString() ?? ""} />
         <Text name="contact_email" label="Contact email" type="email" defaultValue={s.contact_email ?? ""} />
+      </Section>
+
+      <Section title="Brand and sharing">
+        <Text name="logo_url" label="Logo URL (square image)" type="url" defaultValue={s.logo_url ?? ""} />
+        <Text name="default_og_image" label="Default share image URL (1200×630)" type="url" defaultValue={s.default_og_image ?? ""} />
+        <p className="-mt-2 text-[11px] text-muted">
+          Leave blank to use the built-in logo and the generated share card.
+        </p>
+      </Section>
+
+      <Section title="The publication's social profiles">
+        {SITE_SOCIALS.map((k) => (
+          <Text key={k} name={`social_${k}`} label={k === "x" ? "X / Twitter" : k[0].toUpperCase() + k.slice(1)} type="url" defaultValue={s.socials[k] ?? ""} />
+        ))}
+        <p className="-mt-2 text-[11px] text-muted">
+          Tells search engines these accounts belong to the site. The footer icons are edited under Site content → Menus.
+        </p>
       </Section>
 
       <Section title="SEO defaults">
