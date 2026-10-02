@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { CoverUpload } from "@/components/admin/cover-upload";
 import { RichEditor } from "@/components/admin/rich-editor";
 import { StyleCheck } from "@/components/admin/style-check";
+import { OUTLINES } from "@/lib/outlines";
 import { useUpload } from "@/components/admin/use-upload";
 import { hasRichIncompatibleSyntax } from "@/lib/mdx-guard";
 
@@ -354,6 +355,39 @@ export function ArticleEditor({
           {/* Always-present hidden field: `body` is the single source of truth
               the form submits, whichever editing surface produced it. */}
           <textarea name="body" value={body} readOnly hidden />
+
+          {/* A new, empty piece can start from the house outline for its kind. */}
+          {tab === "write" && !article.id && !body.trim() && (
+            <div className="border-b border-border bg-gold-dim px-5 py-3 sm:px-8">
+              <p className="mb-2 text-[12px] font-semibold">Start from an outline</p>
+              <div className="flex flex-wrap gap-2">
+                {OUTLINES.map((o) => (
+                  <button
+                    key={o.key}
+                    type="button"
+                    onClick={() => {
+                      setBody(o.body);
+                      setRichKey((k) => k + 1);
+                      dirty.current = true;
+                      // Pick the matching format if it's still unset.
+                      const sel = formRef.current?.elements.namedItem("format_id") as HTMLSelectElement | null;
+                      const match = o.formats
+                        .map((n) => formats.find((fm) => fm.name.toLowerCase() === n.toLowerCase()))
+                        .find(Boolean);
+                      if (sel && !sel.value && match) sel.value = match.id;
+                    }}
+                    className="rounded-full border border-gold/40 bg-bg px-3 py-1.5 text-[12px] font-semibold text-gold hover:bg-gold-dim"
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-[11px] text-muted">
+                Fills in the sections every piece needs. Replace each [Replace: …] line; the style check
+                flags any you miss.
+              </p>
+            </div>
+          )}
 
           {tab === "write" && writeMode === "rich" && (
             <RichEditor key={richKey} initialMarkdown={body} onChange={setBody} />
