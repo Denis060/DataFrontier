@@ -43,6 +43,7 @@ export default async function EditArticlePage({
     meta_title: row.meta_title ?? "",
     meta_description: row.meta_description ?? "",
     canonical_url: row.canonical_url ?? "",
+    review_note: row.review_note ?? "",
   };
 
   return (

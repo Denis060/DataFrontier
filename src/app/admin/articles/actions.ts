@@ -7,6 +7,8 @@ import { requireStaff } from "@/lib/admin";
 import { hasRole } from "@/lib/auth";
 import { renderMarkdown } from "@/lib/markdown";
 import { sendPushToAll } from "@/lib/push";
+import { articlePublishedEmail, changesRequestedEmail, reviewSubmittedEmail } from "@/lib/email";
+import { newsroomInbox, notify, personFor } from "@/lib/notify";
 import type { Database } from "@/lib/supabase/database.types";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://everydaydatascience.com";
@@ -138,6 +140,9 @@ export async function saveArticle(formData: FormData): Promise<Result> {
   if (staff) patch.featured = wantsFeatured;
 
   let firstPublish = false;
+  // Editor's note for "Request changes"; only staff may set it (a DB trigger
+  // also ignores writer edits to it).
+  const reviewNote = staff ? ((formData.get("review_note") as string) || "").trim() || null : undefined;
 
   if (TRANSITIONS.has(intent)) {
     const to = intent as ArticleStatus;
@@ -146,6 +151,8 @@ export async function saveArticle(formData: FormData): Promise<Result> {
       return { error: "Only an editor or admin can publish. Submit for review instead." };
     }
     patch.status = to;
+    if (staff && to === "changes_requested") patch.review_note = reviewNote ?? null;
+    if (staff && to === "published") patch.review_note = null;
 
     if (to === "published" && id) {
       const { data: cur } = await db.from("articles").select("published_at").eq("id", id).single();
@@ -157,9 +164,18 @@ export async function saveArticle(formData: FormData): Promise<Result> {
   }
 
   let articleId = id;
+  let authorId: string | null = profile.id;
+  let prevStatus: string | null = null;
 
   if (id) {
-    const { data: existing } = await db.from("articles").select("slug").eq("id", id).single();
+    const { data: existing } = await db.from("articles").select("slug, status, author_id").eq("id", id).single();
+    authorId = existing?.author_id ?? null;
+    prevStatus = existing?.status ?? null;
+    // Live pieces change only through an editor (also enforced by the
+    // enforce_publish_rights trigger, migration 20261003120000).
+    if (!staff && existing && ["published", "archived"].includes(existing.status)) {
+      return { error: "This article is live. Ask an editor to make changes to it." };
+    }
     const { error } = await db.from("articles").update(patch).eq("id", id);
     if (error) return { error: humanize(error.message) };
     // Slug changed: record a 301 from the old URL to the new one so links and
@@ -216,6 +232,34 @@ export async function saveArticle(formData: FormData): Promise<Result> {
     }
   }
 
+  // Close the review loop by email. Best-effort, after the save succeeded.
+  const to = patch.status;
+  const editUrl = `${SITE}/admin/articles/${articleId}`;
+  if (articleId && to && to !== prevStatus) {
+    if (to === "in_review") {
+      await notify(
+        await newsroomInbox(),
+        `Ready for review: ${fields.title}`,
+        reviewSubmittedEmail({ title: fields.title, writer: profile.full_name, editUrl }),
+      );
+    } else if (authorId && authorId !== profile.id && (to === "changes_requested" || firstPublish)) {
+      const writer = await personFor(authorId);
+      if (to === "changes_requested") {
+        await notify(
+          writer.email,
+          `Changes requested: ${fields.title}`,
+          changesRequestedEmail({ name: writer.name, title: fields.title, note: reviewNote ?? null, editUrl }),
+        );
+      } else {
+        await notify(
+          writer.email,
+          `You're published: ${fields.title}`,
+          articlePublishedEmail({ name: writer.name, title: fields.title, url: `${SITE}/article/${fields.slug}` }),
+        );
+      }
+    }
+  }
+
   revalidatePath("/admin/articles");
   revalidatePath(`/article/${slug}`);
   revalidatePath("/");
@@ -223,7 +267,10 @@ export async function saveArticle(formData: FormData): Promise<Result> {
 }
 
 export async function deleteArticle(id: string): Promise<Result> {
-  await requireStaff();
+  const profile = await requireStaff();
+  // RLS lets only editors/admins delete; without this check a writer's delete
+  // silently removed nothing and still reported success.
+  if (!hasRole(profile.role, ["admin", "editor"])) return { error: "Only an editor or admin can delete an article." };
   const db = await createClient();
   const { error } = await db.from("articles").delete().eq("id", id);
   if (error) return { error: humanize(error.message) };

@@ -15,7 +15,7 @@ export default async function AdminSettingsPage() {
   const { data } = await db
     .from("site_settings")
     .select(
-      "site_name, tagline, established_year, contact_email, default_meta_title, default_meta_description, newsletter_headline, newsletter_subtext, newsletter_show_stats, spotlight_headline, spotlight_body, spotlight_cta_url, editor_headline, editor_bio, editor_badges",
+      "site_name, tagline, established_year, contact_email, default_meta_title, default_meta_description, newsletter_headline, newsletter_subtext, newsletter_show_stats, spotlight_headline, spotlight_body, spotlight_cta_url, editor_headline, editor_bio, editor_badges, logo_url, default_og_image, socials",
     )
     .eq("id", true)
     .single();
@@ -23,6 +23,7 @@ export default async function AdminSettingsPage() {
   const settings = {
     ...(data ?? {}),
     editor_badges: Array.isArray(data?.editor_badges) ? (data.editor_badges as { label: string; color: string }[]) : [],
+    socials: data?.socials && typeof data.socials === "object" && !Array.isArray(data.socials) ? (data.socials as Record<string, string>) : {},
   } as Settings;
 
   return (
