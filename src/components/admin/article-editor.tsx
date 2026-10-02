@@ -409,7 +409,9 @@ export function ArticleEditor({
         </div>
 
         {/* Sidebar: metadata */}
-        <aside className="flex flex-col gap-5 bg-bg2 px-5 py-6 sm:px-8">
+        {/* On wide screens the settings column stays put and scrolls on its
+            own, so the writing area scrolls without dragging it along. */}
+        <aside className="flex flex-col gap-5 bg-bg2 px-5 py-6 sm:px-8 lg:sticky lg:top-[65px] lg:h-[calc(100vh-65px)] lg:self-start lg:overflow-y-auto lg:border-l lg:border-border">
           <div>
             <label className={label} htmlFor="slug">
               Slug
