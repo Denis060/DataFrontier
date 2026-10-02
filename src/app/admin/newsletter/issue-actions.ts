@@ -8,6 +8,7 @@ import { hasRole } from "@/lib/auth";
 import { SECTION_DEFS, renderIssue, type IssueContent } from "@/lib/newsletter";
 import { sendMail } from "@/lib/email";
 import { dispatchIssue } from "@/lib/dispatch";
+import { issueExtras } from "@/lib/newsletter-extras";
 import type { Json } from "@/lib/supabase/database.types";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://everydaydatascience.com";
@@ -33,11 +34,13 @@ function contentFromForm(fd: FormData): IssueContent {
   const intro = String(fd.get("intro") ?? "").trim();
   if (intro) content.intro = intro;
   for (const def of SECTION_DEFS) {
+    const title = String(fd.get(`${def.key}_title`) ?? "").trim();
     const text = String(fd.get(`${def.key}_text`) ?? "").trim();
     const url = String(fd.get(`${def.key}_url`) ?? "").trim();
     const image = String(fd.get(`${def.key}_image`) ?? "").trim();
-    if (text || url || image) {
+    if (title || text || url || image) {
       content[def.key] = {
+        ...(title ? { title } : {}),
         ...(text ? { text } : {}),
         ...(url ? { url } : {}),
         ...(image ? { image_url: image } : {}),
@@ -114,7 +117,7 @@ export async function sendTestIssue(
   // one-click endpoint is a safe no-op if clicked from the test.
   const unsubscribeUrl = `${SITE}/api/newsletter/unsubscribe?token=test`;
   const webUrl = `${SITE}/newsletter/${issue.slug ?? issue.id}`;
-  const { html, text } = renderIssue(issue.title, issue.summary, content, unsubscribeUrl, webUrl);
+  const { html, text } = renderIssue(issue.title, issue.summary, content, unsubscribeUrl, webUrl, await issueExtras(content));
 
   try {
     const res = await sendMail({
@@ -185,12 +188,14 @@ export async function previewIssue(fd: FormData): Promise<{ html: string } | { e
   await requireEditor();
   const title = String(fd.get("title") ?? "").trim() || "Untitled issue";
   const summary = String(fd.get("summary") ?? "").trim() || null;
+  const content = contentFromForm(fd);
   const { html } = renderIssue(
     title,
     summary,
-    contentFromForm(fd),
+    content,
     `${SITE}/api/newsletter/unsubscribe?token=preview`,
     `${SITE}/newsletter`,
+    await issueExtras(content),
   );
   return { html };
 }

@@ -2,6 +2,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/server";
 import { sendMail, welcomeFollowupEmail } from "@/lib/email";
 import { renderIssue, type IssueContent } from "@/lib/newsletter";
+import { issueExtras } from "@/lib/newsletter-extras";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://everydaydatascience.com";
 
@@ -42,6 +43,8 @@ export async function dispatchIssue(issueId: string): Promise<{ sent: number; re
 
   const content = (issue.content ?? {}) as IssueContent;
   const webUrl = `${SITE}/newsletter/${issue.slug ?? issue.id}`;
+  // Once per run, not per recipient: every subscriber gets the same blocks.
+  const extras = await issueExtras(content);
   let sentThisRun = 0;
 
   for (let b = 0; b < MAX_BATCHES_PER_RUN; b++) {
@@ -54,7 +57,7 @@ export async function dispatchIssue(issueId: string): Promise<{ sent: number; re
 
     for (const row of batch) {
       const unsubscribeUrl = await unsubUrl(db, row.subscriber_id);
-      const { html, text } = renderIssue(issue.title, issue.summary, content, unsubscribeUrl, webUrl);
+      const { html, text } = renderIssue(issue.title, issue.summary, content, unsubscribeUrl, webUrl, extras);
 
       try {
         const res = await sendMail({
