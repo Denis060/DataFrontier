@@ -1,5 +1,7 @@
 "use server";
 
+import { newCommentEmail } from "@/lib/email";
+import { newsroomInbox, notify } from "@/lib/notify";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile, hasRole } from "@/lib/auth";
@@ -46,6 +48,16 @@ export async function postComment(_prev: CommentState, formData: FormData): Prom
   });
 
   if (error) return { ok: false, message: "Could not post your comment. Try again." };
+
+  // A reader's comment waits for approval; tell the newsroom so it doesn't sit.
+  if (!isStaff) {
+    const { data: art } = await db.from("articles").select("title").eq("id", articleId).maybeSingle();
+    await notify(
+      await newsroomInbox(),
+      `New comment on ${art?.title ?? "an article"}`,
+      newCommentEmail({ who: profile.full_name, article: art?.title ?? "an article", body }),
+    );
+  }
 
   revalidatePath(`/article/${slug}`);
   return {
