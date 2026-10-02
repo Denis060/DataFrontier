@@ -68,8 +68,8 @@ export function WriterHome({ name, data }: { name: string; data: Workspace }) {
           <section aria-label="Your numbers" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Stat icon={<Eye className="size-4" />} label="Views" value={data.totals.views} />
             <Stat icon={<Heart className="size-4" />} label="Reactions" value={data.totals.reactions} />
-            <Stat icon={<MessageSquare className="size-4" />} label="Comments" value={data.totals.comments} />
-            <Stat icon={<Users className="size-4" />} label="Followers" value={data.followers} />
+            <Stat icon={<MessageSquare className="size-4" />} label="Comments" value={data.totals.comments} href="/admin/responses" />
+            <Stat icon={<Users className="size-4" />} label="Followers" value={data.followers} href="/admin/followers" />
           </section>
 
           {data.pieces.length === 0 ? (
@@ -158,15 +158,16 @@ export function WriterHome({ name, data }: { name: string; data: Workspace }) {
   );
 }
 
-function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
+function Stat({ icon, label, value, href }: { icon: React.ReactNode; label: string; value: number; href?: string }) {
+  const Box = href ? Link : "div";
   return (
-    <div className="rounded-lg border border-border bg-bg2 p-4">
+    <Box href={href as string} className={`rounded-lg border border-border bg-bg2 p-4 ${href ? "transition-colors hover:border-gold/40" : ""}`}>
       <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[1.5px] text-muted">
         <span aria-hidden>{icon}</span>
         {label}
       </p>
       <p className="mt-2 font-serif text-[28px] leading-none font-black text-gold">{value.toLocaleString("en-US")}</p>
-    </div>
+    </Box>
   );
 }
 
