@@ -24,6 +24,7 @@ import {
   type ArticleCard,
   getFollowState,
   getMostRead,
+  getArticleCorrections,
 } from "@/lib/queries";
 import { getCurrentProfile } from "@/lib/auth";
 import { sameAsLinks } from "@/lib/socials";
@@ -164,7 +165,7 @@ export default async function ArticlePage({ params }: Props) {
     notFound();
   }
 
-  const [related, moreByAuthor, comments, reactions, bookmarked, authorFollow, mostRead] = await Promise.all([
+  const [related, moreByAuthor, comments, reactions, bookmarked, authorFollow, mostRead, corrections] = await Promise.all([
     getRelated(article.id, article.category_id),
     getMoreByAuthor(article.author_id, article.id),
     getComments(article.id),
@@ -172,6 +173,7 @@ export default async function ArticlePage({ params }: Props) {
     isBookmarked(article.id),
     getFollowState({ authorId: article.author_id }, profile?.id ?? null),
     getMostRead(5, article.id),
+    getArticleCorrections(article.id),
   ]);
 
   const seriesNav = article.series_id ? await getArticleSeriesNav(article.series_id, article.id) : null;
@@ -282,6 +284,11 @@ export default async function ArticlePage({ params }: Props) {
               <time className="text-xs text-muted" dateTime={article.published_at ?? undefined}>
                 {fmtDate(article.published_at)}
               </time>
+              {corrections.length > 0 && (
+                <a href="#corrections" className="text-xs font-semibold text-gold hover:underline">
+                  Corrected
+                </a>
+              )}
             </div>
 
             <h1 className="mb-4 font-serif text-[clamp(30px,5vw,48px)] leading-[1.1] font-black tracking-[-0.6px]">
@@ -343,6 +350,31 @@ export default async function ArticlePage({ params }: Props) {
               <ArticleBody html={article.body_html} source={article.body} />
             ) : (
               <p className="text-muted">This article has no body yet.</p>
+            )}
+
+            {corrections.length > 0 && (
+              <aside
+                id="corrections"
+                className="mt-10 scroll-mt-28 rounded-md border border-gold/30 bg-gold-dim px-5 py-4"
+              >
+                <p className="mb-2 font-mono text-[10px] uppercase tracking-[2px] text-gold">
+                  {corrections.length === 1 ? "Correction" : "Corrections"}
+                </p>
+                <ul className="flex flex-col gap-2">
+                  {corrections.map((c) => (
+                    <li key={c.id} className="text-[14px] leading-relaxed">
+                      <time dateTime={c.corrected_on} className="font-semibold">
+                        {/* Date-only value: pin to midday UTC so no time zone shifts the day. */}
+                        {fmtDate(`${c.corrected_on}T12:00:00Z`)}:
+                      </time>{" "}
+                      {c.note}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/corrections" className="mt-2 inline-block text-[12px] text-muted hover:text-gold">
+                  How we handle corrections →
+                </Link>
+              </aside>
             )}
 
             {originalHost && (

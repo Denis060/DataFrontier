@@ -416,6 +416,55 @@ export async function getLibrary(profileId: string): Promise<ArticleCard[]> {
 }
 
 /** Other pieces by the same author, for the article rail. */
+/** Corrections on one article, oldest first (the order they happened). */
+export async function getArticleCorrections(articleId: string) {
+  const db = await createClient();
+  const { data } = await db
+    .from("corrections")
+    .select("id, corrected_on, note")
+    .eq("article_id", articleId)
+    .order("corrected_on", { ascending: true });
+  return data ?? [];
+}
+
+/** Every public correction, newest first, with its article. RLS hides drafts. */
+export async function getCorrectionsLog() {
+  const db = await createClient();
+  const { data } = await db
+    .from("corrections")
+    .select("id, corrected_on, note, article:articles(title, slug)")
+    .order("corrected_on", { ascending: false })
+    .order("created_at", { ascending: false });
+  return (data ?? []) as unknown as {
+    id: string;
+    corrected_on: string;
+    note: string;
+    article: { title: string; slug: string } | null;
+  }[];
+}
+
+export type PredictionStatus = "open" | "held" | "wrong";
+export type Prediction = {
+  id: string;
+  claim: string;
+  status: PredictionStatus;
+  verdict_note: string | null;
+  checked_on: string | null;
+  article: { title: string; slug: string; published_at: string | null } | null;
+};
+
+/** Published predictions for the scoreboard. RLS returns only published ones to readers. */
+export async function getScoreboard(): Promise<Prediction[]> {
+  const db = await createClient();
+  const { data } = await db
+    .from("predictions")
+    .select("id, claim, status, verdict_note, checked_on, article:articles(title, slug, published_at)")
+    .eq("published", true)
+    .order("checked_on", { ascending: false, nullsFirst: false })
+    .order("sort_order", { ascending: true });
+  return (data ?? []) as unknown as Prediction[];
+}
+
 /**
  * Most-read published articles by lifetime views. A ranking, so it may
  * repeat pieces shown elsewhere on the page; that's the point of it.
