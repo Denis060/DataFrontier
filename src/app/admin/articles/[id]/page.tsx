@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { requireStaff, getArticleForEdit, listFormatsAndCategories } from "@/lib/admin";
+import { requireStaff, getArticleForEdit, getArticleTagsAndCoauthors, listFormatsAndCategories, listWriterProfiles } from "@/lib/admin";
 import { hasRole } from "@/lib/auth";
 import { ArticleEditor, type EditorArticle } from "@/components/admin/article-editor";
 
@@ -18,9 +18,11 @@ export default async function EditArticlePage({
     searchParams,
   ]);
 
-  const [row, { formats, categories, series }] = await Promise.all([
+  const [row, { formats, categories, series }, writers, extra] = await Promise.all([
     getArticleForEdit(id, profile),
     listFormatsAndCategories(),
+    listWriterProfiles(),
+    getArticleTagsAndCoauthors(id),
   ]);
   // An author reaching for someone else's article gets null → 404.
   if (!row) notFound();
@@ -44,6 +46,10 @@ export default async function EditArticlePage({
     meta_description: row.meta_description ?? "",
     canonical_url: row.canonical_url ?? "",
     review_note: row.review_note ?? "",
+    tags: extra.tags,
+    coauthor_ids: extra.coauthorIds,
+    guest_authors: Array.isArray(row.guest_authors) ? (row.guest_authors as { name: string; url: string }[]) : [],
+    author_id: row.author_id,
   };
 
   return (
@@ -52,6 +58,7 @@ export default async function EditArticlePage({
       categories={categories}
       formats={formats}
       series={series}
+      writers={writers}
       canPublish={hasRole(profile.role, ["admin", "editor"])}
       justSaved={saved === "1"}
     />

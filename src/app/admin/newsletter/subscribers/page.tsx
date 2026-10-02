@@ -21,7 +21,7 @@ export default async function SubscribersPage({
   const db = await createClient();
   const { data } = await db
     .from("newsletter_subscribers")
-    .select("email, status, source, created_at, confirmed_at")
+    .select("id, email, status, source, created_at, confirmed_at")
     .order("created_at", { ascending: false });
 
   const rows = data ?? [];

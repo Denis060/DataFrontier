@@ -4,6 +4,7 @@ import { hasRole } from "@/lib/auth";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { IssueComposer, type IssueDraft } from "@/components/admin/issue-composer";
 import { SECTION_DEFS } from "@/lib/newsletter";
+import { composerSources } from "@/app/admin/newsletter/sources";
 
 export const metadata = { title: "New issue | Newsroom", robots: { index: false } };
 
@@ -19,10 +20,11 @@ const EMPTY: IssueDraft = {
 export default async function NewIssuePage() {
   const profile = await requireStaff();
   if (!hasRole(profile.role, ["admin", "editor"])) redirect("/admin/newsletter");
+  const sources = await composerSources();
 
   return (
     <AdminShell role={profile.role} name={profile.full_name}>
-      <IssueComposer issue={EMPTY} sections={SECTION_DEFS} justSaved={false} />
+      <IssueComposer issue={EMPTY} sections={SECTION_DEFS} justSaved={false} sources={sources} />
     </AdminShell>
   );
 }
