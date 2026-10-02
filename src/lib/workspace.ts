@@ -88,3 +88,84 @@ export async function getWorkspace(profileId: string): Promise<Workspace> {
     },
   };
 }
+
+export type Follower = { name: string; slug: string | null; avatar: string | null; title: string | null; since: string };
+
+/** Who follows a writer, newest first. Follows and profiles are public; no emails. */
+export async function getFollowers(profileId: string): Promise<Follower[]> {
+  const db = await createClient();
+  // Name the FK: follows reaches profiles twice (follower and author).
+  const { data } = await db
+    .from("follows")
+    .select("created_at, follower:profiles!follows_follower_id_fkey(full_name, slug, avatar_url, title)")
+    .eq("author_id", profileId)
+    .order("created_at", { ascending: false });
+  type Row = { created_at: string; follower: { full_name: string; slug: string | null; avatar_url: string | null; title: string | null } | null };
+  return ((data ?? []) as unknown as Row[])
+    .filter((r) => r.follower)
+    .map((r) => ({
+      name: r.follower!.full_name,
+      slug: r.follower!.slug,
+      avatar: r.follower!.avatar_url,
+      title: r.follower!.title,
+      since: r.created_at,
+    }));
+}
+
+export type PieceComment = {
+  id: string;
+  body: string;
+  at: string;
+  approved: boolean;
+  isReply: boolean;
+  who: string;
+  whoSlug: string | null;
+  article: { title: string; slug: string };
+};
+
+/**
+ * Reader comments on a writer's own published pieces, newest first. Only
+ * approved ones are shown in full; waiting ones are counted (moderation stays
+ * with editors).
+ */
+export async function getCommentsOnMyPieces(profileId: string): Promise<{ comments: PieceComment[]; waiting: number }> {
+  const db = await createClient();
+  const { data: arts } = await db.from("articles").select("id").eq("author_id", profileId).eq("status", "published");
+  const ids = (arts ?? []).map((a) => a.id);
+  if (!ids.length) return { comments: [], waiting: 0 };
+
+  const [{ data }, { count }] = await Promise.all([
+    db
+      .from("comments")
+      .select("id, body, created_at, is_approved, parent_id, author:profiles!comments_profile_id_fkey(full_name, slug), article:articles(title, slug)")
+      .in("article_id", ids)
+      .eq("is_approved", true)
+      .order("created_at", { ascending: false })
+      .limit(100),
+    db.from("comments").select("id", { count: "exact", head: true }).in("article_id", ids).eq("is_approved", false),
+  ]);
+  type Row = {
+    id: string;
+    body: string;
+    created_at: string;
+    is_approved: boolean;
+    parent_id: string | null;
+    author: { full_name: string; slug: string | null } | null;
+    article: { title: string; slug: string } | null;
+  };
+  return {
+    comments: ((data ?? []) as unknown as Row[])
+      .filter((r) => r.article)
+      .map((r) => ({
+        id: r.id,
+        body: r.body,
+        at: r.created_at,
+        approved: r.is_approved,
+        isReply: !!r.parent_id,
+        who: r.author?.full_name ?? "A reader",
+        whoSlug: r.author?.slug ?? null,
+        article: r.article!,
+      })),
+    waiting: count ?? 0,
+  };
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { MessageSquare } from "lucide-react";
 
 /**
@@ -13,6 +13,21 @@ const Ctx = createContext<{ open: boolean; toggle: () => void }>({ open: false, 
 
 export function CommentsProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  // A link straight to the discussion (…#comments, e.g. from a writer's
+  // "Reply on the article") opens the thread and scrolls to it.
+  useEffect(() => {
+    const openIfLinked = () => {
+      if (window.location.hash !== "#comments") return;
+      setOpen(true);
+      requestAnimationFrame(() => document.getElementById("comments")?.scrollIntoView());
+    };
+    const frame = requestAnimationFrame(openIfLinked);
+    window.addEventListener("hashchange", openIfLinked);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("hashchange", openIfLinked);
+    };
+  }, []);
   return <Ctx.Provider value={{ open, toggle: () => setOpen((o) => !o) }}>{children}</Ctx.Provider>;
 }
 
