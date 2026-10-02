@@ -13,10 +13,10 @@ import type { HomeData } from "@/lib/queries";
 const MORE_LINKS = [
   { label: "Our Writers", url: "/authors" },
   { label: "Learning Paths", url: "/series" },
-  { label: "Events", url: "/events" },
-  { label: "Careers", url: "/jobs" },
   { label: "Cheat Sheets", url: "/cheat-sheets" },
   { label: "Newsletter Archive", url: "/newsletter/archive" },
+  { label: "Events", url: "/events" },
+  { label: "Careers", url: "/jobs" },
   { label: "About", url: "/about" },
   { label: "Advertise", url: "/advertise" },
   { label: "Contact", url: "/contact" },
@@ -132,6 +132,10 @@ export function SiteHeader({ siteName, established, nav, ticker, profile = null,
 
 const isWriteLink = (url: string) => url === "/write";
 
+// In the phone menu these sit as a quiet text row under the Explore tiles,
+// so the tiles stay an even grid of things to browse.
+const COMPANY_URLS = new Set(["/about", "/advertise", "/contact"]);
+
 /**
  * Full-screen phone menu. It stays mounted so it can animate: the panel fades
  * and slides in, then each link rises in a beat after the one before. Closed,
@@ -212,7 +216,7 @@ function MobileMenu({
             <div style={r.style} className={`mt-6 ${r.className}`}>
               <p className="mb-3 font-mono text-[10px] uppercase tracking-[2px] text-muted">Explore</p>
               <div className="grid grid-cols-2 gap-2">
-                {MORE_LINKS.map((l) => (
+                {MORE_LINKS.filter((l) => !COMPANY_URLS.has(l.url)).map((l) => (
                   <Link
                     key={l.url}
                     href={l.url}
@@ -223,6 +227,13 @@ function MobileMenu({
                   </Link>
                 ))}
               </div>
+              <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
+                {MORE_LINKS.filter((l) => COMPANY_URLS.has(l.url)).map((l) => (
+                  <Link key={l.url} href={l.url} onClick={close} className="text-muted hover:text-ink">
+                    {l.label}
+                  </Link>
+                ))}
+              </p>
             </div>
           );
         })()}
