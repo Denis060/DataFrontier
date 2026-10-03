@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Download } from "lucide-react";
+import { Suspense } from "react";
+import { ArrowLeft } from "lucide-react";
 import { Shell } from "@/components/layout/shell";
 import { Pill } from "@/components/pill";
 import { ShareBar } from "@/components/article/share-bar";
 import { getCheatSheet } from "@/lib/queries";
+import { getCurrentProfile } from "@/lib/auth";
+import { SheetDownload } from "@/components/sheet-download";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -23,19 +26,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-/** Supabase public URLs force a download with `?download=<name>`. */
-function downloadUrl(url: string, slug: string) {
-  if (!url.includes("/storage/v1/object/public/")) return url;
-  const ext = url.split(".").pop()?.split("?")[0] ?? "png";
-  return `${url}${url.includes("?") ? "&" : "?"}download=${slug}.${ext}`;
-}
-
 export default async function CheatSheetPage({ params }: Props) {
   const { slug } = await params;
   const sheet = await getCheatSheet(slug);
   if (!sheet) notFound();
 
   const fileUrl = sheet.download_url ?? sheet.image_url;
+  const viewer = await getCurrentProfile();
   // Our own storage downloads directly; anything else (Drive, Canva…) opens in a new tab.
   const external = !fileUrl.includes("/storage/v1/object/public/");
   const pdf = /\.pdf(\?|$)/i.test(fileUrl);
@@ -64,14 +61,14 @@ export default async function CheatSheetPage({ params }: Props) {
         )}
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
-          <a
-            href={downloadUrl(fileUrl, sheet.slug)}
-            {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-            className="inline-flex items-center gap-2 rounded bg-gold px-5 py-2.5 text-[13px] font-bold text-on-accent transition-opacity hover:opacity-85"
-          >
-            <Download className="size-4" aria-hidden />
-            {pdf ? "Download PDF" : external ? "Get the download" : "Download"}
-          </a>
+          <Suspense>
+            <SheetDownload
+              slug={sheet.slug}
+              title={sheet.title}
+              signedIn={!!viewer}
+              label={pdf ? "Download PDF" : external ? "Get the download" : "Download"}
+            />
+          </Suspense>
           <ShareBar url={shareUrl} title={sheet.title} />
         </div>
 
