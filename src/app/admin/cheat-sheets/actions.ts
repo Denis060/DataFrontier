@@ -25,13 +25,18 @@ export async function saveCheatSheet(formData: FormData): Promise<{ error: strin
   if (!title) return { error: "Title is required." };
   if (!imageUrl) return { error: "Upload the cheat-sheet image first." };
 
+  const download = ((formData.get("download_url") as string) || "").trim();
+  if (download && !/^https:\/\/\S+$/i.test(download)) {
+    return { error: "The download link must be a full link starting with https://" };
+  }
+
   const rawSlug = (formData.get("slug") as string)?.trim();
   const fields = {
     title,
     slug: rawSlug ? slugify(rawSlug) : slugify(title),
     description: ((formData.get("description") as string) || "").trim() || null,
     image_url: imageUrl,
-    download_url: ((formData.get("download_url") as string) || "").trim() || null,
+    download_url: download || null,
     category_id: (formData.get("category_id") as string) || null,
     published: formData.get("published") === "on",
   };
