@@ -3,7 +3,10 @@
 import { useState, useSyncExternalStore } from "react";
 import { Check, Copy, Download, PartyPopper, X } from "lucide-react";
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://everydaydatascience.com";
+// Shares must point at the public site: LinkedIn and X can't fetch a
+// localhost address, so testing locally would share a dead link.
+const ENV_SITE = process.env.NEXT_PUBLIC_SITE_URL;
+const SITE = ENV_SITE && !/localhost|127\.0\.0\.1/.test(ENV_SITE) ? ENV_SITE : "https://everydaydatascience.com";
 const KEY = "df-celebrated";
 
 type Piece = { id: string; title: string; slug: string };
