@@ -203,7 +203,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                 {mostRead.map((a, i) => (
                   <li key={a.id}>
                     <Link href={`/article/${a.slug}`} className="group flex gap-3">
-                      <span className="font-serif text-2xl leading-none font-black text-gold/60">{i + 1}</span>
+                      <span className="w-6 shrink-0 text-center font-serif text-2xl leading-none font-black text-gold">{i + 1}</span>
                       <span className="min-w-0">
                         <span className="block font-serif text-[15px] leading-snug font-bold group-hover:opacity-75">{a.title}</span>
                         {a.reading_time ? <span className="mt-0.5 block text-[11px] text-muted">{a.reading_time} min read</span> : null}
@@ -215,7 +215,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             </section>
           )}
 
-          <InlineSubscribe slug={slug} source={`category:${slug}`} className="" />
+          <InlineSubscribe slug={slug} source={`category:${slug}`} className="" stacked />
 
           <section>
             <h2 className="mb-3 border-b border-border pb-2 font-mono text-[10px] uppercase tracking-[2px] text-muted">

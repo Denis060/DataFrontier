@@ -65,12 +65,27 @@ export function ArticleRows({ articles, empty = "Nothing published here yet." }:
       {articles.map((a) => (
         <li key={a.id}>
           <Link href={`/article/${a.slug}`} className="group grid grid-cols-[96px_minmax(0,1fr)] gap-4 py-5 sm:grid-cols-[200px_minmax(0,1fr)] sm:gap-6">
-            <CoverImage
-              src={a.cover_image}
-              alt={a.cover_alt ?? ""}
-              sizes="(min-width: 640px) 200px, 96px"
-              className="transition-opacity group-hover:opacity-85"
-            />
+            {a.cover_image ? (
+              <CoverImage
+                src={a.cover_image}
+                alt={a.cover_alt ?? ""}
+                sizes="(min-width: 640px) 200px, 96px"
+                className="transition-opacity group-hover:opacity-85"
+              />
+            ) : (
+              // No cover: a branded tile keeps every row the same shape.
+              <div
+                aria-hidden
+                className="flex aspect-[16/9] flex-col justify-between overflow-hidden rounded-md border border-border bg-gradient-to-br from-gold-dim via-bg2 to-teal-dim p-2 transition-opacity group-hover:opacity-85 sm:p-3"
+              >
+                <span className="truncate font-mono text-[8px] uppercase tracking-[1.5px] text-gold sm:text-[9px]">
+                  {a.format?.name ?? a.category?.name ?? "Article"}
+                </span>
+                <span className="font-serif text-[11px] leading-none font-black text-ink/70 sm:text-[13px]">
+                  Everyday <span className="text-gold">DS</span>
+                </span>
+              </div>
+            )}
             <div className="min-w-0">
               <div className="mb-1.5 flex flex-wrap items-center gap-2">
                 {a.format && <Pill color={a.format.color}>{a.format.name}</Pill>}
