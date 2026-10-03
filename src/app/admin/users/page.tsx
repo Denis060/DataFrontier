@@ -31,7 +31,7 @@ export default async function AdminUsersPage() {
 
   return (
     <AdminShell role={profile.role} name={profile.full_name}>
-      <div className="mx-auto w-full max-w-[900px] px-5 py-10 sm:px-8">
+      <div className="w-full max-w-[1200px] px-5 py-10 sm:px-8">
         <h1 className="mb-1 font-serif text-3xl font-black tracking-[-0.5px]">People</h1>
         <p className="mb-8 text-[13px] text-muted">
           {rows.length} {rows.length === 1 ? "account" : "accounts"} · {staffCount} with newsroom access.

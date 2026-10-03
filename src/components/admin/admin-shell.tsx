@@ -61,10 +61,9 @@ export async function AdminShell({
           <Link href="/" className="font-serif text-lg font-black whitespace-nowrap">
             Everyday <span className="text-gold">Data Science</span>
           </Link>
-          {/* Phones: the account controls live up here, since the footer is desktop-only. */}
-          <div className="flex items-center gap-2 lg:hidden">
+          {/* Phones: the theme switch stays up here; account links are in the menu drawer. */}
+          <div className="lg:hidden">
             <ThemeToggle />
-            <SignOut />
           </div>
         </div>
         <AdminNav
@@ -74,6 +73,17 @@ export async function AdminShell({
             icon: <Icon className="size-4" aria-hidden />,
             badge: counts[href] ?? 0,
           }))}
+          footer={
+            <div className="flex flex-col gap-3">
+              <span className="truncate text-[12px] text-muted">{name}</span>
+              <div className="flex items-center justify-between gap-2 text-[13px]">
+                <Link href="/" className="text-muted hover:text-ink">
+                  View site
+                </Link>
+                <SignOut />
+              </div>
+            </div>
+          }
         />
         <div className="mt-auto hidden flex-col gap-2 border-t border-border px-4 py-3 lg:flex">
           <div className="flex items-center justify-between gap-2">
@@ -88,7 +98,7 @@ export async function AdminShell({
           </div>
         </div>
       </aside>
-      <div className="flex-1">{children}</div>
+      <div className="min-w-0 flex-1">{children}</div>
     </div>
   );
 }

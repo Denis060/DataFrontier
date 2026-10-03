@@ -31,7 +31,7 @@ export function WriterHome({ name, data }: { name: string; data: Workspace }) {
     .sort((a, b) => (b.published_at ?? "").localeCompare(a.published_at ?? ""))[0];
 
   return (
-    <div className="mx-auto w-full max-w-[1100px] px-4 py-8 sm:px-8 sm:py-10">
+    <div className="w-full max-w-[1200px] px-4 py-8 sm:px-8 sm:py-10">
       <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="mb-1 font-mono text-[10px] uppercase tracking-[2px] text-gold">Your workspace</p>

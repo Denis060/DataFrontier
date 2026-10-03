@@ -200,7 +200,7 @@ Read their latest: [${w.latest.title}](${w.latest.url})` : "";
   const sec = (key: string) => issue.content?.[key] ?? {};
 
   return (
-    <div className="mx-auto w-full max-w-[760px] px-5 py-10 sm:px-8">
+    <div className="w-full max-w-[760px] px-5 py-10 sm:px-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <Link href="/admin/newsletter" className="text-[13px] text-muted hover:text-ink">
           ← Newsletter

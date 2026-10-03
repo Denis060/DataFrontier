@@ -60,7 +60,7 @@ export default async function EditIssuePage({
   return (
     <AdminShell role={profile.role} name={profile.full_name}>
       {showStats && (
-        <div className="mx-auto w-full max-w-[760px] px-5 pt-10 sm:px-8">
+        <div className="w-full max-w-[760px] px-5 pt-10 sm:px-8">
           <IssueStats
             recipients={recipients}
             clicked={clicked}
