@@ -3,7 +3,6 @@
 import { useActionState, useEffect } from "react";
 import { subscribe, type SubscribeState } from "@/app/actions/subscribe";
 import { Honeypot } from "@/components/honeypot";
-import { SubscribeSuccess } from "@/components/subscribe-success";
 
 /** One email field for a free offer. Same double-opt-in action as every signup. */
 export function OfferForm({ slug, title, id = "offer-email" }: { slug: string; title: string; id?: string }) {
@@ -17,7 +16,29 @@ export function OfferForm({ slug, title, id = "offer-email" }: { slug: string; t
     }
   }, [state]);
 
-  if (state?.ok) return <SubscribeSuccess email={state.email} />;
+  // The reply can't say whether the address was already on the list (that
+  // would leak it), so it covers both: new readers confirm, existing ones
+  // get the download straight away.
+  if (state?.ok) {
+    return (
+        <div className="rounded border border-teal/30 bg-teal-dim px-4 py-3.5 text-[13px] leading-relaxed">
+          <p className="font-serif text-lg font-black text-ink">Check your inbox</p>
+          <p className="mt-1 text-muted">
+            We&apos;ve emailed{state.email ? <> <strong className="font-semibold text-ink">{state.email}</strong></> : null} from{" "}
+            <strong className="font-semibold text-ink">Everyday Data Science</strong>.
+          </p>
+          <ul className="mt-2 flex list-disc flex-col gap-1 pl-4 text-muted">
+            <li>
+              <span className="text-ink">New here?</span> Click the confirm link and your download opens straight away.
+            </li>
+            <li>
+              <span className="text-ink">Already subscribed?</span> Your download link is in that email, no need to confirm again.
+            </li>
+          </ul>
+          <p className="mt-2 text-muted">Not there in a minute? Check Promotions or Spam.</p>
+        </div>
+    );
+  }
 
   return (
     <form action={action} className="flex flex-col gap-2.5">
