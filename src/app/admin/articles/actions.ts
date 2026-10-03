@@ -7,7 +7,13 @@ import { requireStaff } from "@/lib/admin";
 import { hasRole } from "@/lib/auth";
 import { renderMarkdown } from "@/lib/markdown";
 import { sendPushToAll } from "@/lib/push";
-import { articlePublishedEmail, changesRequestedEmail, reviewSubmittedEmail } from "@/lib/email";
+import {
+  articlePublishedEmail,
+  changesRequestedEmail,
+  coauthorAddedEmail,
+  reviewReceivedEmail,
+  reviewSubmittedEmail,
+} from "@/lib/email";
 import { newsroomInbox, notify, personFor } from "@/lib/notify";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -276,9 +282,29 @@ export async function saveArticle(formData: FormData): Promise<Result> {
     }
   }
 
+  let addedCoauthors: string[] = [];
   if (articleId) {
-    const err = await syncTagsAndCoauthors(db, articleId, authorId ?? profile.id, formData);
-    if (err) return { error: err };
+    const res = await syncTagsAndCoauthors(db, articleId, authorId ?? profile.id, formData);
+    if (res.error) return { error: res.error };
+    addedCoauthors = res.added.filter((id) => id !== profile.id);
+  }
+
+  // Tell anyone newly put on the byline, by email and in their notifications.
+  const finalStatus = patch.status ?? prevStatus ?? "draft";
+  const isLive = finalStatus === "published";
+  if (articleId && addedCoauthors.length && finalStatus !== "archived") {
+    const url = isLive ? `${SITE}/article/${fields.slug}` : `${SITE}/admin`;
+    for (const id of addedCoauthors) {
+      const person = await personFor(id);
+      await notify(
+        person.email,
+        `You're a co-author on "${fields.title}"`,
+        coauthorAddedEmail({ name: person.name, by: profile.full_name, title: fields.title, live: isLive, url }),
+      );
+    }
+    await createAdminClient()
+      .from("notifications")
+      .insert(addedCoauthors.map((user_id) => ({ user_id, type: "coauthor_added", title: fields.title, url, actor_name: profile.full_name })));
   }
 
   // Close the review loop by email. Best-effort, after the save succeeded.
@@ -297,6 +323,19 @@ export async function saveArticle(formData: FormData): Promise<Result> {
           note: authorNote,
         }),
       );
+      // And a receipt to the writer, so sending isn't met with silence.
+      if (!staff) {
+        await notify(
+          profile.email,
+          `With the editor: ${fields.title}`,
+          reviewReceivedEmail({
+            name: profile.full_name,
+            title: fields.title,
+            resubmitted: prevStatus === "changes_requested",
+            workspaceUrl: `${SITE}/admin`,
+          }),
+        );
+      }
     } else if (authorId && authorId !== profile.id && (to === "changes_requested" || firstPublish)) {
       const writer = await personFor(authorId);
       if (to === "changes_requested") {
@@ -313,12 +352,26 @@ export async function saveArticle(formData: FormData): Promise<Result> {
         );
       }
     }
+    // Co-authors share the moment (anyone just added already got an email).
+    if (firstPublish && articleId) {
+      const { data: co } = await db.from("article_authors").select("profile_id").eq("article_id", articleId);
+      for (const { profile_id } of co ?? []) {
+        if (profile_id === profile.id || addedCoauthors.includes(profile_id)) continue;
+        const person = await personFor(profile_id);
+        await notify(
+          person.email,
+          `You're published: ${fields.title}`,
+          articlePublishedEmail({ name: person.name, title: fields.title, url: `${SITE}/article/${fields.slug}`, coauthor: true }),
+        );
+      }
+    }
   }
 
   revalidatePath("/admin/articles");
   revalidatePath(`/article/${slug}`);
   revalidatePath("/");
-  redirect(`/admin/articles/${articleId}?saved=1`);
+  // "sent" tells the editor screen to confirm the hand-off, not just a save.
+  redirect(`/admin/articles/${articleId}?saved=${to === "in_review" && to !== prevStatus ? "sent" : "1"}`);
 }
 
 /**
@@ -333,7 +386,7 @@ async function syncTagsAndCoauthors(
   articleId: string,
   primaryAuthorId: string,
   formData: FormData,
-): Promise<string | null> {
+): Promise<{ error: string | null; added: string[] }> {
   const seen = new Set<string>();
   const tags = String(formData.get("tags") ?? "")
     .split(",")
@@ -351,10 +404,10 @@ async function syncTagsAndCoauthors(
     tagIds = (data ?? []).map((r) => r.id);
   }
   const { error: tagDel } = await db.from("article_tags").delete().eq("article_id", articleId);
-  if (tagDel) return `Couldn't save tags: ${tagDel.message}`;
+  if (tagDel) return { error: `Couldn't save tags: ${tagDel.message}`, added: [] };
   if (tagIds.length) {
     const { error } = await db.from("article_tags").insert(tagIds.map((tag_id) => ({ article_id: articleId, tag_id })));
-    if (error) return `Couldn't save tags: ${error.message}`;
+    if (error) return { error: `Couldn't save tags: ${error.message}`, added: [] };
   }
 
   // Co-authors: only writer accounts, never the primary author.
@@ -364,13 +417,15 @@ async function syncTagsAndCoauthors(
     const { data } = await db.from("profiles").select("id").in("id", wanted).in("role", ["author", "editor", "admin"]);
     ids = (data ?? []).map((r) => r.id);
   }
+  const { data: before } = await db.from("article_authors").select("profile_id").eq("article_id", articleId);
+  const had = new Set((before ?? []).map((r) => r.profile_id));
   const { error: coDel } = await db.from("article_authors").delete().eq("article_id", articleId);
-  if (coDel) return `Couldn't save co-authors: ${coDel.message}`;
+  if (coDel) return { error: `Couldn't save co-authors: ${coDel.message}`, added: [] };
   if (ids.length) {
     const { error } = await db.from("article_authors").insert(ids.map((profile_id) => ({ article_id: articleId, profile_id })));
-    if (error) return `Couldn't save co-authors: ${error.message}`;
+    if (error) return { error: `Couldn't save co-authors: ${error.message}`, added: [] };
   }
-  return null;
+  return { error: null, added: ids.filter((id) => !had.has(id)) };
 }
 
 export async function deleteArticle(id: string): Promise<Result> {

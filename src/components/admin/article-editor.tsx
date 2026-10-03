@@ -63,6 +63,7 @@ export function ArticleEditor({
   writers = [],
   canPublish,
   justSaved,
+  justSent = false,
 }: {
   article: EditorArticle;
   categories: Option[];
@@ -71,6 +72,8 @@ export function ArticleEditor({
   writers?: { id: string; full_name: string }[];
   canPublish: boolean;
   justSaved: boolean;
+  /** Just sent for review: confirm the hand-off. */
+  justSent?: boolean;
 }) {
   const [body, setBody] = useState(article.body);
   const [tab, setTab] = useState<"write" | "preview">("write");
@@ -316,6 +319,23 @@ export function ArticleEditor({
           )}
         </div>
       </header>
+
+      {/* Sending for review gets a clear "it's with the editor", not just "Saved". */}
+      {justSent && article.status === "in_review" && (
+        <div className="border-b border-teal/30 bg-teal-dim px-5 py-3 text-[13px] sm:px-8" role="status">
+          <p className="font-semibold text-teal">Sent. It&apos;s with the editor now.</p>
+          <p className="mt-0.5 text-ink">
+            {canPublish
+              ? "It's in the review queue."
+              : "We've emailed you a receipt. You'll hear back by email when the editor publishes it or asks for changes. You can still make small edits while it waits."}
+          </p>
+          {!canPublish && (
+            <Link href="/admin" className="mt-1 inline-block font-semibold text-teal hover:underline">
+              Back to your workspace →
+            </Link>
+          )}
+        </div>
+      )}
 
       {/* The writer sees why their piece came back. */}
       {article.status === "changes_requested" && (

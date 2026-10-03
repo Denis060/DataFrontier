@@ -61,7 +61,8 @@ export default async function NotificationsPage() {
                   {!n.is_read && <span className="mt-2 size-2 shrink-0 rounded-full bg-gold" />}
                   <div className={n.is_read ? "pl-5" : ""}>
                     <p className="text-[14px] leading-snug">
-                      <span className="font-semibold">{n.actor_name}</span> published{" "}
+                      <span className="font-semibold">{n.actor_name}</span>{" "}
+                      {n.type === "coauthor_added" ? "added you as a co-author on" : "published"}{" "}
                       <span className="font-serif font-bold">{n.title}</span>
                     </p>
                     <p className="mt-0.5 font-mono text-[11px] text-muted">{fmt(n.created_at)}</p>
