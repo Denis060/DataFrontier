@@ -32,20 +32,23 @@ import {
   CareersBand,
   CategoryStrip,
   EditorSection,
+  FreeDownloads,
   MostRead,
   PromiseStrip,
   StartHere,
 } from "@/components/home/bands";
 import { SiteFooter } from "@/components/home/site-footer";
+import { promoOffers } from "@/lib/offer-match";
 
 export const revalidate = 60;
 
 export default async function Home() {
-  const [d, profile, writers, mostRead] = await Promise.all([
+  const [d, profile, writers, mostRead, offers] = await Promise.all([
     getHomeData(),
     getCurrentProfile(),
     getWriters(),
     getMostRead(5),
+    promoOffers(),
   ]);
   const unread = await getUnreadCount(profile?.id ?? null);
   const s = d.settings;
@@ -109,6 +112,8 @@ export default async function Home() {
           showStats={s?.newsletter_show_stats ?? true}
           latestIssue={d.latestIssue}
         />
+
+        <FreeDownloads offers={offers} />
 
         <CategoryStrip categories={d.categories} />
 
