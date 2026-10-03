@@ -59,7 +59,7 @@ export async function decideApplication(
   // decision.
   const person = await personFor(app.profile_id);
   if (decision === "approved") {
-    await notify(person.email, "You're approved to write for Everyday Data Science", authorApprovedEmail(person.name));
+    await notify(person.email, "You're approved to write for Everyday Data Science", authorApprovedEmail(person.name, note.trim() || null));
   } else {
     await notify(person.email, "About your pitch to Everyday Data Science", applicationDeclinedEmail({ name: person.name, note: note.trim() || null }));
   }
