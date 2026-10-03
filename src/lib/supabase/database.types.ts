@@ -541,6 +541,48 @@ export type Database = {
           },
         ]
       }
+      lead_magnets: {
+        Row: {
+          created_at: string
+          cover_image: string | null
+          description: string | null
+          files: string | null
+          id: string
+          includes: string | null
+          is_active: boolean
+          slug: string
+          sort_order: number
+          tagline: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          cover_image?: string | null
+          description?: string | null
+          files?: string | null
+          id?: string
+          includes?: string | null
+          is_active?: boolean
+          slug: string
+          sort_order?: number
+          tagline?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          cover_image?: string | null
+          description?: string | null
+          files?: string | null
+          id?: string
+          includes?: string | null
+          is_active?: boolean
+          slug?: string
+          sort_order?: number
+          tagline?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       email_events: {
         Row: {
           created_at: string
@@ -967,6 +1009,9 @@ export type Database = {
       }
       newsletter_subscribers: {
         Row: {
+          magnet_id: string | null
+          survey: Json | null
+          survey_at: string | null
           confirm_reminder_sent_at: string | null
           confirm_token: string
           confirmed_at: string | null
@@ -979,6 +1024,9 @@ export type Database = {
           welcome_followup_sent_at: string | null
         }
         Insert: {
+          magnet_id?: string | null
+          survey?: Json | null
+          survey_at?: string | null
           confirm_reminder_sent_at?: string | null
           confirm_token?: string
           confirmed_at?: string | null
@@ -991,6 +1039,9 @@ export type Database = {
           welcome_followup_sent_at?: string | null
         }
         Update: {
+          magnet_id?: string | null
+          survey?: Json | null
+          survey_at?: string | null
           confirm_reminder_sent_at?: string | null
           confirm_token?: string
           confirmed_at?: string | null
