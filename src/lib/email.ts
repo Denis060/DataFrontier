@@ -57,6 +57,10 @@ export async function sendEmail({ to, subject, html }: SendArgs) {
   captureMail({ to, subject, html });
   if (!resend) {
     console.info(`[email:skipped] no RESEND_API_KEY — would send "${subject}" to ${to}`);
+    // Print the email's main link (confirm, download…) so the flow can be
+    // finished by hand in development.
+    const action = html.match(/href="([^"]*(?:confirm|download)[^"]*)"/)?.[1];
+    if (action) console.info(`[email:skipped]   link: ${action.replace(/&amp;/g, "&")}`);
     return { skipped: true as const };
   }
   const { error } = await resend.emails.send({ from, to, subject, html, replyTo: await replyTo() });
@@ -151,12 +155,18 @@ function benefitList(items: string[]): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 18px">${rows}</table>`;
 }
 
-export function confirmEmail(confirmUrl: string, unsubscribeUrl: string) {
+/** offerTitle: the free offer they signed up for, if any (see lib/free-offers). */
+export function confirmEmail(confirmUrl: string, unsubscribeUrl: string, offerTitle?: string | null) {
+  const offer = offerTitle ? escHtml(offerTitle) : null;
   return emailShell(
-    `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 12px">Confirm your subscription</h1>
-     <p style="margin:0 0 18px">You're one tap from <strong>The Everyday Brief:</strong> a free weekly dispatch on AI, ML, and data science for people who actually build things.</p>
+    `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 12px">${offer ? `Confirm to get ${offer}` : "Confirm your subscription"}</h1>
+     <p style="margin:0 0 18px">${
+       offer
+         ? `One tap and <strong>${offer}</strong> is yours. Confirming also subscribes you to <strong>The Everyday Brief</strong>, our free weekly dispatch on AI, ML and data science. Unsubscribe any time.`
+         : "You're one tap from <strong>The Everyday Brief:</strong> a free weekly dispatch on AI, ML, and data science for people who actually build things."
+     }</p>
      <p style="margin:0 0 22px">
-       <a href="${confirmUrl}" style="display:inline-block;background:#8a6212;color:#fff;text-decoration:none;padding:13px 26px;border-radius:6px;font-weight:700;font-size:15px">Confirm subscription &rarr;</a>
+       <a href="${confirmUrl}" style="display:inline-block;background:#8a6212;color:#fff;text-decoration:none;padding:13px 26px;border-radius:6px;font-weight:700;font-size:15px">${offer ? "Confirm and get it" : "Confirm subscription"} &rarr;</a>
      </p>
      <p style="margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:#5a6270;font-weight:700">Every Tuesday, you'll get</p>
      ${benefitList([
@@ -169,6 +179,39 @@ export function confirmEmail(confirmUrl: string, unsubscribeUrl: string) {
      <p style="font-size:13px;color:#5a6270;margin:0">If you didn't request this, you can safely ignore this email.</p>`,
     unsubscribeUrl,
     "Confirm your subscription to The Everyday Brief, practical AI, ML & data science, weekly.",
+  );
+}
+
+/**
+ * Sent when a subscriber gets a free offer: right after confirming, or
+ * straight away if they were already subscribed. Doubles as the welcome.
+ */
+export function offerEmail(a: { title: string; downloadUrl: string; unsubscribeUrl: string; isNew: boolean }) {
+  const title = escHtml(a.title);
+  return emailShell(
+    `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 14px">Here's your ${title}</h1>
+     <p style="margin:0 0 18px">Thanks for ${a.isNew ? "joining us" : "reading"}. Your download is ready:</p>
+     <p style="margin:0 0 22px">
+       <a href="${a.downloadUrl}" style="display:inline-block;background:#8a6212;color:#fff;text-decoration:none;padding:13px 26px;border-radius:6px;font-weight:700;font-size:15px">Download ${title} &rarr;</a>
+     </p>
+     <p style="margin:0 0 14px;font-size:13px;color:#5a6270">The link is yours to keep; open this email again any time you need it.</p>
+     ${
+       a.isNew
+         ? `<p style="margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:#5a6270;font-weight:700">What comes next, every Tuesday</p>
+     ${benefitList([
+       "A cheat sheet worth saving",
+       "One practical tip you can use that day",
+       "The one thing worth reading this week",
+       "An African AI story you won't find elsewhere",
+       "An opportunity: a job, grant, or call",
+     ])}`
+         : ""
+     }
+     <p style="margin:0 0 14px">Got a question or a topic you want covered? Just hit reply, I read every email.</p>
+     <p style="margin:0 0 4px">Glad you're here,</p>
+     <p style="margin:0;font-weight:700">Ibrahim · Everyday Data Science</p>`,
+    a.unsubscribeUrl,
+    `Your ${a.title} is ready to download.`,
   );
 }
 

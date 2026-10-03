@@ -5,6 +5,7 @@ import { hasRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { SubscribersList } from "@/components/admin/subscribers-list";
+import { AudiencePanel } from "@/components/admin/audience-panel";
 
 export const metadata = { title: "Subscribers | Newsroom", robots: { index: false } };
 
@@ -19,10 +20,13 @@ export default async function SubscribersPage({
   if (!hasRole(profile.role, ["admin"])) redirect("/admin/newsletter");
 
   const db = await createClient();
-  const { data } = await db
-    .from("newsletter_subscribers")
-    .select("id, email, status, source, created_at, confirmed_at")
-    .order("created_at", { ascending: false });
+  const [{ data }, { data: offers }] = await Promise.all([
+    db
+      .from("newsletter_subscribers")
+      .select("id, email, status, source, created_at, confirmed_at, magnet_id, survey")
+      .order("created_at", { ascending: false }),
+    db.from("lead_magnets").select("id, slug, title, is_active").order("sort_order"),
+  ]);
 
   const rows = data ?? [];
   const confirmed = rows.filter((r) => r.status === "confirmed").length;
@@ -41,6 +45,8 @@ export default async function SubscribersPage({
             ← Newsletter
           </Link>
         </header>
+
+        <AudiencePanel subs={rows} offers={offers ?? []} />
 
         <SubscribersList subscribers={rows} initialFilter={status} />
       </div>

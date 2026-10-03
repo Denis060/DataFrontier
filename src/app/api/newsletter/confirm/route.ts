@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
-import { sendEmail, welcomeEmail, links } from "@/lib/email";
+import { sendEmail, welcomeEmail, offerEmail, links } from "@/lib/email";
+import { offerDownloadPath } from "@/lib/free-offers";
+
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://everydaydatascience.com";
+
+/** The thank-you page; the token lets it show the download and the survey. */
+const thanks = (origin: string, token: string) =>
+  new URL(`/newsletter/confirmed?t=${encodeURIComponent(token)}`, origin);
 
 /** Double opt-in landing. The token is the authorisation; anon can't do this. */
 export async function GET(request: Request) {
@@ -17,21 +24,38 @@ export async function GET(request: Request) {
     .update({ status: "confirmed", confirmed_at: new Date().toISOString() })
     .eq("confirm_token", token)
     .eq("status", "pending")
-    .select("email, unsubscribe_token")
+    .select("email, unsubscribe_token, magnet_id")
     .maybeSingle();
 
   if (data) {
-    // Fire-and-forget: a welcome-send failure must not fail the confirmation.
+    // Came for a free offer: their welcome is the download. Fire-and-forget:
+    // a send failure must not fail the confirmation.
+    const offer = data.magnet_id
+      ? (await db.from("lead_magnets").select("slug, title").eq("id", data.magnet_id).maybeSingle()).data
+      : null;
     try {
-      await sendEmail({
-        to: data.email,
-        subject: "Welcome to The Everyday Brief 👋",
-        html: welcomeEmail(links.unsubscribe(data.unsubscribe_token)),
-      });
+      await sendEmail(
+        offer
+          ? {
+              to: data.email,
+              subject: `Here's your ${offer.title}`,
+              html: offerEmail({
+                title: offer.title,
+                downloadUrl: `${SITE}${offerDownloadPath(offer.slug, token)}`,
+                unsubscribeUrl: links.unsubscribe(data.unsubscribe_token),
+                isNew: true,
+              }),
+            }
+          : {
+              to: data.email,
+              subject: "Welcome to The Everyday Brief 👋",
+              html: welcomeEmail(links.unsubscribe(data.unsubscribe_token)),
+            },
+      );
     } catch {
       /* ignore */
     }
-    return NextResponse.redirect(new URL("/newsletter/confirmed", origin));
+    return NextResponse.redirect(thanks(origin, token));
   }
 
   // No pending row: either already confirmed (fine — send them to the same
@@ -44,6 +68,6 @@ export async function GET(request: Request) {
     .maybeSingle();
 
   return NextResponse.redirect(
-    new URL(already ? "/newsletter/confirmed" : "/newsletter?error=invalid-link", origin),
+    already ? thanks(origin, token) : new URL("/newsletter?error=invalid-link", origin),
   );
 }

@@ -291,6 +291,36 @@ export const RESOURCES: Resource[] = [
     summary: { title: "name", meta: ["color"] },
     revalidate: ["layout"],
   },
+  {
+    key: "free-offers",
+    table: "lead_magnets",
+    title: "Free offers",
+    singular: "free offer",
+    description: "Downloads readers get for subscribing, each with its own page at /free/<slug> to share in posts.",
+    roles: ["admin", "editor"],
+    fields: [
+      { name: "title", label: "Title", type: "text", required: true, placeholder: "The Everyday SQL Pack" },
+      { name: "slug", label: "Page link", type: "text", slugFrom: "title", help: "The page is everydaydatascience.com/free/<this>. Share that link in your post." },
+      { name: "tagline", label: "One-line pitch", type: "text", wide: true, help: "Shown under the title and in link previews." },
+      { name: "description", label: "Description", type: "textarea", wide: true },
+      { name: "includes", label: "What's inside", type: "textarea", wide: true, help: "One item per line. Shown as a checklist." },
+      {
+        name: "files",
+        label: "Files in the download",
+        type: "textarea",
+        required: true,
+        wide: true,
+        help: "One link per line (images or PDFs, e.g. a cheat sheet's image link). They're merged in this order into one PDF. Only confirmed subscribers can download it.",
+      },
+      { name: "cover_image", label: "Cover image", type: "url", wide: true, help: "Optional. Leave blank to use the first image in the files." },
+      active("Live (the page accepts signups)"),
+      sortField,
+    ],
+    orderBy: [ORDER("sort_order"), ORDER("created_at", false)],
+    summary: { title: "title", meta: ["slug", "is_active"] },
+    revalidate: [],
+    note: "To see who signed up and their survey answers, open Newsletter → Subscribers → Audience.",
+  },
 ];
 
 export const resourceFor = (key: string) => RESOURCES.find((r) => r.key === key) ?? null;
