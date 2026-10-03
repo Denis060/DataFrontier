@@ -18,7 +18,7 @@ export default async function AdminArticlesPage({
 
   return (
     <AdminShell role={profile.role} name={profile.full_name}>
-      <div className="mx-auto w-full max-w-[1000px] px-5 py-10 sm:px-8">
+      <div className="w-full max-w-[1440px] px-5 py-10 sm:px-8">
         <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="font-serif text-3xl font-black tracking-[-0.5px]">Articles</h1>

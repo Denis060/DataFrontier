@@ -1,18 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ApplicationCard } from "@/components/admin/application-card";
-
-type App = {
-  id: string;
-  bio: string;
-  topics: string;
-  writing_links: string | null;
-  status: string;
-  review_note: string | null;
-  created_at: string;
-  applicant: { full_name: string; slug: string | null } | null;
-};
+import { ApplicationCard, type ApplicationRow as App } from "@/components/admin/application-card";
 
 const FILTERS = [
   { key: "pending", label: "Pending" },
@@ -24,7 +13,10 @@ const FILTERS = [
 const PAGE = 25;
 
 export function ApplicationsList({ apps, canApprove }: { apps: App[]; canApprove: boolean }) {
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>("pending");
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>(
+    // Open on the queue when there is one; otherwise show everything.
+    apps.some((x) => x.status === "pending") ? "pending" : "all",
+  );
   const [q, setQ] = useState("");
   const [limit, setLimit] = useState(PAGE);
 
@@ -88,7 +80,7 @@ export function ApplicationsList({ apps, canApprove }: { apps: App[]; canApprove
 
       {filtered.length === 0 ? (
         <p className="rounded border border-dashed border-border px-6 py-16 text-center text-sm text-muted">
-          {q.trim() ? "No applications match your search." : "Nothing here."}
+          {q.trim() ? "No applications match your search." : filter === "pending" ? "No pitches waiting. New ones show up here and on your overview." : "Nothing here."}
         </p>
       ) : (
         <div className="flex flex-col gap-3">

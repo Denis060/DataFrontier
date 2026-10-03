@@ -92,7 +92,9 @@ export function RichEditor({
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="flex flex-wrap items-center gap-0.5 border-b border-border px-4 py-1.5 sm:px-8">
+      {/* Pinned under the editor header while writing (--editor-header is set by
+          ArticleEditor); one swipeable row on phones. */}
+      <div className="sticky top-[var(--editor-header,56px)] z-10 flex items-center gap-0.5 overflow-x-auto border-b border-border bg-bg/95 px-3 py-1.5 backdrop-blur [scrollbar-width:none] sm:flex-wrap sm:overflow-visible sm:px-8 [&>*]:shrink-0">
         <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={btn(editor.isActive("bold"))} aria-label="Bold">
           <Bold className="size-4" />
         </button>

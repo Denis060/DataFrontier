@@ -21,6 +21,7 @@ export default async function NewsletterPage() {
         showStats={settings?.newsletter_show_stats ?? true}
         source="newsletter-page"
         latestIssue={latestIssue}
+        asPageHeading
       />
     </Shell>
   );

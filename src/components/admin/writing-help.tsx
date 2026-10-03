@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BookOpen, Check, Copy, ExternalLink } from "lucide-react";
 import { aiBrief } from "@/lib/ai-brief";
+import { Popover } from "@/components/admin/popover";
 
 /**
  * The writer's guide, reachable from inside the editor, plus a brief to paste
@@ -23,12 +24,18 @@ export function WritingHelp({ getFormat }: { getFormat: () => string | null }) {
   }
 
   return (
-    <details className="group relative">
-      <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded border border-border px-3 py-2 text-[12px] text-muted hover:text-ink [&::-webkit-details-marker]:hidden">
-        <BookOpen className="size-3.5" aria-hidden />
-        Writing help
-      </summary>
-      <div className="absolute right-0 z-30 mt-2 w-[min(320px,calc(100vw-32px))] rounded-lg border border-border bg-bg2 p-4 shadow-xl">
+    <Popover
+      title="Writing help"
+      width="sm:w-[320px]"
+      label={
+        <>
+          <BookOpen className="size-4 sm:size-3.5" aria-hidden />
+          <span className="hidden sm:inline">Writing help</span>
+        </>
+      }
+      buttonClassName="inline-flex items-center gap-1.5 rounded border border-border px-2.5 py-2 text-[12px] text-muted hover:text-ink sm:px-3"
+    >
+      <div>
         <p className="text-[13px] font-semibold">Using ChatGPT or Claude?</p>
         <p className="mt-1 text-[12px] leading-relaxed text-muted">
           Copy our brief, paste it into the tool, then add your own notes, code and results under it.
@@ -55,6 +62,6 @@ export function WritingHelp({ getFormat }: { getFormat: () => string | null }) {
           <ExternalLink className="size-3.5" aria-hidden />
         </a>
       </div>
-    </details>
+    </Popover>
   );
 }

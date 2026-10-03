@@ -14,8 +14,11 @@ export type DeskPiece = {
 
 export type DeskPitch = { id: string; name: string; topics: string; since: string };
 
+export type DeskSheet = { id: string; title: string; writer: string; since: string };
+
 export type Desk = {
   review: DeskPiece[];
+  sheets: DeskSheet[];
   pitches: DeskPitch[];
   pitchCount: number;
   comments: number;
@@ -27,7 +30,7 @@ export type Desk = {
 export async function getEditorDesk(): Promise<Desk> {
   const db = await createClient();
   const head = { count: "exact" as const, head: true };
-  const [review, pitches, comments, withWriters] = await Promise.all([
+  const [review, pitches, comments, withWriters, sheets] = await Promise.all([
     db
       .from("articles")
       .select("id, title, updated_at, author_note, review_snapshot, writer:profiles!articles_author_id_fkey(full_name, avatar_url)")
@@ -41,6 +44,12 @@ export async function getEditorDesk(): Promise<Desk> {
       .limit(3),
     db.from("comments").select("id", head).eq("is_approved", false),
     db.from("articles").select("id", head).eq("status", "changes_requested"),
+    // Errors (e.g. before the review migration) just mean an empty list.
+    db
+      .from("cheat_sheets")
+      .select("id, title, submitted_at, created_at, writer:profiles!cheat_sheets_author_id_fkey(full_name)")
+      .eq("status", "in_review")
+      .order("submitted_at", { ascending: true }),
   ]);
 
   type Writer = { full_name: string | null; avatar_url: string | null } | null;
@@ -63,6 +72,12 @@ export async function getEditorDesk(): Promise<Desk> {
       name: (p.applicant as unknown as Applicant)?.full_name ?? "Someone",
       topics: p.topics ?? "",
       since: p.created_at,
+    })),
+    sheets: (sheets.data ?? []).map((c) => ({
+      id: c.id,
+      title: c.title,
+      writer: (c.writer as unknown as { full_name: string | null } | null)?.full_name ?? "Unknown writer",
+      since: c.submitted_at ?? c.created_at,
     })),
     pitchCount: pitches.count ?? 0,
     comments: comments.count ?? 0,

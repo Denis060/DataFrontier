@@ -20,7 +20,15 @@ function isRecent(iso: string | null, days: number) {
  */
 export function WriterHome({ name, data }: { name: string; data: Workspace }) {
   const first = name.split(" ")[0] || name;
-  const sentBack = data.pieces.filter((p) => p.status === "changes_requested");
+  // Anything the editor sent back, articles and cheat sheets alike.
+  const sentBack = [
+    ...data.pieces
+      .filter((p) => p.status === "changes_requested")
+      .map((p) => ({ key: `a-${p.id}`, kind: "Article", title: p.title, note: p.review_note, href: `/admin/articles/${p.id}` })),
+    ...data.sheets
+      .filter((c) => c.status === "changes_requested")
+      .map((c) => ({ key: `c-${c.id}`, kind: "Cheat sheet", title: c.title, note: c.review_note, href: `/admin/cheat-sheets/${c.id}` })),
+  ];
   const drafts = data.pieces.filter((p) => p.status === "draft");
   const review = data.pieces.filter((p) => p.status === "in_review");
   const live = data.pieces.filter((p) => p.status === "published");
@@ -31,7 +39,7 @@ export function WriterHome({ name, data }: { name: string; data: Workspace }) {
     .sort((a, b) => (b.published_at ?? "").localeCompare(a.published_at ?? ""))[0];
 
   return (
-    <div className="mx-auto w-full max-w-[1100px] px-4 py-8 sm:px-8 sm:py-10">
+    <div className="w-full max-w-[1440px] px-4 py-8 sm:px-8 sm:py-10">
       <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="mb-1 font-mono text-[10px] uppercase tracking-[2px] text-gold">Your workspace</p>
@@ -55,17 +63,18 @@ export function WriterHome({ name, data }: { name: string; data: Workspace }) {
           <p className="mb-3 font-mono text-[10px] uppercase tracking-[2px] text-red">Needs your attention</p>
           <ul className="flex flex-col gap-3">
             {sentBack.map((p) => (
-              <li key={p.id} className="rounded-md border border-border bg-bg p-4">
+              <li key={p.key} className="rounded-md border border-border bg-bg p-4">
+                <p className="mb-1 font-mono text-[10px] uppercase tracking-[1.5px] text-muted">{p.kind}</p>
                 <p className="font-serif text-[17px] leading-snug font-bold">{p.title}</p>
-                {p.review_note ? (
+                {p.note ? (
                   <p className="mt-2 line-clamp-3 border-l-2 border-red/40 pl-3 text-[13px] whitespace-pre-wrap text-muted">
-                    {p.review_note}
+                    {p.note}
                   </p>
                 ) : (
                   <p className="mt-2 text-[13px] text-muted">The editor asked for changes.</p>
                 )}
                 <Link
-                  href={`/admin/articles/${p.id}`}
+                  href={p.href}
                   className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded bg-ink px-4 py-2.5 text-[13px] font-bold text-bg sm:w-auto"
                 >
                   Open and fix <ArrowRight className="size-3.5" aria-hidden />
