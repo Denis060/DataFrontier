@@ -14,8 +14,12 @@ export type WorkspacePiece = {
   comments: number;
 };
 
+export type WorkspaceSheet = { id: string; title: string; status: string; review_note: string | null };
+
 export type Workspace = {
   pieces: WorkspacePiece[];
+  /** The writer's cheat sheets (any status), for "needs your attention". */
+  sheets: WorkspaceSheet[];
   followers: number;
   totals: { views: number; reactions: number; comments: number; published: number };
   profile: {
@@ -33,7 +37,7 @@ export type Workspace = {
  */
 export async function getWorkspace(profileId: string): Promise<Workspace> {
   const db = await createClient();
-  const [arts, follows, prof] = await Promise.all([
+  const [arts, follows, prof, sheetRows] = await Promise.all([
     db
       .from("articles")
       .select(
@@ -43,6 +47,7 @@ export async function getWorkspace(profileId: string): Promise<Workspace> {
       .order("updated_at", { ascending: false }),
     db.from("follows").select("id", { count: "exact", head: true }).eq("author_id", profileId),
     db.from("profiles").select("slug, title, bio, avatar_url, socials").eq("id", profileId).maybeSingle(),
+    db.from("cheat_sheets").select("id, title, status, review_note").eq("author_id", profileId).order("created_at", { ascending: false }),
   ]);
 
   type Row = Omit<WorkspacePiece, "views" | "reactions" | "comments"> & {
@@ -70,6 +75,7 @@ export async function getWorkspace(profileId: string): Promise<Workspace> {
 
   return {
     pieces,
+    sheets: (sheetRows.data ?? []) as WorkspaceSheet[],
     followers: follows.count ?? 0,
     totals: {
       views: live.reduce((s, x) => s + x.views, 0),

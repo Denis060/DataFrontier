@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { SURVEY } from "@/lib/free-offers";
 
-type Sub = { status: string; magnet_id: string | null; survey: unknown };
+type Sub = { status: string; magnet_id: string | null; survey: unknown; source?: string | null };
 type Offer = { id: string; slug: string; title: string; is_active: boolean };
 
 /**
@@ -17,6 +17,9 @@ export function AudiencePanel({ subs, offers }: { subs: Sub[]; offers: Offer[] }
     const mine = subs.filter((s) => s.magnet_id === o.id);
     return { ...o, signups: mine.length, confirmed: mine.filter((s) => s.status === "confirmed").length };
   });
+  // Readers who signed up to download a single cheat sheet.
+  const viaSheets = subs.filter((s) => s.source?.startsWith("sheet:"));
+  const sheetsConfirmed = viaSheets.filter((s) => s.status === "confirmed").length;
 
   return (
     <section aria-label="Audience" className="mb-8 flex flex-col gap-4">
@@ -27,6 +30,14 @@ export function AudiencePanel({ subs, offers }: { subs: Sub[]; offers: Offer[] }
             Manage offers →
           </Link>
         </div>
+        {viaSheets.length > 0 && (
+          <p className="mb-2 flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2.5 text-[13px]">
+            <span className="font-semibold">Cheat sheet downloads</span>
+            <span className="font-mono text-[12px] text-muted">
+              {viaSheets.length} signed up · {sheetsConfirmed} confirmed ({Math.round((sheetsConfirmed / viaSheets.length) * 100)}%)
+            </span>
+          </p>
+        )}
         {perOffer.length === 0 ? (
           <p className="text-[13px] text-muted">No offers yet.</p>
         ) : (

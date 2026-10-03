@@ -829,6 +829,81 @@ export async function getArticlesByCategory(
   return { items: (data ?? []) as ArticleCard[], total, page, perPage: PER_PAGE };
 }
 
+export type TopicFilters = { page: number; format?: string; q?: string; sort?: "new" | "popular" };
+
+/**
+ * A topic page's listing, filtered by format and a search term within the
+ * topic, newest or most read first. Also returns the formats present in the
+ * topic (with counts) for the filter chips, and the unfiltered total.
+ */
+export async function getTopicListing(categoryId: string, f: TopicFilters) {
+  const db = await createClient();
+
+  // Every published piece in the topic, light: drives the format chips and
+  // resolves a format slug without another table read.
+  const { data: all } = await db
+    .from("articles")
+    .select("format_id, format:formats(name, slug)")
+    .eq("status", "published")
+    .eq("category_id", categoryId);
+  const formatMap = new Map<string, { name: string; slug: string; id: string; count: number }>();
+  for (const a of all ?? []) {
+    const fm = a.format as unknown as { name: string; slug: string } | null;
+    if (!fm || !a.format_id) continue;
+    const cur = formatMap.get(fm.slug) ?? { ...fm, id: a.format_id, count: 0 };
+    cur.count++;
+    formatMap.set(fm.slug, cur);
+  }
+  const formats = [...formatMap.values()].sort((a, b) => b.count - a.count);
+  const formatId = f.format ? formatMap.get(f.format)?.id : undefined;
+
+  // Strip characters that would break PostgREST's or() filter syntax.
+  const term = (f.q ?? "").replace(/[%,()*\\]/g, " ").trim().slice(0, 80);
+
+  const filtered = () => {
+    let q = db.from("articles").select("id", { count: "exact", head: true }).eq("status", "published").eq("category_id", categoryId);
+    if (formatId) q = q.eq("format_id", formatId);
+    if (term) q = q.or(`title.ilike.%${term}%,excerpt.ilike.%${term}%`);
+    return q;
+  };
+  const { count } = await filtered();
+  const total = count ?? 0;
+  const base = { formats, all: all?.length ?? 0, total, page: f.page, perPage: PER_PAGE };
+  if ((f.page - 1) * PER_PAGE >= total) return { ...base, items: [] as ArticleCard[] };
+
+  let q = db.from("articles").select(ARTICLE_SELECT).eq("status", "published").eq("category_id", categoryId);
+  if (formatId) q = q.eq("format_id", formatId);
+  if (term) q = q.or(`title.ilike.%${term}%,excerpt.ilike.%${term}%`);
+  q =
+    f.sort === "popular"
+      ? q.order("view_count", { ascending: false }).order("published_at", { ascending: false })
+      : q.order("published_at", { ascending: false });
+  const { data, error } = await q.range(...range(f.page, PER_PAGE));
+  if (error) throw new Error(`getTopicListing: ${error.message}`);
+  return { ...base, items: (data ?? []) as ArticleCard[] };
+}
+
+/** The most-read pieces in one topic, for its sidebar. */
+export async function getMostReadInCategory(categoryId: string, limit = 5) {
+  const db = await createClient();
+  const { data } = await db
+    .from("articles")
+    .select("id, slug, title, view_count, reading_time")
+    .eq("status", "published")
+    .eq("category_id", categoryId)
+    .gt("view_count", 0)
+    .order("view_count", { ascending: false })
+    .limit(limit);
+  return data ?? [];
+}
+
+/** All topics, in menu order, for switching between topic pages. */
+export async function getTopics() {
+  const db = await createClient();
+  const { data } = await db.from("categories").select("id, name, slug").order("sort_order");
+  return data ?? [];
+}
+
 export async function getAuthor(slug: string) {
   const db = await createClient();
   const { data, error } = await db

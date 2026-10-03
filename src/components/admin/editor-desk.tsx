@@ -13,7 +13,7 @@ function waited(iso: string): string {
  * first), pitches to decide, comments to approve. Empty means a clear desk.
  */
 export function EditorDesk({ desk }: { desk: Desk }) {
-  const total = desk.review.length + desk.pitchCount + desk.comments;
+  const total = desk.review.length + desk.sheets.length + desk.pitchCount + desk.comments;
 
   if (total === 0) {
     return (
@@ -66,6 +66,34 @@ export function EditorDesk({ desk }: { desk: Desk }) {
                       {p.revised && <span className="ml-1.5 rounded bg-gold px-1.5 py-px text-[10px] font-bold text-on-accent">Revised</span>}
                     </p>
                     {p.note && <p className="mt-1 line-clamp-1 text-[12px] italic text-muted">&ldquo;{p.note}&rdquo;</p>}
+                  </div>
+                  <span className="hidden shrink-0 items-center gap-1 rounded bg-gold px-3 py-2 text-[12px] font-bold text-on-accent group-hover:opacity-85 sm:inline-flex">
+                    Review <ArrowRight className="size-3.5" aria-hidden />
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {desk.sheets.length > 0 && (
+        <div className="mb-4">
+          <p className="mb-2 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[1.5px] text-muted">
+            <FileText className="size-3.5" aria-hidden /> Cheat sheets to review
+          </p>
+          <ul className="flex flex-col gap-2">
+            {desk.sheets.map((c) => (
+              <li key={c.id}>
+                <Link
+                  href={`/admin/cheat-sheets/${c.id}`}
+                  className="group flex items-center gap-3 rounded-md border border-border bg-bg p-3 transition-colors hover:border-gold/50"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-serif text-[15px] leading-snug font-bold">{c.title}</p>
+                    <p className="mt-0.5 text-[12px] text-muted">
+                      {c.writer} · waiting {waited(c.since)}
+                    </p>
                   </div>
                   <span className="hidden shrink-0 items-center gap-1 rounded bg-gold px-3 py-2 text-[12px] font-bold text-on-accent group-hover:opacity-85 sm:inline-flex">
                     Review <ArrowRight className="size-3.5" aria-hidden />

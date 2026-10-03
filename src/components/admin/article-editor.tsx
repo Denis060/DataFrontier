@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { ExternalLink, Eye, ImagePlus, Loader2, Save } from "lucide-react";
+import { ArrowLeft, ExternalLink, Eye, ImagePlus, Loader2, Save } from "lucide-react";
 import { renderPreview } from "@/app/admin/articles/preview-action";
 import { saveArticle, deleteArticle } from "@/app/admin/articles/actions";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -10,6 +10,7 @@ import { CoverUpload } from "@/components/admin/cover-upload";
 import { RichEditor } from "@/components/admin/rich-editor";
 import { StyleCheck } from "@/components/admin/style-check";
 import { WritingHelp } from "@/components/admin/writing-help";
+import { Popover } from "@/components/admin/popover";
 import { ReviewDiff } from "@/components/admin/review-diff";
 import { SeoDescriptionHint, SeoTitleHint } from "@/components/admin/seo-hints";
 import { SubmitCheck } from "@/components/admin/submit-check";
@@ -92,6 +93,18 @@ export function ArticleEditor({
   const [saving, startSave] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  // The sticky toolbar sits right under the sticky header, whatever its height.
+  useEffect(() => {
+    const header = headerRef.current;
+    const form = formRef.current;
+    if (!header || !form) return;
+    const set = () => form.style.setProperty("--editor-header", `${header.offsetHeight}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(header);
+    return () => ro.disconnect();
+  }, []);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const intentRef = useRef<HTMLInputElement>(null);
   const { upload, uploading: imgUploading, error: imgError } = useUpload();
@@ -197,15 +210,30 @@ export function ArticleEditor({
       {/* Which button was pressed: "save" or a target status. */}
       <input ref={intentRef} type="hidden" name="intent" defaultValue="save" />
 
-      <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-border bg-bg/90 px-5 py-3 backdrop-blur-xl sm:px-8">
+      {/* One row on every screen: on phones labels shrink to icons or short
+          words so nothing wraps. Its height feeds --editor-header, which keeps
+          the formatting toolbar pinned just below it. */}
+      <header
+        ref={headerRef}
+        className="sticky top-0 z-20 flex items-center gap-2 border-b border-border bg-bg px-3 py-2.5 sm:gap-3 sm:px-8 sm:py-3"
+      >
         {/* Writers came from their workspace; take them back there. */}
-        <Link href={canPublish ? "/admin/articles" : "/admin"} className="text-[13px] text-muted hover:text-ink">
-          {canPublish ? "← Articles" : "← Your workspace"}
+        <Link
+          href={canPublish ? "/admin/articles" : "/admin"}
+          aria-label={canPublish ? "Back to articles" : "Back to your workspace"}
+          className="inline-flex shrink-0 items-center gap-1 rounded p-1.5 text-[13px] text-muted hover:text-ink sm:p-0"
+        >
+          <ArrowLeft className="size-4" aria-hidden />
+          <span className="hidden sm:inline">{canPublish ? "Articles" : "Your workspace"}</span>
         </Link>
-        {article.id && <StatusBadge status={article.status} />}
-        {justSaved && <span className="text-[12px] text-teal">Saved</span>}
+        {article.id && (
+          <span className="hidden sm:inline-flex">
+            <StatusBadge status={article.status} />
+          </span>
+        )}
+        {justSaved && <span className="hidden text-[12px] text-teal sm:inline">Saved</span>}
 
-        <div className="ml-auto flex flex-wrap items-center gap-2">
+        <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
           {!locked && (
             <WritingHelp
               getFormat={() => {
@@ -220,10 +248,11 @@ export function ArticleEditor({
             <Link
               href={`/article/${article.slug}`}
               target="_blank"
-              className="inline-flex items-center gap-1.5 rounded border border-border px-3 py-2 text-[12px] text-muted hover:text-ink"
+              aria-label={article.status === "published" ? "View on site" : "Preview on site"}
+              className="inline-flex items-center gap-1.5 rounded border border-border px-2.5 py-2 text-[12px] text-muted hover:text-ink sm:px-3"
             >
-              <ExternalLink className="size-3.5" aria-hidden />
-              {article.status === "published" ? "View" : "Preview on site"}
+              <ExternalLink className="size-4 sm:size-3.5" aria-hidden />
+              <span className="hidden sm:inline">{article.status === "published" ? "View" : "Preview on site"}</span>
             </Link>
           )}
 
@@ -232,7 +261,7 @@ export function ArticleEditor({
             type="button"
             onClick={() => submitWith("save")}
             disabled={saving}
-            className="inline-flex items-center gap-1.5 rounded border border-border px-3.5 py-2 text-[13px] font-medium transition-colors hover:border-border-strong hover:bg-surface-1 disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded border border-border px-2.5 py-2 text-[13px] font-medium transition-colors hover:border-border-strong hover:bg-surface-1 disabled:opacity-60 sm:px-3.5"
           >
             {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
             Save
@@ -242,41 +271,46 @@ export function ArticleEditor({
           {/* Every transition saves the whole form first — see submitWith. */}
           {/* Resubmitting after changes: let the writer say what they changed. */}
           {article.status === "changes_requested" && (
-            <details className="relative">
-              <summary className="cursor-pointer list-none rounded border border-gold/40 px-3.5 py-2 text-[13px] font-medium text-gold hover:bg-gold-dim">
-                Resubmit for review
-              </summary>
-              <div className="absolute right-0 z-30 mt-2 w-[min(90vw,380px)] rounded-md border border-border bg-bg p-3 shadow-xl">
-                <label htmlFor="author_note" className="mb-1.5 block font-mono text-[10px] uppercase tracking-[1.5px] text-muted">
-                  What did you change? (optional)
-                </label>
-                <textarea
-                  id="author_note"
-                  name="author_note"
-                  rows={4}
-                  placeholder="e.g. Expanded the excerpt, added the benchmark source, cut the intro."
-                  className="w-full resize-y rounded border border-border bg-surface-1 px-3 py-2 text-[13px] outline-none focus:border-gold/40"
-                />
-                <p className="mt-1 text-[11px] text-muted">The editor sees this, plus exactly which lines you edited.</p>
-                <button
-                  type="button"
-                  onClick={() => submitWith("in_review")}
-                  disabled={saving}
-                  className="mt-2 w-full rounded bg-gold px-3.5 py-2 text-[13px] font-bold text-on-accent hover:opacity-85 disabled:opacity-60"
-                >
-                  Send it back to the editor
-                </button>
-              </div>
-            </details>
+            <Popover
+              title="Resubmit for review"
+              buttonClassName="rounded border border-gold/40 px-2.5 py-2 text-[13px] font-medium whitespace-nowrap text-gold hover:bg-gold-dim sm:px-3.5"
+              label={
+                <>
+                  <span className="sm:hidden">Resubmit</span>
+                  <span className="hidden sm:inline">Resubmit for review</span>
+                </>
+              }
+            >
+              <label htmlFor="author_note" className="mb-1.5 block font-mono text-[10px] uppercase tracking-[1.5px] text-muted">
+                What did you change? (optional)
+              </label>
+              <textarea
+                id="author_note"
+                name="author_note"
+                rows={4}
+                placeholder="e.g. Expanded the excerpt, added the benchmark source, cut the intro."
+                className="w-full resize-y rounded border border-border bg-surface-1 px-3 py-2 text-[13px] outline-none focus:border-gold/40"
+              />
+              <p className="mt-1 text-[11px] text-muted">The editor sees this, plus exactly which lines you edited.</p>
+              <button
+                type="button"
+                onClick={() => submitWith("in_review")}
+                disabled={saving}
+                className="mt-2 w-full rounded bg-gold px-3.5 py-2.5 text-[13px] font-bold text-on-accent hover:opacity-85 disabled:opacity-60"
+              >
+                Send it back to the editor
+              </button>
+            </Popover>
           )}
           {article.status === "draft" && (
             <button
               type="button"
               onClick={() => submitWith("in_review")}
               disabled={saving}
-              className="rounded border border-gold/40 px-3.5 py-2 text-[13px] font-medium text-gold hover:bg-gold-dim disabled:opacity-60"
+              className="rounded border border-gold/40 px-2.5 py-2 text-[13px] font-medium whitespace-nowrap text-gold hover:bg-gold-dim disabled:opacity-60 sm:px-3.5"
             >
-              {article.id ? "Submit for review" : "Save & submit"}
+              <span className="sm:hidden">Submit</span>
+              <span className="hidden sm:inline">{article.id ? "Submit for review" : "Save & submit"}</span>
             </button>
           )}
           {article.id && canPublish && article.status !== "published" && (
@@ -284,38 +318,42 @@ export function ArticleEditor({
               type="button"
               onClick={() => submitWith("published")}
               disabled={saving}
-              className="rounded bg-gold px-3.5 py-2 text-[13px] font-bold text-on-accent hover:opacity-85 disabled:opacity-60"
+              className="rounded bg-gold px-2.5 py-2 text-[13px] font-bold text-on-accent hover:opacity-85 disabled:opacity-60 sm:px-3.5"
             >
               Publish
             </button>
           )}
           {article.id && canPublish && article.status === "in_review" && (
-            <details className="relative">
-              <summary className="cursor-pointer list-none rounded border border-red/40 px-3.5 py-2 text-[13px] font-medium text-red hover:bg-red-dim">
-                Request changes
-              </summary>
-              <div className="absolute right-0 z-30 mt-2 w-[min(90vw,380px)] rounded-md border border-border bg-bg p-3 shadow-xl">
-                <label htmlFor="review_note" className="mb-1.5 block font-mono text-[10px] uppercase tracking-[1.5px] text-muted">
-                  Note to the writer (emailed to them)
-                </label>
-                <textarea
-                  id="review_note"
-                  name="review_note"
-                  rows={5}
-                  defaultValue={article.review_note}
-                  placeholder="What needs to change, and why."
-                  className="w-full resize-y rounded border border-border bg-surface-1 px-3 py-2 text-[13px] outline-none focus:border-gold/40"
-                />
-                <button
-                  type="button"
-                  onClick={() => submitWith("changes_requested")}
-                  disabled={saving}
-                  className="mt-2 w-full rounded bg-red px-3.5 py-2 text-[13px] font-bold text-white hover:opacity-90 disabled:opacity-60"
-                >
-                  Send back with this note
-                </button>
-              </div>
-            </details>
+            <Popover
+              title="Request changes"
+              buttonClassName="rounded border border-red/40 px-2.5 py-2 text-[13px] font-medium whitespace-nowrap text-red hover:bg-red-dim sm:px-3.5"
+              label={
+                <>
+                  <span className="sm:hidden">Send back</span>
+                  <span className="hidden sm:inline">Request changes</span>
+                </>
+              }
+            >
+              <label htmlFor="review_note" className="mb-1.5 block font-mono text-[10px] uppercase tracking-[1.5px] text-muted">
+                Note to the writer (emailed to them)
+              </label>
+              <textarea
+                id="review_note"
+                name="review_note"
+                rows={5}
+                defaultValue={article.review_note}
+                placeholder="What needs to change, and why."
+                className="w-full resize-y rounded border border-border bg-surface-1 px-3 py-2 text-[13px] outline-none focus:border-gold/40"
+              />
+              <button
+                type="button"
+                onClick={() => submitWith("changes_requested")}
+                disabled={saving}
+                className="mt-2 w-full rounded bg-red px-3.5 py-2.5 text-[13px] font-bold text-white hover:opacity-90 disabled:opacity-60"
+              >
+                Send back with this note
+              </button>
+            </Popover>
           )}
         </div>
       </header>

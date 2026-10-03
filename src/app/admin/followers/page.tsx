@@ -16,7 +16,7 @@ export default async function FollowersPage() {
 
   return (
     <AdminShell role={profile.role} name={profile.full_name}>
-      <div className="mx-auto w-full max-w-[760px] px-4 py-8 sm:px-8 sm:py-10">
+      <div className="w-full max-w-[1440px] px-4 py-8 sm:px-8 sm:py-10">
         <h1 className="font-serif text-[28px] font-black tracking-[-0.5px] sm:text-3xl">Followers</h1>
         <p className="mt-1 text-[13px] text-muted">
           {followers.length === 0

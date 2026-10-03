@@ -27,18 +27,37 @@ const NAV = [
  * to approve. Counted on every admin page so nothing sits unnoticed.
  */
 async function waiting(role: Role): Promise<Record<string, number>> {
-  if (role !== "admin" && role !== "editor") return {};
   const db = await createClient();
   const head = { count: "exact" as const, head: true };
-  const [apps, review, comments] = await Promise.all([
+  // Writers: badge whatever the editor sent back to them.
+  if (role === "author") {
+    const {
+      data: { user },
+    } = await db.auth.getUser();
+    if (!user) return {};
+    const [arts, sheets] = await Promise.all([
+      db.from("articles").select("id", head).eq("author_id", user.id).eq("status", "changes_requested"),
+      db.from("cheat_sheets").select("id", head).eq("author_id", user.id).eq("status", "changes_requested"),
+    ]);
+    const sent = (arts.count ?? 0) + (sheets.count ?? 0);
+    return {
+      "/admin": sent,
+      "/admin/articles": arts.count ?? 0,
+      "/admin/cheat-sheets": sheets.count ?? 0,
+    };
+  }
+  if (role !== "admin" && role !== "editor") return {};
+  const [apps, review, comments, sheets] = await Promise.all([
     db.from("author_applications").select("id", head).eq("status", "pending"),
     db.from("articles").select("id", head).eq("status", "in_review"),
     db.from("comments").select("id", head).eq("is_approved", false),
+    db.from("cheat_sheets").select("id", head).eq("status", "in_review"),
   ]);
   return {
     "/admin/applications": apps.count ?? 0,
     "/admin/articles": review.count ?? 0,
     "/admin/comments": comments.count ?? 0,
+    "/admin/cheat-sheets": sheets.count ?? 0,
   };
 }
 
@@ -61,10 +80,9 @@ export async function AdminShell({
           <Link href="/" className="font-serif text-lg font-black whitespace-nowrap">
             Everyday <span className="text-gold">Data Science</span>
           </Link>
-          {/* Phones: the account controls live up here, since the footer is desktop-only. */}
-          <div className="flex items-center gap-2 lg:hidden">
+          {/* Phones: the theme switch stays up here; account links are in the menu drawer. */}
+          <div className="lg:hidden">
             <ThemeToggle />
-            <SignOut />
           </div>
         </div>
         <AdminNav
@@ -74,6 +92,17 @@ export async function AdminShell({
             icon: <Icon className="size-4" aria-hidden />,
             badge: counts[href] ?? 0,
           }))}
+          footer={
+            <div className="flex flex-col gap-3">
+              <span className="truncate text-[12px] text-muted">{name}</span>
+              <div className="flex items-center justify-between gap-2 text-[13px]">
+                <Link href="/" className="text-muted hover:text-ink">
+                  View site
+                </Link>
+                <SignOut />
+              </div>
+            </div>
+          }
         />
         <div className="mt-auto hidden flex-col gap-2 border-t border-border px-4 py-3 lg:flex">
           <div className="flex items-center justify-between gap-2">
@@ -88,7 +117,7 @@ export async function AdminShell({
           </div>
         </div>
       </aside>
-      <div className="flex-1">{children}</div>
+      <div className="min-w-0 flex-1">{children}</div>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { Download } from "lucide-react";
 import { Shell } from "@/components/layout/shell";
 import { ReaderSurvey } from "@/components/reader-survey";
 import { createAdminClient } from "@/lib/supabase/server";
-import { offerDownloadPath } from "@/lib/free-offers";
+import { giftOf, type Gift } from "@/lib/gifts";
 
 export const metadata: Metadata = { title: "Subscription confirmed", robots: { index: false } };
 
@@ -16,21 +16,19 @@ export const metadata: Metadata = { title: "Subscription confirmed", robots: { i
 export default async function ConfirmedPage({ searchParams }: { searchParams: Promise<{ t?: string }> }) {
   const { t } = await searchParams;
 
-  let offer: { slug: string; title: string } | null = null;
+  let offer: Gift | null = null;
   let surveyed = true;
   if (t) {
     const db = createAdminClient();
     const { data: sub } = await db
       .from("newsletter_subscribers")
-      .select("magnet_id, survey_at")
+      .select("magnet_id, source, survey_at")
       .eq("confirm_token", t)
       .eq("status", "confirmed")
       .maybeSingle();
     if (sub) {
       surveyed = !!sub.survey_at;
-      if (sub.magnet_id) {
-        offer = (await db.from("lead_magnets").select("slug, title").eq("id", sub.magnet_id).maybeSingle()).data;
-      }
+      offer = await giftOf(db, sub);
     }
   }
 
@@ -49,11 +47,11 @@ export default async function ConfirmedPage({ searchParams }: { searchParams: Pr
 
         {offer && t ? (
           <a
-            href={offerDownloadPath(offer.slug, t)}
+            href={offer.path(t)}
             className="mt-6 inline-flex items-center gap-2 rounded bg-gold px-6 py-3.5 text-[15px] font-bold text-on-accent hover:opacity-85"
           >
             <Download className="size-4" aria-hidden />
-            Download {offer.title} (PDF)
+            Download {offer.title}
           </a>
         ) : (
           <div className="mt-6 flex gap-3">

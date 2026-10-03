@@ -31,3 +31,19 @@ export async function setUserRole(
   revalidatePath("/admin/users");
   return { ok: true };
 }
+
+/**
+ * Mark a writer as trusted (publishes their own cheat sheets without review)
+ * or not. Admin-only; the guard_profile_trusted trigger enforces it too.
+ */
+export async function setTrusted(userId: string, trusted: boolean): Promise<{ error: string } | { ok: true }> {
+  const me = await requireStaff();
+  if (!hasRole(me.role, ["admin"])) return { error: "Only an admin can change this." };
+  const db = await createClient();
+  const { error } = await db.from("profiles").update({ trusted }).eq("id", userId);
+  if (error) {
+    return { error: error.message.includes("trusted") ? "Run the cheat sheet review migration first." : error.message };
+  }
+  revalidatePath("/admin/users");
+  return { ok: true };
+}

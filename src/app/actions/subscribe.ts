@@ -2,19 +2,10 @@
 
 import { createAdminClient } from "@/lib/supabase/server";
 import { confirmEmail, links, offerEmail, sendEmail } from "@/lib/email";
-import { offerDownloadPath, offerSource } from "@/lib/free-offers";
+import { findGift } from "@/lib/gifts";
 import { rateLimit, isBot } from "@/lib/rate-limit";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://everydaydatascience.com";
-
-type Db = ReturnType<typeof createAdminClient>;
-
-/** An active free offer by slug, if the form came from one. */
-async function findOffer(db: Db, slug: string) {
-  if (!slug) return null;
-  const { data } = await db.from("lead_magnets").select("id, slug, title").eq("slug", slug).eq("is_active", true).maybeSingle();
-  return data;
-}
 
 // `email` is echoed back on success so the form can say where the link went.
 export type SubscribeState = { ok: boolean; message: string; email?: string } | null;
@@ -28,6 +19,7 @@ export async function subscribe(
 
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const offerSlug = String(formData.get("offer") ?? "").trim();
+  const sheetSlug = String(formData.get("sheet") ?? "").trim();
   let source = String(formData.get("source") ?? "homepage");
 
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
@@ -41,11 +33,12 @@ export async function subscribe(
   // Trusted server action: bypass RLS so we can read the tokens back (anon
   // cannot select the subscriber list).
   const db = createAdminClient();
-  const offer = await findOffer(db, offerSlug);
-  if (offer) source = offerSource(offer.slug);
+  // A free offer or a cheat sheet download, if the form came from one.
+  const offer = await findGift(db, { offer: offerSlug, sheet: sheetSlug });
+  if (offer) source = offer.source;
   const { data, error } = await db
     .from("newsletter_subscribers")
-    .insert({ email, source, magnet_id: offer?.id ?? null })
+    .insert({ email, source, magnet_id: offer?.magnetId ?? null })
     .select("confirm_token, unsubscribe_token")
     .single();
 
@@ -67,13 +60,13 @@ export async function subscribe(
             subject: `Your ${offer.title}`,
             html: offerEmail({
               title: offer.title,
-              downloadUrl: `${SITE}${offerDownloadPath(offer.slug, existing.confirm_token)}`,
+              downloadUrl: `${SITE}${offer.path(existing.confirm_token)}`,
               unsubscribeUrl: links.unsubscribe(existing.unsubscribe_token),
               isNew: false,
             }),
           });
         } else if (existing?.status === "pending") {
-          if (!existing.magnet_id) await db.from("newsletter_subscribers").update({ magnet_id: offer.id }).eq("id", existing.id);
+          if (!existing.magnet_id && offer.magnetId) await db.from("newsletter_subscribers").update({ magnet_id: offer.magnetId }).eq("id", existing.id);
           await sendEmail({
             to: email,
             subject: `Confirm to get ${offer.title}`,

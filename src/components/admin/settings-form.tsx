@@ -83,7 +83,7 @@ export function SettingsForm({ settings }: { settings: Settings }) {
   }
 
   return (
-    <form ref={formRef} onSubmit={onSubmit} className="flex flex-col gap-5">
+    <form ref={formRef} onSubmit={onSubmit} className="grid gap-5 xl:grid-cols-2 xl:items-start">
       <Section title="Identity">
         <Text name="site_name" label="Site name" defaultValue={s.site_name ?? ""} />
         <Text name="tagline" label="Tagline" defaultValue={s.tagline ?? ""} />
@@ -172,7 +172,8 @@ export function SettingsForm({ settings }: { settings: Settings }) {
         </div>
       </Section>
 
-      <div className="flex items-center gap-3">
+      {/* Always reachable, whichever column you are editing. */}
+      <div className="sticky bottom-0 z-10 col-span-full flex items-center gap-3 border-t border-border bg-bg/95 py-3 backdrop-blur">
         <button type="submit" disabled={saving} className="rounded bg-gold px-5 py-2.5 text-[13px] font-bold text-on-accent hover:opacity-85 disabled:opacity-60">
           {saving ? "Saving…" : "Save settings"}
         </button>

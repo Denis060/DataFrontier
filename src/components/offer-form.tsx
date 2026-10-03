@@ -4,8 +4,23 @@ import { useActionState, useEffect } from "react";
 import { subscribe, type SubscribeState } from "@/app/actions/subscribe";
 import { Honeypot } from "@/components/honeypot";
 
-/** One email field for a free offer. Same double-opt-in action as every signup. */
-export function OfferForm({ slug, title, id = "offer-email" }: { slug: string; title: string; id?: string }) {
+/**
+ * One email field for something a reader gets for their email: a free offer
+ * or a cheat sheet (kind). Same double-opt-in action as every signup.
+ */
+export function OfferForm({
+  slug,
+  title,
+  id = "offer-email",
+  kind = "offer",
+  cta,
+}: {
+  slug: string;
+  title: string;
+  id?: string;
+  kind?: "offer" | "sheet";
+  cta?: string;
+}) {
   const [state, action, pending] = useActionState<SubscribeState, FormData>(subscribe, null);
 
   useEffect(() => {
@@ -43,7 +58,7 @@ export function OfferForm({ slug, title, id = "offer-email" }: { slug: string; t
   return (
     <form action={action} className="flex flex-col gap-2.5">
       <Honeypot />
-      <input type="hidden" name="offer" value={slug} />
+      <input type="hidden" name={kind} value={slug} />
       <label htmlFor={id} className="font-mono text-[10px] uppercase tracking-[1.5px] text-muted">
         Where should we send it?
       </label>
@@ -61,7 +76,7 @@ export function OfferForm({ slug, title, id = "offer-email" }: { slug: string; t
         disabled={pending}
         className="w-full rounded bg-gold px-5 py-3.5 text-[15px] font-bold text-on-accent transition-opacity hover:opacity-85 disabled:opacity-60"
       >
-        {pending ? "Sending…" : `Get ${title} free →`}
+        {pending ? "Sending…" : (cta ?? `Get ${title} free →`)}
       </button>
       {state && !state.ok && <p className="text-[12px] text-red">{state.message}</p>}
       <p className="text-[12px] leading-relaxed text-muted">

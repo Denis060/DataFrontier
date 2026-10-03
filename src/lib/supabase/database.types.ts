@@ -363,6 +363,9 @@ export type Database = {
       }
       cheat_sheets: {
         Row: {
+          review_note: string | null
+          status: string
+          submitted_at: string | null
           author_id: string | null
           category_id: string | null
           created_at: string
@@ -378,6 +381,9 @@ export type Database = {
           view_count: number
         }
         Insert: {
+          review_note?: string | null
+          status?: string
+          submitted_at?: string | null
           author_id?: string | null
           category_id?: string | null
           created_at?: string
@@ -393,6 +399,9 @@ export type Database = {
           view_count?: number
         }
         Update: {
+          review_note?: string | null
+          status?: string
+          submitted_at?: string | null
           author_id?: string | null
           category_id?: string | null
           created_at?: string
@@ -1145,6 +1154,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          trusted: boolean
           avatar_url: string | null
           bio: string | null
           created_at: string
@@ -1158,6 +1168,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          trusted?: boolean
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
@@ -1171,6 +1182,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          trusted?: boolean
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
