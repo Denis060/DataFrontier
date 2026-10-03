@@ -11,7 +11,7 @@ import { SubscribeSuccess } from "@/components/subscribe-success";
  * reader can use if they want to. Reuses the real double-opt-in action, and
  * marks the shared flag on success so the floating prompt stays quiet.
  */
-export function InlineSubscribe({ slug }: { slug: string }) {
+export function InlineSubscribe({ slug, source, className = "mt-10" }: { slug: string; source?: string; className?: string }) {
   const [state, action, pending] = useActionState<SubscribeState, FormData>(subscribe, null);
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export function InlineSubscribe({ slug }: { slug: string }) {
   }, [state]);
 
   return (
-    <aside className="mt-10 rounded-lg border border-border bg-bg2 px-5 py-6 sm:px-7">
+    <aside className={`${className} rounded-lg border border-border bg-bg2 px-5 py-6 sm:px-7`}>
       <p className="mb-1.5 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[2px] text-teal">
         <span className="inline-block size-1.5 rounded-full bg-teal" />
         Free weekly newsletter
@@ -40,7 +40,7 @@ export function InlineSubscribe({ slug }: { slug: string }) {
       ) : (
         <form action={action} className="flex flex-col gap-2 sm:flex-row">
           <Honeypot />
-          <input type="hidden" name="source" value={`article:${slug}`} />
+          <input type="hidden" name="source" value={source ?? `article:${slug}`} />
           <label htmlFor="inline-sub-email" className="sr-only">
             Email address
           </label>
