@@ -36,6 +36,9 @@ export default async function CheatSheetPage({ params }: Props) {
   if (!sheet) notFound();
 
   const fileUrl = sheet.download_url ?? sheet.image_url;
+  // Our own storage downloads directly; anything else (Drive, Canva…) opens in a new tab.
+  const external = !fileUrl.includes("/storage/v1/object/public/");
+  const pdf = /\.pdf(\?|$)/i.test(fileUrl);
   const shareUrl = `${SITE}/cheat-sheets/${sheet.slug}`;
 
   return (
@@ -63,10 +66,11 @@ export default async function CheatSheetPage({ params }: Props) {
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <a
             href={downloadUrl(fileUrl, sheet.slug)}
+            {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
             className="inline-flex items-center gap-2 rounded bg-gold px-5 py-2.5 text-[13px] font-bold text-on-accent transition-opacity hover:opacity-85"
           >
             <Download className="size-4" aria-hidden />
-            Download
+            {pdf ? "Download PDF" : external ? "Get the download" : "Download"}
           </a>
           <ShareBar url={shareUrl} title={sheet.title} />
         </div>
