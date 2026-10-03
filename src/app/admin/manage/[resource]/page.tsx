@@ -40,7 +40,7 @@ export default async function ManagePage({ params }: { params: Promise<{ resourc
 
   return (
     <AdminShell role={profile.role} name={profile.full_name}>
-      <div className="w-full max-w-[1200px] px-5 py-10 sm:px-8">
+      <div className="w-full max-w-[1440px] px-5 py-10 sm:px-8">
         <Link href="/admin/manage" className="text-[13px] text-muted hover:text-ink">
           ← Site content
         </Link>

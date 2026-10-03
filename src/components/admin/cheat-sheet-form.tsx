@@ -124,7 +124,7 @@ export function CheatSheetForm({
   }
 
   return (
-    <form ref={formRef} onSubmit={onSubmit} className="flex w-full max-w-[760px] flex-col gap-5 px-5 py-10 sm:px-8">
+    <form ref={formRef} onSubmit={onSubmit} className="flex w-full max-w-[1440px] flex-col gap-5 px-5 py-10 sm:px-8">
       {sheet.id && <input type="hidden" name="id" value={sheet.id} />}
       <input type="hidden" name="image_url" value={imageUrl} />
       <input type="hidden" name="download_url" value={downloadUrl} />
@@ -231,6 +231,10 @@ export function CheatSheetForm({
       {error && <p className="rounded border border-red/30 bg-red-dim px-3 py-2 text-[13px] text-red">{error}</p>}
 
       <fieldset disabled={locked} className="contents">
+      {/* Wide screens: the sheet and its download on the left, the details
+          beside it (and kept in view while scrolling a tall preview). */}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start xl:gap-10">
+      <div className="flex min-w-0 flex-col gap-5">
 
       <div>
         <span className={label}>The cheat sheet *</span>
@@ -376,6 +380,9 @@ export function CheatSheetForm({
         )}
       </fieldset>
 
+      </div>
+
+      <div className="flex flex-col gap-5 lg:sticky lg:top-6">
       <div>
         <label className={label} htmlFor="title">Title *</label>
         <input id="title" name="title" defaultValue={sheet.title} required className={field} />
@@ -400,7 +407,8 @@ export function CheatSheetForm({
           ))}
         </select>
       </div>
-
+      </div>
+      </div>
       </fieldset>
 
       {sheet.id && !locked && (

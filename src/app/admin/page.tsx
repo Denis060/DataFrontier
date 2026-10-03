@@ -155,7 +155,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
   return (
     <AdminShell role={profile.role} name={profile.full_name}>
-      <div className="w-full max-w-[1200px] px-5 py-10 sm:px-8">
+      <div className="w-full max-w-[1440px] px-5 py-10 sm:px-8">
         <header className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6">
           <div>
             <p className="mb-1 font-mono text-[10px] uppercase tracking-[2px] text-gold">Newsroom</p>
