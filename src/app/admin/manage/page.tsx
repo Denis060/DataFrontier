@@ -17,7 +17,7 @@ export default async function ManageIndexPage() {
 
   return (
     <AdminShell role={profile.role} name={profile.full_name}>
-      <div className="mx-auto w-full max-w-[1000px] px-5 py-10 sm:px-8">
+      <div className="w-full max-w-[1200px] px-5 py-10 sm:px-8">
         <h1 className="font-serif text-3xl font-black tracking-[-0.5px]">Site content</h1>
         <p className="mt-1 text-[13px] text-muted">
           Everything on the site that isn&apos;t an article: menus, the ticker, events, jobs,

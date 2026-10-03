@@ -39,7 +39,7 @@ export default async function ApplicationsPage() {
 
   return (
     <AdminShell role={profile.role} name={profile.full_name}>
-      <div className="mx-auto w-full max-w-[1100px] px-4 py-8 sm:px-8 sm:py-10">
+      <div className="w-full max-w-[1200px] px-4 py-8 sm:px-8 sm:py-10">
         <h1 className="mb-1 font-serif text-3xl font-black tracking-[-0.5px]">Contributor applications</h1>
         <p className="mb-8 text-[13px] text-muted">
           {canApprove

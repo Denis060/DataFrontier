@@ -28,7 +28,7 @@ export default async function AdminSettingsPage() {
 
   return (
     <AdminShell role={profile.role} name={profile.full_name}>
-      <div className="mx-auto w-full max-w-[720px] px-5 py-10 sm:px-8">
+      <div className="w-full max-w-[720px] px-5 py-10 sm:px-8">
         <h1 className="mb-1 font-serif text-3xl font-black tracking-[-0.5px]">Settings</h1>
         <p className="mb-8 text-[13px] text-muted">
           Site-wide identity and homepage copy. Changes go live immediately.

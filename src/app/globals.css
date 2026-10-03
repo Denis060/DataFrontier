@@ -209,6 +209,21 @@ body::before {
 .article-prose h3 {
   font-size: 22px;
 }
+/* Links in the text look like links: gold and underlined, so sources are
+   obvious without hovering. Headings' self-links are reset just below. */
+.article-prose a {
+  color: var(--df-gold);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--df-gold) 45%, transparent);
+  overflow-wrap: anywhere;
+  transition: text-decoration-color 0.15s;
+}
+.article-prose a:hover {
+  text-decoration-color: var(--df-gold);
+  text-decoration-thickness: 2px;
+}
 /* rehype-autolink-headings wraps the text in an <a>; keep it looking like a heading. */
 .article-prose h2 a,
 .article-prose h3 a {
