@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { sendEmail, welcomeEmail, offerEmail, links } from "@/lib/email";
-import { offerDownloadPath } from "@/lib/free-offers";
+import { giftOf } from "@/lib/gifts";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://everydaydatascience.com";
 
@@ -24,15 +24,13 @@ export async function GET(request: Request) {
     .update({ status: "confirmed", confirmed_at: new Date().toISOString() })
     .eq("confirm_token", token)
     .eq("status", "pending")
-    .select("email, unsubscribe_token, magnet_id")
+    .select("email, unsubscribe_token, magnet_id, source")
     .maybeSingle();
 
   if (data) {
     // Came for a free offer: their welcome is the download. Fire-and-forget:
     // a send failure must not fail the confirmation.
-    const offer = data.magnet_id
-      ? (await db.from("lead_magnets").select("slug, title").eq("id", data.magnet_id).maybeSingle()).data
-      : null;
+    const offer = await giftOf(db, data);
     try {
       await sendEmail(
         offer
@@ -41,7 +39,7 @@ export async function GET(request: Request) {
               subject: `Here's your ${offer.title}`,
               html: offerEmail({
                 title: offer.title,
-                downloadUrl: `${SITE}${offerDownloadPath(offer.slug, token)}`,
+                downloadUrl: `${SITE}${offer.path(token)}`,
                 unsubscribeUrl: links.unsubscribe(data.unsubscribe_token),
                 isNew: true,
               }),
