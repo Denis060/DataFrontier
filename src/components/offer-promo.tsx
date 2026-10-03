@@ -30,7 +30,7 @@ export function OfferPromo({ offer, variant = "end" }: { offer: PromoOffer; vari
 
   return (
     <aside className={`${variant === "end" ? "mt-10" : ""} overflow-hidden rounded-lg border border-gold/40 bg-gold-dim`}>
-      <div className="grid sm:grid-cols-[minmax(0,1fr)_200px]">
+      <div className={`grid ${variant === "card" ? "sm:grid-cols-[minmax(0,1fr)_minmax(0,320px)]" : "sm:grid-cols-[minmax(0,1fr)_200px]"}`}>
         <div className="p-5 sm:p-7">
           <p className="mb-1.5 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[2px] text-gold">
             <Download className="size-3.5" aria-hidden /> Free download
@@ -46,9 +46,9 @@ export function OfferPromo({ offer, variant = "end" }: { offer: PromoOffer; vari
           <p className="mt-2 text-[11px] text-muted">Comes with The Everyday Brief, our free weekly newsletter.</p>
         </div>
         {offer.cover && (
-          <Link href={href} aria-hidden tabIndex={-1} className="hidden border-l border-gold/30 sm:block">
+          <Link href={href} aria-hidden tabIndex={-1} className="relative hidden overflow-hidden border-l border-gold/30 sm:block">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={offer.cover} alt="" className="h-full w-full object-cover object-top" />
+            <img src={offer.cover} alt="" className="absolute inset-0 h-full w-full object-cover object-top" />
           </Link>
         )}
       </div>

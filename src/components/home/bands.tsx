@@ -582,7 +582,7 @@ export function FreeDownloads({ offers }: { offers: PromoOffer[] }) {
       <h2 className="mb-7 flex items-center gap-2.5 font-mono text-[11px] font-medium uppercase tracking-[2px] text-gold after:h-px after:flex-1 after:bg-border after:content-['']">
         Free downloads
       </h2>
-      <div className={`grid gap-5 ${offers.length > 1 ? "lg:grid-cols-2" : ""}`}>
+      <div className={`grid gap-5 ${offers.length > 1 ? "lg:grid-cols-2" : "max-w-[960px]"}`}>
         {offers.slice(0, 4).map((o) => (
           <OfferPromo key={o.slug} offer={o} variant="card" />
         ))}
