@@ -36,6 +36,7 @@ import { BookmarkButton } from "@/components/article/bookmark-button";
 import { CommentsProvider, CommentButton, CommentsReveal } from "@/components/article/comments-disclosure";
 import { InlineSubscribe } from "@/components/article/inline-subscribe";
 import { OfferPromo } from "@/components/offer-promo";
+import { ReadTracker } from "@/components/learning/read-tracker";
 import { offerForArticle } from "@/lib/offer-match";
 import { Comments } from "@/components/article/comments";
 import { ViewCounter } from "@/components/article/view-counter";
@@ -382,6 +383,8 @@ export default async function ArticlePage({ params }: Props) {
             ) : (
               <p className="text-muted">This article has no body yet.</p>
             )}
+            {/* Learning-path progress, kept on the reader's device. */}
+            {!isDraft && <ReadTracker slug={article.slug} />}
 
             {extra.tags.length > 0 && (
               <ul className="mt-10 flex flex-wrap gap-2" aria-label="Tags">

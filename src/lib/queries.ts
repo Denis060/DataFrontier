@@ -298,6 +298,30 @@ export async function getAllSeries(): Promise<SeriesSummary[]> {
   });
 }
 
+export type PathPart = { slug: string; title: string; cover_image: string | null; reading_time: number | null };
+export type LearningPath = { id: string; title: string; slug: string; description: string | null; parts: PathPart[]; minutes: number };
+
+/**
+ * Every learning path with its published parts in order (covers and reading
+ * times for the index cards). Paths with nothing published are left out.
+ */
+export async function getLearningPaths(): Promise<LearningPath[]> {
+  const db = await createClient();
+  const { data } = await db
+    .from("series")
+    .select("id, title, slug, description, articles(slug, title, cover_image, reading_time, series_position, status)")
+    .eq("articles.status", "published")
+    .order("sort_order")
+    .order("series_position", { referencedTable: "articles", ascending: true });
+  type Row = { id: string; title: string; slug: string; description: string | null; articles: (PathPart & { series_position: number | null })[] };
+  return ((data ?? []) as unknown as Row[])
+    .map((s) => {
+      const parts = (s.articles ?? []).map(({ slug, title, cover_image, reading_time }) => ({ slug, title, cover_image, reading_time }));
+      return { id: s.id, title: s.title, slug: s.slug, description: s.description, parts, minutes: parts.reduce((m, p) => m + (p.reading_time ?? 0), 0) };
+    })
+    .filter((s) => s.parts.length > 0);
+}
+
 /** One series + its published articles, in path order. */
 export async function getSeriesBySlug(slug: string) {
   const db = await createClient();
