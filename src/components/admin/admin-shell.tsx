@@ -30,15 +30,17 @@ async function waiting(role: Role): Promise<Record<string, number>> {
   if (role !== "admin" && role !== "editor") return {};
   const db = await createClient();
   const head = { count: "exact" as const, head: true };
-  const [apps, review, comments] = await Promise.all([
+  const [apps, review, comments, sheets] = await Promise.all([
     db.from("author_applications").select("id", head).eq("status", "pending"),
     db.from("articles").select("id", head).eq("status", "in_review"),
     db.from("comments").select("id", head).eq("is_approved", false),
+    db.from("cheat_sheets").select("id", head).eq("status", "in_review"),
   ]);
   return {
     "/admin/applications": apps.count ?? 0,
     "/admin/articles": review.count ?? 0,
     "/admin/comments": comments.count ?? 0,
+    "/admin/cheat-sheets": sheets.count ?? 0,
   };
 }
 

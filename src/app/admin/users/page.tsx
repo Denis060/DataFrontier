@@ -4,6 +4,7 @@ import { hasRole } from "@/lib/auth";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { RoleSelect } from "@/components/admin/role-select";
+import { TrustedToggle } from "@/components/admin/trusted-toggle";
 
 export const metadata = { title: "People | Newsroom", robots: { index: false } };
 
@@ -26,6 +27,10 @@ export default async function AdminUsersPage() {
   const { data: authData } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
   const emailById = new Map((authData?.users ?? []).map((u) => [u.id, u.email ?? ""]));
 
+  // Read separately so the page still works before the trusted column exists.
+  const { data: trust } = await db.from("profiles").select("id, trusted");
+  const trustedIds = new Set((trust ?? []).filter((t) => t.trusted).map((t) => t.id));
+
   const rows = profiles ?? [];
   const staffCount = rows.filter((r) => r.role !== "reader").length;
 
@@ -35,7 +40,8 @@ export default async function AdminUsersPage() {
         <h1 className="mb-1 font-serif text-3xl font-black tracking-[-0.5px]">People</h1>
         <p className="mb-8 text-[13px] text-muted">
           {rows.length} {rows.length === 1 ? "account" : "accounts"} · {staffCount} with newsroom access.
-          Changing a role takes effect immediately.
+          Changing a role takes effect immediately. Writers marked Trusted publish their own cheat
+          sheets without review; everyone else&apos;s go to your desk.
         </p>
 
         <div className="overflow-x-auto rounded-md border border-border">
@@ -46,6 +52,9 @@ export default async function AdminUsersPage() {
                 <th className="px-4 py-3 font-medium">Email</th>
                 <th className="px-4 py-3 font-medium">Joined</th>
                 <th className="px-4 py-3 font-medium">Role</th>
+                <th className="px-4 py-3 font-medium" title="Trusted writers publish their own cheat sheets without review">
+                  Cheat sheets
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -56,6 +65,15 @@ export default async function AdminUsersPage() {
                   <td className="px-4 py-3 font-mono text-[11px] text-muted">{fmt(u.created_at)}</td>
                   <td className="px-4 py-3">
                     <RoleSelect userId={u.id} role={u.role} disabled={u.id === profile.id} />
+                  </td>
+                  <td className="px-4 py-3">
+                    {u.role === "author" ? (
+                      <TrustedToggle userId={u.id} trusted={trustedIds.has(u.id)} />
+                    ) : u.role === "reader" ? (
+                      <span className="text-[12px] text-muted">-</span>
+                    ) : (
+                      <span className="text-[12px] text-muted">Publishes</span>
+                    )}
                   </td>
                 </tr>
               ))}
