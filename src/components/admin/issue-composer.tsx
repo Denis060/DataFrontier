@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -118,6 +118,13 @@ Read their latest: [${w.latest.title}](${w.latest.url})` : "";
     });
   }
 
+  // Wide screens show the preview beside the form: render it once on open.
+  useEffect(() => {
+    if (!window.matchMedia("(min-width: 1280px)").matches) return;
+    const id = requestAnimationFrame(() => onPreview());
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   function onSendNow() {
     if (!issue.id) return;
     const n = sources.audience;
@@ -200,7 +207,8 @@ Read their latest: [${w.latest.title}](${w.latest.url})` : "";
   const sec = (key: string) => issue.content?.[key] ?? {};
 
   return (
-    <div className="w-full max-w-[760px] px-5 py-10 sm:px-8">
+    <div className="w-full max-w-[1600px] px-5 py-10 sm:px-8 xl:grid xl:grid-cols-[minmax(0,760px)_minmax(0,1fr)] xl:items-start xl:gap-8">
+      <div className="min-w-0">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <Link href="/admin/newsletter" className="text-[13px] text-muted hover:text-ink">
           ← Newsletter
@@ -347,7 +355,7 @@ Read their latest: [${w.latest.title}](${w.latest.url})` : "";
         <div
           role="dialog"
           aria-label="Email preview"
-          className="fixed inset-0 z-[200] flex flex-col bg-black/60 p-3 sm:p-6"
+          className="fixed inset-0 z-[200] flex flex-col bg-black/60 p-3 sm:p-6 xl:hidden"
           onClick={() => setPreview(null)}
         >
           <div className="mx-auto flex h-full w-full max-w-[760px] flex-col overflow-hidden rounded-lg bg-bg" onClick={(e) => e.stopPropagation()}>
@@ -454,6 +462,46 @@ Read their latest: [${w.latest.title}](${w.latest.url})` : "";
           {sendMsg && <p className="mt-2 text-[12px] text-teal">{sendMsg}</p>}
         </div>
       )}
+      </div>
+
+      {/* Wide screens: the email as subscribers will see it, beside the form. */}
+      <aside className="hidden xl:sticky xl:top-6 xl:flex xl:h-[calc(100vh-48px)] xl:flex-col xl:overflow-hidden xl:rounded-lg xl:border xl:border-border xl:bg-bg2">
+        <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
+          <p className="font-mono text-[10px] uppercase tracking-[1.5px] text-muted">Preview</p>
+          <div className="ml-2 flex gap-1 text-[12px]">
+            {(["desktop", "phone"] as const).map((w) => (
+              <button
+                key={w}
+                type="button"
+                onClick={() => setPreviewWidth(w)}
+                className={`rounded px-2.5 py-1 ${previewWidth === w ? "bg-gold-dim font-semibold text-gold" : "text-muted hover:text-ink"}`}
+              >
+                {w === "desktop" ? "Desktop" : "Phone"}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={onPreview}
+            disabled={previewing}
+            className="ml-auto rounded border border-border px-3 py-1.5 text-[12px] font-semibold hover:bg-surface-1 disabled:opacity-60"
+          >
+            {previewing ? "Rendering…" : "Refresh preview"}
+          </button>
+        </div>
+        <div className="flex-1 overflow-auto bg-surface-2 p-3">
+          {preview ? (
+            <iframe
+              title="Email preview"
+              srcDoc={preview.replace("<head>", '<head><base target="_blank">')}
+              sandbox="allow-popups allow-popups-to-escape-sandbox"
+              className={`mx-auto block h-full w-full rounded border border-border bg-white ${previewWidth === "phone" ? "max-w-[390px]" : ""}`}
+            />
+          ) : (
+            <p className="mt-16 text-center text-[13px] text-muted">{previewing ? "Rendering the email…" : "Press Refresh preview after editing to see the email here."}</p>
+          )}
+        </div>
+      </aside>
     </div>
   );
 }

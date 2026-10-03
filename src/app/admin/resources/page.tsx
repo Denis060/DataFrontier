@@ -19,7 +19,7 @@ export default async function AdminResourcesPage() {
 
   return (
     <AdminShell role={profile.role} name={profile.full_name}>
-      <div className="w-full max-w-[1200px] px-5 py-10 sm:px-8">
+      <div className="w-full max-w-[1440px] px-5 py-10 sm:px-8">
         <h1 className="mb-1 font-serif text-3xl font-black tracking-[-0.5px]">Tools &amp; Resources</h1>
         <p className="mb-8 text-[13px] text-muted">
           The items in the homepage “Tools &amp; Resources” column. Lowest order shows first;

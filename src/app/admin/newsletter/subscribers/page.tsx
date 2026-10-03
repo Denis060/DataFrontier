@@ -33,7 +33,7 @@ export default async function SubscribersPage({
 
   return (
     <AdminShell role={profile.role} name={profile.full_name}>
-      <div className="w-full max-w-[1200px] px-5 py-10 sm:px-8">
+      <div className="w-full max-w-[1440px] px-5 py-10 sm:px-8">
         <header className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
           <div>
             <h1 className="font-serif text-3xl font-black tracking-[-0.5px]">Subscribers</h1>
