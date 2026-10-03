@@ -207,12 +207,12 @@ export function CheatSheetForm({
 
       {justSent && sheet.status === "in_review" && (
         <p className="rounded border border-teal/30 bg-teal-dim px-3 py-2.5 text-[13px]" role="status">
-          <strong className="font-semibold text-teal">Sent. It&apos;s with the editor now.</strong> You&apos;ll get an email when it&apos;s published or sent back.
+          <strong className="font-semibold text-teal">Sent. It&apos;s with the editor now.</strong>{" "}You&apos;ll get an email when it&apos;s published or sent back.
         </p>
       )}
       {!isStaff && sheet.status === "in_review" && !justSent && (
         <p className="rounded border border-gold/30 bg-gold-dim px-3 py-2.5 text-[13px]">
-          <strong className="font-semibold">Waiting for review.</strong> You can still make small edits; save them and the editor sees the latest version.
+          <strong className="font-semibold">Waiting for review.</strong>{" "}You can still make small edits; save them and the editor sees the latest version.
         </p>
       )}
       {sheet.status === "changes_requested" && (
@@ -224,7 +224,7 @@ export function CheatSheetForm({
       )}
       {locked && (
         <p className="rounded border border-gold/30 bg-gold-dim px-3 py-2.5 text-[13px]">
-          <strong className="font-semibold">This cheat sheet is live.</strong> Live cheat sheets are changed by an editor. To fix something, email the editor with the change you need.
+          <strong className="font-semibold">This cheat sheet is live.</strong>{" "}Live cheat sheets are changed by an editor. To fix something, email the editor with the change you need.
         </p>
       )}
 
