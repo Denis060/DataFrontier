@@ -424,11 +424,12 @@ export function newCommentEmail(a: { who: string; article: string; body: string 
  * Sent when an admin approves a writer application. Before this, approval
  * changed the role silently and the new author never found out.
  */
-export function authorApprovedEmail(name: string) {
+export function authorApprovedEmail(name: string, note?: string | null) {
   const first = escHtml(name.split(" ")[0] || "there");
   return emailShell(
     `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 14px">You're in, ${first}. Welcome aboard.</h1>
      <p style="margin:0 0 14px">Your application to write for <strong>Everyday Data Science</strong> is approved. You now have an author account.</p>
+     ${note ? quote(note) : ""}
      <p style="margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:#5a6270;font-weight:700">How it works from here</p>
      ${benefitList([
        "Sign in and open the editor to start a draft",
