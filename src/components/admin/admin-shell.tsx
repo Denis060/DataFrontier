@@ -27,9 +27,26 @@ const NAV = [
  * to approve. Counted on every admin page so nothing sits unnoticed.
  */
 async function waiting(role: Role): Promise<Record<string, number>> {
-  if (role !== "admin" && role !== "editor") return {};
   const db = await createClient();
   const head = { count: "exact" as const, head: true };
+  // Writers: badge whatever the editor sent back to them.
+  if (role === "author") {
+    const {
+      data: { user },
+    } = await db.auth.getUser();
+    if (!user) return {};
+    const [arts, sheets] = await Promise.all([
+      db.from("articles").select("id", head).eq("author_id", user.id).eq("status", "changes_requested"),
+      db.from("cheat_sheets").select("id", head).eq("author_id", user.id).eq("status", "changes_requested"),
+    ]);
+    const sent = (arts.count ?? 0) + (sheets.count ?? 0);
+    return {
+      "/admin": sent,
+      "/admin/articles": arts.count ?? 0,
+      "/admin/cheat-sheets": sheets.count ?? 0,
+    };
+  }
+  if (role !== "admin" && role !== "editor") return {};
   const [apps, review, comments, sheets] = await Promise.all([
     db.from("author_applications").select("id", head).eq("status", "pending"),
     db.from("articles").select("id", head).eq("status", "in_review"),
