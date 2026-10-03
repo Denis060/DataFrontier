@@ -6,6 +6,8 @@ import Link from "next/link";
 import { FileText, ImagePlus, Link2, Loader2 } from "lucide-react";
 import { saveCheatSheet, deleteCheatSheet } from "@/app/admin/cheat-sheets/actions";
 import { useUpload } from "@/components/admin/use-upload";
+import { StatusBadge } from "@/components/admin/status-badge";
+import { Popover } from "@/components/admin/popover";
 import { pdfFirstPageToPng } from "@/lib/pdf-preview";
 
 type DownloadMode = "image" | "file" | "link";
@@ -27,7 +29,9 @@ export type CheatSheetDraft = {
   image_url: string;
   download_url: string;
   category_id: string;
-  published: boolean;
+  /** draft · in_review · changes_requested · published */
+  status: string;
+  review_note: string;
 };
 
 const field =
@@ -37,10 +41,23 @@ const label = "mb-1.5 block font-mono text-[10px] uppercase tracking-[1.5px] tex
 export function CheatSheetForm({
   sheet,
   categories,
+  canPublish,
+  isStaff,
+  justSaved = false,
+  justSent = false,
 }: {
   sheet: CheatSheetDraft;
   categories: Option[];
+  /** Editors, admins and trusted writers publish; other writers submit. */
+  canPublish: boolean;
+  /** Only editors and admins send a sheet back with a note. */
+  isStaff: boolean;
+  justSaved?: boolean;
+  justSent?: boolean;
 }) {
+  const intentRef = useRef<HTMLInputElement>(null);
+  const live = sheet.status === "published";
+  const locked = live && !canPublish;
   const [imageUrl, setImageUrl] = useState(sheet.image_url);
   const [mode, setMode] = useState<DownloadMode>(initialMode(sheet.download_url));
   const [fileUrl, setFileUrl] = useState(initialMode(sheet.download_url) === "file" ? sheet.download_url : "");
@@ -91,6 +108,11 @@ export function CheatSheetForm({
     }
   }
 
+  function submitWith(intent: string) {
+    if (intentRef.current) intentRef.current.value = intent;
+    formRef.current?.requestSubmit();
+  }
+
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -106,21 +128,109 @@ export function CheatSheetForm({
       {sheet.id && <input type="hidden" name="id" value={sheet.id} />}
       <input type="hidden" name="image_url" value={imageUrl} />
       <input type="hidden" name="download_url" value={downloadUrl} />
+      <input ref={intentRef} type="hidden" name="intent" defaultValue="save" />
 
-      <div className="flex items-center justify-between">
-        <Link href="/admin/cheat-sheets" className="text-[13px] text-muted hover:text-ink">
+      <div className="flex flex-wrap items-center gap-2">
+        <Link href="/admin/cheat-sheets" className="mr-auto text-[13px] text-muted hover:text-ink">
           ← Cheat sheets
         </Link>
-        <button
-          type="submit"
-          disabled={saving}
-          className="rounded bg-gold px-4 py-2 text-[13px] font-bold text-on-accent hover:opacity-85 disabled:opacity-60"
-        >
-          {saving ? "Saving…" : "Save"}
-        </button>
+        {sheet.id && <StatusBadge status={sheet.status} />}
+        {justSaved && !justSent && <span className="text-[12px] text-teal">Saved</span>}
+        {!locked && (
+          <button
+            type="button"
+            onClick={() => submitWith("save")}
+            disabled={saving}
+            className="rounded border border-border px-3.5 py-2 text-[13px] font-medium hover:border-border-strong hover:bg-surface-1 disabled:opacity-60"
+          >
+            {saving ? "Saving…" : "Save"}
+          </button>
+        )}
+        {!canPublish && (sheet.status === "draft" || sheet.status === "changes_requested") && (
+          <button
+            type="button"
+            onClick={() => submitWith("submit")}
+            disabled={saving}
+            className="rounded bg-gold px-3.5 py-2 text-[13px] font-bold text-on-accent hover:opacity-85 disabled:opacity-60"
+          >
+            {sheet.status === "changes_requested" ? "Resubmit for review" : "Submit for review"}
+          </button>
+        )}
+        {canPublish && !live && (
+          <button
+            type="button"
+            onClick={() => submitWith("publish")}
+            disabled={saving}
+            className="rounded bg-gold px-3.5 py-2 text-[13px] font-bold text-on-accent hover:opacity-85 disabled:opacity-60"
+          >
+            Publish
+          </button>
+        )}
+        {canPublish && live && (
+          <button
+            type="button"
+            onClick={() => confirm("Take this cheat sheet off the site?") && submitWith("unpublish")}
+            disabled={saving}
+            className="rounded border border-border px-3.5 py-2 text-[13px] font-medium text-muted hover:text-ink disabled:opacity-60"
+          >
+            Unpublish
+          </button>
+        )}
+        {isStaff && sheet.status === "in_review" && (
+          <Popover
+            title="Send back with a note"
+            buttonClassName="rounded border border-red/40 px-3.5 py-2 text-[13px] font-medium text-red hover:bg-red-dim"
+            label="Send back"
+          >
+            <label htmlFor="review_note" className="mb-1.5 block font-mono text-[10px] uppercase tracking-[1.5px] text-muted">
+              Note to the writer (emailed to them)
+            </label>
+            <textarea
+              id="review_note"
+              name="review_note"
+              rows={4}
+              defaultValue={sheet.review_note}
+              placeholder="What needs to change, and why."
+              className="w-full resize-y rounded border border-border bg-surface-1 px-3 py-2 text-[13px] outline-none focus:border-gold/40"
+            />
+            <button
+              type="button"
+              onClick={() => submitWith("send_back")}
+              disabled={saving}
+              className="mt-2 w-full rounded bg-red px-3.5 py-2.5 text-[13px] font-bold text-white hover:opacity-90 disabled:opacity-60"
+            >
+              Send back with this note
+            </button>
+          </Popover>
+        )}
       </div>
 
+      {justSent && sheet.status === "in_review" && (
+        <p className="rounded border border-teal/30 bg-teal-dim px-3 py-2.5 text-[13px]" role="status">
+          <strong className="font-semibold text-teal">Sent. It&apos;s with the editor now.</strong> You&apos;ll get an email when it&apos;s published or sent back.
+        </p>
+      )}
+      {!isStaff && sheet.status === "in_review" && !justSent && (
+        <p className="rounded border border-gold/30 bg-gold-dim px-3 py-2.5 text-[13px]">
+          <strong className="font-semibold">Waiting for review.</strong> You can still make small edits; save them and the editor sees the latest version.
+        </p>
+      )}
+      {sheet.status === "changes_requested" && (
+        <div className="rounded border border-red/30 bg-red-dim px-3 py-2.5 text-[13px]">
+          <p className="font-semibold text-red">The editor asked for changes</p>
+          <p className="mt-1 whitespace-pre-wrap">{sheet.review_note || "No note was left. Reply to the email if anything is unclear."}</p>
+          {!isStaff && <p className="mt-1 text-muted">Make your edits, then press Resubmit for review.</p>}
+        </div>
+      )}
+      {locked && (
+        <p className="rounded border border-gold/30 bg-gold-dim px-3 py-2.5 text-[13px]">
+          <strong className="font-semibold">This cheat sheet is live.</strong> Live cheat sheets are changed by an editor. To fix something, email the editor with the change you need.
+        </p>
+      )}
+
       {error && <p className="rounded border border-red/30 bg-red-dim px-3 py-2 text-[13px] text-red">{error}</p>}
+
+      <fieldset disabled={locked} className="contents">
 
       <div>
         <span className={label}>The cheat sheet *</span>
@@ -291,13 +401,9 @@ export function CheatSheetForm({
         </select>
       </div>
 
+      </fieldset>
 
-      <label className="flex items-center gap-2 text-[13px]">
-        <input type="checkbox" name="published" defaultChecked={sheet.published} className="size-4 accent-[var(--df-gold)]" />
-        Published (visible on the public site)
-      </label>
-
-      {sheet.id && (
+      {sheet.id && !locked && (
         <button
           type="button"
           onClick={() => {
