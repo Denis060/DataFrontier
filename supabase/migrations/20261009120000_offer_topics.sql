@@ -6,5 +6,5 @@
 alter table lead_magnets add column if not exists topics text;
 
 update lead_magnets
-   set topics = 'sql, query, queries, database, joins, postgres, postgresql, duckdb'
+   set topics = 'sql, postgres, postgresql, duckdb'
  where slug = 'sql-pack' and topics is null;
