@@ -17,6 +17,7 @@ export function NewsletterBand({
   showStats,
   source = "homepage",
   latestIssue = null,
+  asPageHeading = false,
 }: {
   headline: string;
   subtext: string;
@@ -26,7 +27,10 @@ export function NewsletterBand({
   latestIssue?: HomeData["latestIssue"];
   /** Recorded on the subscriber row, so sign-ups can be attributed per page. */
   source?: string;
+  /** On /newsletter the headline is the page's main heading (h1). */
+  asPageHeading?: boolean;
 }) {
+  const Heading = asPageHeading ? "h1" : "h2";
   const [state, formAction, pending] = useActionState<SubscribeState, FormData>(
     subscribe,
     null,
@@ -64,9 +68,9 @@ export function NewsletterBand({
           <span className="pulse-dot inline-block size-1.5 rounded-full bg-teal" />
           Free Weekly Newsletter
         </p>
-        <h2 className="mb-3 font-serif text-[28px] leading-[1.1] font-black tracking-[-0.5px] sm:text-[32px]">
+        <Heading className="mb-3 font-serif text-[28px] leading-[1.1] font-black tracking-[-0.5px] sm:text-[32px]">
           {headline}
-        </h2>
+        </Heading>
         <p className="text-[15px] leading-relaxed text-muted">{subtext}</p>
 
         {showStats && tiles.length > 0 && (
