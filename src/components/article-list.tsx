@@ -52,6 +52,47 @@ export function ArticleList({ articles }: { articles: ArticleCard[] }) {
   );
 }
 
+/**
+ * A denser, scannable list: thumbnail beside the text. Used on topic pages,
+ * where readers browse many pieces rather than pick from a few.
+ */
+export function ArticleRows({ articles, empty = "Nothing published here yet." }: { articles: ArticleCard[]; empty?: string }) {
+  if (articles.length === 0) {
+    return <p className="border border-dashed border-border px-6 py-16 text-center text-sm text-muted">{empty}</p>;
+  }
+  return (
+    <ul className="flex flex-col divide-y divide-border border-y border-border">
+      {articles.map((a) => (
+        <li key={a.id}>
+          <Link href={`/article/${a.slug}`} className="group grid grid-cols-[96px_minmax(0,1fr)] gap-4 py-5 sm:grid-cols-[200px_minmax(0,1fr)] sm:gap-6">
+            <CoverImage
+              src={a.cover_image}
+              alt={a.cover_alt ?? ""}
+              sizes="(min-width: 640px) 200px, 96px"
+              className="transition-opacity group-hover:opacity-85"
+            />
+            <div className="min-w-0">
+              <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                {a.format && <Pill color={a.format.color}>{a.format.name}</Pill>}
+                {a.kicker && <span className="hidden font-mono text-[9px] uppercase tracking-[1.5px] text-muted sm:inline">{a.kicker}</span>}
+              </div>
+              <h2 className="font-serif text-[17px] leading-[1.25] font-bold transition-opacity group-hover:opacity-75 sm:text-xl">{a.title}</h2>
+              {a.excerpt && <p className="mt-1.5 line-clamp-2 text-[13px] leading-[1.6] text-muted max-sm:hidden">{a.excerpt}</p>}
+              <p className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted">
+                <span>{a.author?.full_name}</span>
+                <span className="opacity-40">·</span>
+                <span>{fmtDate(a.published_at)}</span>
+                <span className="opacity-40">·</span>
+                <span>{a.reading_time} min</span>
+              </p>
+            </div>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function Pagination({
   page,
   total,
