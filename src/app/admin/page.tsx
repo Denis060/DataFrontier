@@ -11,6 +11,8 @@ import { AuthorPerformance } from "@/components/admin/author-performance";
 import { WriterHome } from "@/components/admin/writer-home";
 import { getWorkspace } from "@/lib/workspace";
 import { sentCounts } from "@/lib/newsletter-stats";
+import { getEditorDesk } from "@/lib/editor-desk";
+import { EditorDesk } from "@/components/admin/editor-desk";
 
 export const metadata: Metadata = { title: "Newsroom", robots: { index: false } };
 
@@ -148,6 +150,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   // get the site-wide + subscriber insights below it.
   const authorPerf = await getAuthorInsights(profile.id);
   const insights = hasRole(profile.role, ["admin"]) ? await getInsights(db) : null;
+  // Whoever edits sees their queue first.
+  const desk = hasRole(profile.role, ["admin", "editor"]) ? await getEditorDesk() : null;
 
   return (
     <AdminShell role={profile.role} name={profile.full_name}>
@@ -177,6 +181,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </form>
           </div>
         </header>
+
+        {desk && <EditorDesk desk={desk} />}
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {tiles.map((t) => (

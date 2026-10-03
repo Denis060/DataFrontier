@@ -62,7 +62,8 @@ export default async function EditArticlePage({
       series={series}
       writers={writers}
       canPublish={hasRole(profile.role, ["admin", "editor"])}
-      justSaved={saved === "1"}
+      justSaved={saved === "1" || saved === "sent"}
+      justSent={saved === "sent"}
     />
   );
 }

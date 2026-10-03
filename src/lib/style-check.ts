@@ -63,7 +63,17 @@ const LEFTOVER =
   /^\s*(?:certainly|sure|absolutely|of course)[!,.].*$|^.*\b(?:I hope this helps|as an AI( language model)?|let me know if you(?:'d| would) like|here(?:'s| is) (?:a|an|the) (?:revised|polished|improved|rewritten) version)\b.*$/gim;
 const PLACEHOLDER = /\[(?:write here|replace|insert|your|add|citation needed)\b[^\]]*\]/gi;
 
-const words = (s: string) => (s.match(/\b[\w'’-]+\b/g) ?? []).length;
+// ?utm_source=chatgpt.com (or openai.com / perplexity) on a pasted link.
+const AI_UTM = /[?&]utm_source=(?:chatgpt\.com|openai|perplexity(?:\.ai)?)[^)\s]*/gi;
+
+/** Drop the AI tracking query from links, keeping any other parameters. */
+function stripAiUtm(md: string): string {
+  return md.replace(/(https?:\/\/[^\s)]+?)([?&])utm_source=(?:chatgpt\.com|openai|perplexity(?:\.ai)?)(&?)/gi, (_m, url, sep, rest) =>
+    rest ? `${url}${sep}` : url,
+  );
+}
+
+const words = (s: string) =>(s.match(/\b[\w'’-]+\b/g) ?? []).length;
 
 /** Paragraphs longer than this are hard to read on a phone. */
 const LONG_PARAGRAPH = 120;
@@ -120,6 +130,20 @@ export function checkStyle(markdown: string): StyleIssue[] {
       },
     });
   }
+  // Links copied out of ChatGPT carry its tracking tag. Links live in prose
+  // (not code), but strip from the whole body so nothing is missed.
+  const tagged = md.match(AI_UTM) ?? [];
+  if (tagged.length) {
+    issues.push({
+      id: "utm",
+      level: "fix",
+      title: `${tagged.length} link${tagged.length === 1 ? "" : "s"} tagged by ChatGPT`,
+      detail: "These links end in utm_source=chatgpt.com, which shows readers the piece came from an AI chat. Remove the tag.",
+      count: tagged.length,
+      fix: { label: "Remove the tags", apply: (m) => stripAiUtm(m) },
+    });
+  }
+
   const placeholders = prose.match(PLACEHOLDER) ?? [];
   if (placeholders.length) {
     issues.push({
