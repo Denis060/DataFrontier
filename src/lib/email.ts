@@ -306,12 +306,42 @@ export function changesRequestedEmail(a: { name: string; title: string; note: st
   );
 }
 
+/** To the writer: a receipt for a piece they sent for review. */
+export function reviewReceivedEmail(a: { name: string; title: string; resubmitted: boolean; workspaceUrl: string }) {
+  const first = escHtml(a.name.split(" ")[0] || "there");
+  return emailShell(
+    `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 14px">${a.resubmitted ? "Got your changes" : "It's with the editor"}, ${first}</h1>
+     <p style="margin:0 0 14px">Thanks for sending <strong>${escHtml(a.title)}</strong>${a.resubmitted ? " back with your changes" : ""}. An editor will read it and either publish it or send it back with a note.</p>
+     <p style="margin:0 0 18px">You'll get an email either way. Nothing else to do for now. You can still make small edits while it waits.</p>
+     ${button(a.workspaceUrl, "Go to your workspace")}`,
+    undefined,
+    `${a.title} is with the editor.`,
+  );
+}
+
+/** To a writer just added as a co-author. */
+export function coauthorAddedEmail(a: { name: string; by: string; title: string; live: boolean; url: string }) {
+  const first = escHtml(a.name.split(" ")[0] || "there");
+  return emailShell(
+    `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 14px">You're a co-author, ${first}</h1>
+     <p style="margin:0 0 14px">${escHtml(a.by)} added you as a co-author on <strong>${escHtml(a.title)}</strong>. Your name will appear in the byline, and the piece will be listed on your author page.</p>
+     <p style="margin:0 0 18px">${
+       a.live
+         ? "It's already live."
+         : "It isn't published yet. We'll email you when it goes live. If you shouldn't be on it, just reply to this email."
+     }</p>
+     ${a.live ? button(a.url, "See it live") : button(a.url, "Go to your workspace")}`,
+    undefined,
+    `${a.by} added you as a co-author.`,
+  );
+}
+
 /** To the writer: their piece is live. */
-export function articlePublishedEmail(a: { name: string; title: string; url: string }) {
+export function articlePublishedEmail(a: { name: string; title: string; url: string; coauthor?: boolean }) {
   const first = escHtml(a.name.split(" ")[0] || "there");
   return emailShell(
     `<h1 style="font-family:Georgia,serif;font-size:22px;margin:0 0 14px">You're published, ${first}</h1>
-     <p style="margin:0 0 14px"><strong>${escHtml(a.title)}</strong> is now live on Everyday Data Science, under your name.</p>
+     <p style="margin:0 0 14px"><strong>${escHtml(a.title)}</strong> is now live on Everyday Data Science, ${a.coauthor ? "with you as a co-author" : "under your name"}.</p>
      <p style="margin:0 0 18px">Sharing it with your network is the best way to get it read. Readers can follow you from the article, so they hear about your next piece.</p>
      ${button(a.url, "See it live")}
      <p style="margin:0">Thank you for writing with us.</p>`,
