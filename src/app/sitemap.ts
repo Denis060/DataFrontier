@@ -16,7 +16,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     db.from("events").select("slug, updated_at").eq("published", true),
     db.from("series").select("slug"),
     db.from("lead_magnets").select("slug, created_at").eq("is_active", true),
-    db.from("tags").select("slug"),
+    // Tag pages under 3 articles are noindex (see tag page), so leave them out here too.
+    db.from("article_tags").select("tag:tags(slug), article:articles!inner(status)").eq("article.status", "published"),
   ]);
 
   const url = (path: string) => `${SITE}${path}`;
@@ -88,8 +89,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  const tagUrls: MetadataRoute.Sitemap = (tags.data ?? []).map((t) => ({
-    url: url(`/tag/${t.slug}`),
+  const tagCounts = new Map<string, number>();
+  for (const r of (tags.data ?? []) as unknown as { tag: { slug: string } | null }[]) {
+    if (r.tag?.slug) tagCounts.set(r.tag.slug, (tagCounts.get(r.tag.slug) ?? 0) + 1);
+  }
+  const tagUrls: MetadataRoute.Sitemap = [...tagCounts].filter(([, n]) => n >= 3).map(([slug]) => ({
+    url: url(`/tag/${slug}`),
     changeFrequency: "weekly",
     priority: 0.4,
   }));
