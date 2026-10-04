@@ -10,6 +10,7 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: "Learning Paths",
   description: "Structured, self-paced series on AI, ML, and data science, read in order.",
+  alternates: { canonical: "/series" },
 };
 
 const hours = (min: number) => (min < 60 ? `${min} min` : `${Math.round((min / 60) * 10) / 10} h`);

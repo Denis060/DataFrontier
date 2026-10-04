@@ -10,6 +10,7 @@ import { getCheatSheets, paginate, toPageNumber } from "@/lib/queries";
 export const metadata: Metadata = {
   title: "Cheat Sheets",
   description: "Visual references for AI, ML, and data science, free to browse and download.",
+  alternates: { canonical: "/cheat-sheets" },
 };
 
 export const revalidate = 300;

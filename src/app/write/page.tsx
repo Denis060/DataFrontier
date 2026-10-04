@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   title: "Write for Everyday Data Science",
   description:
     "Publish your work on AI, data science, and agentic systems, or republish a post from your own blog. Byline, author page, and real editing.",
+  alternates: { canonical: "/write" },
 };
 
 const PERKS = [

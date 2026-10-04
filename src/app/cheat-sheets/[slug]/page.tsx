@@ -23,6 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${sheet.title} | Cheat Sheet`,
     description: sheet.description ?? undefined,
     openGraph: { images: sheet.image_url ? [sheet.image_url] : undefined },
+    alternates: { canonical: `/cheat-sheets/${sheet.slug}` },
   };
 }
 
