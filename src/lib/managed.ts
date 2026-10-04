@@ -305,6 +305,14 @@ export const RESOURCES: Resource[] = [
       { name: "description", label: "Description", type: "textarea", wide: true },
       { name: "includes", label: "What's inside", type: "textarea", wide: true, help: "One item per line. Shown as a checklist." },
       {
+        name: "topics",
+        label: "Show on articles about",
+        type: "text",
+        wide: true,
+        placeholder: "sql, query, database, joins",
+        help: "Comma-separated words. Articles whose title, subtitle, kicker, summary or tags mention one of them show this offer instead of the plain newsletter box. Leave blank to promote it only through its own page.",
+      },
+      {
         name: "files",
         label: "Files in the download",
         type: "textarea",

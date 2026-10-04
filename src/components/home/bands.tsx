@@ -1,3 +1,5 @@
+import { OfferPromo } from "@/components/offer-promo";
+import type { PromoOffer } from "@/lib/offer-match";
 import Link from "next/link";
 import { BookOpen, CodeXml, Earth, FileSearch, FileText, Heart, Route, Scale } from "lucide-react";
 import { Pill } from "@/components/pill";
@@ -567,6 +569,23 @@ export function EditorSection({
             </div>
           </div>
         )}
+      </div>
+    </section>
+  );
+}
+
+/** The free downloads (lead magnets), each linking to its signup page. */
+export function FreeDownloads({ offers }: { offers: PromoOffer[] }) {
+  if (offers.length === 0) return null;
+  return (
+    <section className="border-b border-border px-5 py-12 sm:px-8 lg:px-12">
+      <h2 className="mb-7 flex items-center gap-2.5 font-mono text-[11px] font-medium uppercase tracking-[2px] text-gold after:h-px after:flex-1 after:bg-border after:content-['']">
+        Free downloads
+      </h2>
+      <div className={`grid gap-5 ${offers.length > 1 ? "lg:grid-cols-2" : "max-w-[960px]"}`}>
+        {offers.slice(0, 4).map((o) => (
+          <OfferPromo key={o.slug} offer={o} variant="card" />
+        ))}
       </div>
     </section>
   );
