@@ -64,7 +64,7 @@ export default async function SeriesIndexPage() {
                     className="group flex h-full flex-col overflow-hidden rounded-lg border border-border bg-bg2 transition-colors hover:border-gold/50"
                   >
                     <CoverMosaic
-                      covers={p.parts.map((x) => x.cover_image).filter((x): x is string => !!x)}
+                      covers={p.cover_url ? [p.cover_url] : p.parts.map((x) => x.cover_image).filter((x): x is string => !!x)}
                       title={`${p.parts.length} ${p.parts.length === 1 ? "lesson" : "lessons"}`}
                       seed={p.slug}
                       steps={p.parts.length}
