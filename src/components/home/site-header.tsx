@@ -35,23 +35,29 @@ export function SiteHeader({ siteName, established, nav, ticker, profile = null,
   const [open, setOpen] = useState(false);
   const closeMenu = useCallback(() => setOpen(false), []);
   const [brand, accent] = splitBrand(siteName);
+  // The one call to action that stays visible at every width: the subscribe
+  // button (else the last button-styled link). Other buttons fold away first.
+  const buttons = nav.filter((i) => i.is_button);
+  const primary = buttons.find((b) => /subscri|newsletter/i.test(`${b.label} ${b.url}`)) ?? buttons[buttons.length - 1] ?? null;
 
   return (
     <header className="sticky top-0 z-100 border-b border-border bg-bg/90 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 w-full max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-12">
+      {/* Full width, like the page below: logo at the left edge, menu at the right. */}
+      <div className="flex h-16 w-full items-center justify-between gap-6 px-5 sm:px-8 lg:px-12">
         <Link href="/" className="flex shrink-0 items-baseline gap-2.5">
           <span className="font-serif text-[22px] font-black tracking-[-0.5px] whitespace-nowrap">
             {brand}
             <span className="text-gold">{accent}</span>
           </span>
           {established && (
-            <span className="hidden rounded-[3px] border border-teal-dim px-[7px] py-0.5 font-mono text-[10px] uppercase tracking-[2px] text-teal xl:inline">
+            <span className="hidden rounded-[3px] border border-teal-dim px-[7px] py-0.5 font-mono text-[10px] uppercase tracking-[2px] whitespace-nowrap text-teal 2xl:inline">
               est. {established}
             </span>
           )}
         </Link>
 
-        <nav className="hidden items-center gap-5 lg:flex xl:gap-6">
+        {/* The full menu needs ~1280px; below that the compact menu (☰) takes over. */}
+        <nav className="hidden min-w-0 items-center gap-4 xl:flex 2xl:gap-6">
           {nav.filter((i) => !i.is_button).map((item) =>
             isWriteLink(item.url) ? (
               // The contributor invitation gets its own look so it reads as an
@@ -77,11 +83,11 @@ export function SiteHeader({ siteName, established, nav, ticker, profile = null,
 
           <MoreMenu />
 
-          {nav.filter((i) => i.is_button).map((item) => (
+          {buttons.map((item) => (
             <Link
               key={item.id}
               href={item.url}
-              className="whitespace-nowrap rounded bg-gold px-[18px] py-2 text-[13px] font-semibold text-on-accent transition-opacity hover:opacity-85"
+              className={`${item.id === primary?.id ? "" : "hidden 2xl:inline-block"} whitespace-nowrap rounded bg-gold px-3.5 py-2 text-[13px] font-semibold text-on-accent transition-opacity hover:opacity-85 2xl:px-[18px]`}
             >
               {item.label}
             </Link>
@@ -93,9 +99,27 @@ export function SiteHeader({ siteName, established, nav, ticker, profile = null,
           <UserMenu profile={profile} />
         </nav>
 
-        <div className="flex items-center gap-2 lg:hidden">
+        <div className="flex items-center gap-2 xl:hidden">
+          {/* From tablets up, subscribe, notifications and the account stay in
+              view; only the section links move into the menu. */}
+          {primary && (
+            <Link
+              href={primary.url}
+              className="hidden whitespace-nowrap rounded bg-gold px-3.5 py-2 text-[13px] font-semibold text-on-accent transition-opacity hover:opacity-85 sm:inline-block"
+            >
+              {primary.label}
+            </Link>
+          )}
           <SearchBar />
+          {profile && (
+            <span className="hidden sm:inline-flex">
+              <NotificationBell unread={unread} />
+            </span>
+          )}
           <ThemeToggle />
+          <span className="hidden items-center sm:inline-flex">
+            <UserMenu profile={profile} />
+          </span>
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
@@ -186,7 +210,7 @@ function MobileMenu({
     <div
       id="mobile-menu"
       inert={!open}
-      className={`absolute inset-x-0 top-16 z-10 h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain border-t border-border bg-bg transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none lg:hidden ${
+      className={`absolute inset-x-0 top-16 z-10 h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain border-t border-border bg-bg transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none xl:hidden ${
         open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-2 opacity-0"
       }`}
     >
