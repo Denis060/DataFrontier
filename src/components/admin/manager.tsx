@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Loader2, Plus } from "lucide-react";
+import { ChevronDown, Loader2, Plus, Upload } from "lucide-react";
+import { useUpload } from "@/components/admin/use-upload";
 import { resourceFor, type Field } from "@/lib/managed";
 import { deleteRow, saveRow } from "@/app/admin/manage/actions";
 
@@ -234,6 +235,14 @@ function RowForm({
                   className={input}
                 />
               )}
+              {f.upload && (
+                <UploadButton
+                  spec={f.upload}
+                  onUploaded={(urls) =>
+                    set(f.name, f.upload!.mode === "append" ? [String(v ?? "").trim(), ...urls].filter(Boolean).join("\n") : urls[urls.length - 1])
+                  }
+                />
+              )}
               {f.help && <p className="mt-1 text-[11px] text-muted">{f.help}</p>}
             </div>
           );
@@ -261,6 +270,45 @@ function RowForm({
           </button>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Uploads files (to the cheat-sheets bucket, which takes images and PDFs up
+ * to 10 MB) and hands back each public link, one by one, in the order picked.
+ */
+function UploadButton({ spec, onUploaded }: { spec: NonNullable<Field["upload"]>; onUploaded: (urls: string[]) => void }) {
+  const { upload, uploading, error } = useUpload();
+  const [count, setCount] = useState(0);
+  return (
+    <div className="mt-1.5 flex flex-wrap items-center gap-2">
+      <label className="inline-flex cursor-pointer items-center gap-1.5 rounded border border-border px-3 py-1.5 text-[12px] font-semibold hover:bg-surface-1">
+        {uploading ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <Upload className="size-3.5" aria-hidden />}
+        {uploading ? "Uploading…" : (spec.label ?? "Upload")}
+        <input
+          type="file"
+          accept={spec.accept}
+          multiple={spec.mode === "append"}
+          className="hidden"
+          onChange={async (e) => {
+            const files = Array.from(e.target.files ?? []);
+            e.target.value = "";
+            // Upload in the order picked, then hand all links back at once.
+            const urls: string[] = [];
+            for (const file of files) {
+              const url = await upload(file, "cheat-sheets");
+              if (url) urls.push(url);
+            }
+            if (urls.length) {
+              onUploaded(urls);
+              setCount((n) => n + urls.length);
+            }
+          }}
+        />
+      </label>
+      {count > 0 && !uploading && <span className="text-[11px] text-teal">{count} uploaded. Save to keep {count === 1 ? "it" : "them"}.</span>}
+      {error && <span className="text-[11px] text-red">{error}</span>}
     </div>
   );
 }
