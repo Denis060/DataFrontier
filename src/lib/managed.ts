@@ -39,6 +39,11 @@ export type Field = {
   defaultValue?: string;
   /** Only show (and save) this field when another field has one of these values. */
   showWhen?: { field: string; in: string[] };
+  /**
+   * An Upload button under the field. "append" adds each uploaded file's link
+   * on its own line (multi-line lists); "replace" sets the field to the link.
+   */
+  upload?: { accept: string; mode: "append" | "replace"; label?: string };
 };
 
 export type Resource = {
@@ -318,9 +323,17 @@ export const RESOURCES: Resource[] = [
         type: "textarea",
         required: true,
         wide: true,
-        help: "One link per line (images or PDFs, e.g. a cheat sheet's image link). They're merged in this order into one PDF. Only confirmed subscribers can download it.",
+        help: "Upload images or PDFs (or paste links, one per line). They're merged in this order into one PDF; reorder the lines to change the order. Only confirmed subscribers or signed-in readers can download it.",
+        upload: { accept: "image/png,image/jpeg,image/webp,application/pdf", mode: "append", label: "Upload images or PDFs" },
       },
-      { name: "cover_image", label: "Cover image", type: "url", wide: true, help: "Optional. Leave blank to use the first image in the files." },
+      {
+        name: "cover_image",
+        label: "Cover image",
+        type: "url",
+        wide: true,
+        help: "Optional. Leave blank to use the first image in the files.",
+        upload: { accept: "image/png,image/jpeg,image/webp", mode: "replace", label: "Upload a cover" },
+      },
       active("Live (the page accepts signups)"),
       sortField,
     ],
