@@ -35,6 +35,10 @@ export function SiteHeader({ siteName, established, nav, ticker, profile = null,
   const [open, setOpen] = useState(false);
   const closeMenu = useCallback(() => setOpen(false), []);
   const [brand, accent] = splitBrand(siteName);
+  // The one call to action that stays visible at every width: the subscribe
+  // button (else the last button-styled link). Other buttons fold away first.
+  const buttons = nav.filter((i) => i.is_button);
+  const primary = buttons.find((b) => /subscri|newsletter/i.test(`${b.label} ${b.url}`)) ?? buttons[buttons.length - 1] ?? null;
 
   return (
     <header className="sticky top-0 z-100 border-b border-border bg-bg/90 backdrop-blur-xl">
@@ -79,11 +83,11 @@ export function SiteHeader({ siteName, established, nav, ticker, profile = null,
 
           <MoreMenu />
 
-          {nav.filter((i) => i.is_button).map((item) => (
+          {buttons.map((item) => (
             <Link
               key={item.id}
               href={item.url}
-              className="whitespace-nowrap rounded bg-gold px-3.5 py-2 text-[13px] font-semibold text-on-accent transition-opacity hover:opacity-85 2xl:px-[18px]"
+              className={`${item.id === primary?.id ? "" : "hidden 2xl:inline-block"} whitespace-nowrap rounded bg-gold px-3.5 py-2 text-[13px] font-semibold text-on-accent transition-opacity hover:opacity-85 2xl:px-[18px]`}
             >
               {item.label}
             </Link>
@@ -96,8 +100,26 @@ export function SiteHeader({ siteName, established, nav, ticker, profile = null,
         </nav>
 
         <div className="flex items-center gap-2 xl:hidden">
+          {/* From tablets up, subscribe, notifications and the account stay in
+              view; only the section links move into the menu. */}
+          {primary && (
+            <Link
+              href={primary.url}
+              className="hidden whitespace-nowrap rounded bg-gold px-3.5 py-2 text-[13px] font-semibold text-on-accent transition-opacity hover:opacity-85 sm:inline-block"
+            >
+              {primary.label}
+            </Link>
+          )}
           <SearchBar />
+          {profile && (
+            <span className="hidden sm:inline-flex">
+              <NotificationBell unread={unread} />
+            </span>
+          )}
           <ThemeToggle />
+          <span className="hidden items-center sm:inline-flex">
+            <UserMenu profile={profile} />
+          </span>
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
