@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PDFDocument } from "pdf-lib";
 import { createAdminClient } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/auth";
 import { offerFiles } from "@/lib/free-offers";
 
 // Built per request from the offer's current files, so edits in admin show up
@@ -17,16 +18,20 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
   const url = new URL(request.url);
   const token = url.searchParams.get("t");
   const landing = new URL(`/free/${slug}`, url.origin);
-  if (!token) return NextResponse.redirect(landing);
+  // Signed-in readers download straight away, as for cheat sheets.
+  const signedIn = !!(await getCurrentProfile());
+  if (!token && !signedIn) return NextResponse.redirect(landing);
 
   const db = createAdminClient();
   const [{ data: sub }, { data: offer }] = await Promise.all([
-    db.from("newsletter_subscribers").select("id").eq("confirm_token", token).eq("status", "confirmed").maybeSingle(),
+    token
+      ? db.from("newsletter_subscribers").select("id").eq("confirm_token", token).eq("status", "confirmed").maybeSingle()
+      : Promise.resolve({ data: null }),
     // Not filtered by is_active: links already emailed keep working.
     db.from("lead_magnets").select("slug, title, files").eq("slug", slug).maybeSingle(),
   ]);
   if (!offer) return NextResponse.redirect(new URL("/", url.origin));
-  if (!sub) return NextResponse.redirect(landing);
+  if (!sub && !signedIn) return NextResponse.redirect(landing);
 
   const pdf = await PDFDocument.create();
   pdf.setTitle(offer.title);
