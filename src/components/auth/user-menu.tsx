@@ -22,7 +22,7 @@ export function UserMenu({ profile }: { profile: SessionProfile }) {
     return (
       <Link
         href="/login"
-        className="text-[13px] font-medium tracking-[0.3px] text-muted transition-colors hover:text-ink"
+        className="text-[13px] font-medium tracking-[0.3px] whitespace-nowrap text-muted transition-colors hover:text-ink"
       >
         Sign in
       </Link>
