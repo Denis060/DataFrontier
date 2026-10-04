@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ResourcesManager, type Resource } from "@/components/admin/resources-manager";
 
-export const metadata = { title: "Your book | Newsroom", robots: { index: false } };
+export const metadata = { title: "Books & resources | Newsroom", robots: { index: false } };
 
 export default async function AdminResourcesPage() {
   const profile = await requireStaff();
@@ -20,9 +20,9 @@ export default async function AdminResourcesPage() {
   return (
     <AdminShell role={profile.role} name={profile.full_name}>
       <div className="w-full max-w-[1440px] px-5 py-10 sm:px-8">
-        <h1 className="mb-1 font-serif text-3xl font-black tracking-[-0.5px]">Your book</h1>
+        <h1 className="mb-1 font-serif text-3xl font-black tracking-[-0.5px]">Books &amp; resources</h1>
         <p className="mb-8 text-[13px] text-muted">
-          The box in the homepage “Start here” section, headed “The book”. Add more items (a course, a template, a tool) and the heading becomes “Books &amp; resources”. Lowest order shows first; untick “Show on homepage” to hide one.
+          The “Books &amp; resources” column in the homepage “Start here” section: your book, books by others, courses, tools you recommend. Say whose it is in the description. Lowest order shows first; untick “Show on homepage” to hide one.
         </p>
         <ResourcesManager resources={(data ?? []) as Resource[]} />
       </div>
