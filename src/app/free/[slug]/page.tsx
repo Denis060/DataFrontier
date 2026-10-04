@@ -4,6 +4,8 @@ import { Check } from "lucide-react";
 import { Shell } from "@/components/layout/shell";
 import { OfferForm } from "@/components/offer-form";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/auth";
+import { Download } from "lucide-react";
 import { lines, OFFER_COLUMNS, offerCover, type Offer } from "@/lib/free-offers";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -33,8 +35,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  * Built to be linked from a social post, so nothing competes with the form.
  */
 export default async function FreeOfferPage({ params }: Props) {
-  const offer = await getOffer((await params).slug);
+  const [offer, viewer] = await Promise.all([getOffer((await params).slug), getCurrentProfile()]);
   if (!offer) notFound();
+  // Signed in: no email to ask for, just the file.
+  const box = viewer ? (
+    <div className="flex flex-col gap-2.5">
+      <a
+        href={`/free/${offer.slug}/download`}
+        className="inline-flex w-full items-center justify-center gap-2 rounded bg-gold px-5 py-3.5 text-[15px] font-bold text-on-accent hover:opacity-85"
+      >
+        <Download className="size-4" aria-hidden />
+        Download {offer.title} (PDF)
+      </a>
+      <p className="text-[12px] text-muted">You&apos;re signed in, so it&apos;s yours straight away.</p>
+    </div>
+  ) : null;
   const cover = offerCover(offer);
   const inside = lines(offer.includes);
 
@@ -48,7 +63,7 @@ export default async function FreeOfferPage({ params }: Props) {
 
           {/* On phones the form comes straight after the pitch, before the details. */}
           <div className="mt-6 rounded-lg border border-gold/40 bg-gold-dim p-5 lg:hidden">
-            <OfferForm slug={offer.slug} title={offer.title} id="offer-email-m" />
+            {box ?? <OfferForm slug={offer.slug} title={offer.title} id="offer-email-m" />}
           </div>
 
           {cover && (
@@ -82,7 +97,7 @@ export default async function FreeOfferPage({ params }: Props) {
         <aside className="hidden lg:sticky lg:top-24 lg:block">
           <div className="rounded-lg border border-gold/40 bg-gold-dim p-6">
             <p className="mb-4 font-serif text-xl font-black">Get it free</p>
-            <OfferForm slug={offer.slug} title={offer.title} />
+            {box ?? <OfferForm slug={offer.slug} title={offer.title} />}
           </div>
         </aside>
       </div>
