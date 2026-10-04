@@ -7,6 +7,7 @@ import { getEvents, paginate, toPageNumber } from "@/lib/queries";
 export const metadata: Metadata = {
   title: "Events",
   description: "AI and data-science events worth your time, ours and the community's.",
+  alternates: { canonical: "/events" },
 };
 
 export const revalidate = 300;

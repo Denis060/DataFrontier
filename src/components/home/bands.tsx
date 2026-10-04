@@ -575,18 +575,25 @@ export function EditorSection({
 }
 
 /** The free downloads (lead magnets), each linking to its signup page. */
+/** The free downloads (lead magnets): the first two here, the rest on /free. */
 export function FreeDownloads({ offers }: { offers: PromoOffer[] }) {
   if (offers.length === 0) return null;
+  const shown = offers.slice(0, 2);
   return (
     <section className="border-b border-border px-5 py-12 sm:px-8 lg:px-12">
       <h2 className="mb-7 flex items-center gap-2.5 font-mono text-[11px] font-medium uppercase tracking-[2px] text-gold after:h-px after:flex-1 after:bg-border after:content-['']">
         Free downloads
       </h2>
-      <div className={`grid gap-5 ${offers.length > 1 ? "lg:grid-cols-2" : "max-w-[960px]"}`}>
-        {offers.slice(0, 4).map((o) => (
+      <div className={`grid gap-5 ${shown.length > 1 ? "lg:grid-cols-2" : "max-w-[960px]"}`}>
+        {shown.map((o) => (
           <OfferPromo key={o.slug} offer={o} variant="card" />
         ))}
       </div>
+      {offers.length > shown.length && (
+        <Link href="/free" className="mt-5 inline-block text-[13px] font-semibold text-gold hover:underline">
+          See all {offers.length} free downloads →
+        </Link>
+      )}
     </section>
   );
 }
