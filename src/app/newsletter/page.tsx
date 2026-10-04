@@ -6,6 +6,7 @@ import { getHomeData } from "@/lib/queries";
 export const metadata: Metadata = {
   title: "Subscribe",
   description: "Join the free weekly newsletter for AI and data science practitioners.",
+  alternates: { canonical: "/newsletter" },
 };
 
 export default async function NewsletterPage() {

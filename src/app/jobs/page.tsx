@@ -6,6 +6,7 @@ import { getJobs } from "@/lib/queries";
 export const metadata: Metadata = {
   title: "AI & Data Science Jobs",
   description: "Curated roles in AI and data science, screened for quality.",
+  alternates: { canonical: "/jobs" },
 };
 
 export const revalidate = 300;
