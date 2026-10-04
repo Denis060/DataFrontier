@@ -36,7 +36,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
   if (!data) notFound();
   const { series, articles } = data;
   const minutes = articles.reduce((m, a) => m + (a.reading_time ?? 0), 0);
-  const covers = articles.map((a) => a.cover_image).filter((x): x is string => !!x);
+  const covers = series.cover_url ? [series.cover_url] : articles.map((a) => a.cover_image).filter((x): x is string => !!x);
   const others = all.filter((p) => p.slug !== slug).slice(0, 4);
 
   return (
@@ -135,7 +135,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
                     <li key={p.id}>
                       <Link href={`/series/${p.slug}`} className="group flex items-center gap-3">
                         <CoverMosaic
-                          covers={p.parts.map((x) => x.cover_image).filter((x): x is string => !!x).slice(0, 1)}
+                          covers={(p.cover_url ? [p.cover_url] : p.parts.map((x) => x.cover_image).filter((x): x is string => !!x)).slice(0, 1)}
                           title=""
                           seed={p.slug}
                           steps={0}
