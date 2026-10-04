@@ -34,6 +34,8 @@ export async function saveSeries(fd: FormData): Promise<{ error: string } | { ok
     description: str(fd, "description") || null,
     long_description: str(fd, "long_description") || null,
     sort_order: Number(str(fd, "sort_order")) || 0,
+    // The path's own cover; blank falls back to its lessons' covers.
+    cover_url: str(fd, "cover_url") || null,
   };
 
   const db = await createClient();
@@ -58,4 +60,34 @@ export async function deleteSeries(id: string): Promise<void> {
   await db.from("series").delete().eq("id", id);
   revalidatePath("/admin/series");
   revalidatePath("/series");
+}
+
+/**
+ * Move a lesson one place up or down within its path by swapping it with its
+ * neighbour. Positions are renumbered 1..n first, so gaps or duplicates from
+ * earlier edits can never make a move do nothing.
+ */
+export async function moveLesson(seriesId: string, articleId: string, dir: -1 | 1): Promise<{ error: string } | { ok: true }> {
+  await requireEditor();
+  const db = await createClient();
+  const { data } = await db
+    .from("articles")
+    .select("id, series_position, created_at")
+    .eq("series_id", seriesId)
+    .order("series_position", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: true });
+  const ids = (data ?? []).map((a) => a.id);
+  const i = ids.indexOf(articleId);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= ids.length) return { ok: true };
+  [ids[i], ids[j]] = [ids[j], ids[i]];
+  for (let k = 0; k < ids.length; k++) {
+    const { error } = await db.from("articles").update({ series_position: k + 1 }).eq("id", ids[k]);
+    if (error) return { error: error.message };
+  }
+  const { data: series } = await db.from("series").select("slug").eq("id", seriesId).maybeSingle();
+  revalidatePath("/admin/series");
+  revalidatePath("/series");
+  if (series?.slug) revalidatePath(`/series/${series.slug}`);
+  return { ok: true };
 }

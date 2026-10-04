@@ -552,6 +552,7 @@ export type Database = {
       }
       lead_magnets: {
         Row: {
+          topics: string | null
           created_at: string
           cover_image: string | null
           description: string | null
@@ -565,6 +566,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          topics?: string | null
           created_at?: string
           cover_image?: string | null
           description?: string | null
@@ -578,6 +580,7 @@ export type Database = {
           title: string
         }
         Update: {
+          topics?: string | null
           created_at?: string
           cover_image?: string | null
           description?: string | null

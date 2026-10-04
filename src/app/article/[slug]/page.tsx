@@ -35,6 +35,9 @@ import { ReactionButton } from "@/components/article/reaction-button";
 import { BookmarkButton } from "@/components/article/bookmark-button";
 import { CommentsProvider, CommentButton, CommentsReveal } from "@/components/article/comments-disclosure";
 import { InlineSubscribe } from "@/components/article/inline-subscribe";
+import { OfferPromo } from "@/components/offer-promo";
+import { ReadTracker } from "@/components/learning/read-tracker";
+import { offerForArticle } from "@/lib/offer-match";
 import { Comments } from "@/components/article/comments";
 import { ViewCounter } from "@/components/article/view-counter";
 import { SiteHeader } from "@/components/home/site-header";
@@ -164,6 +167,14 @@ export default async function ArticlePage({ params }: Props) {
   ]);
 
   const seriesNav = article.series_id ? await getArticleSeriesNav(article.series_id, article.id) : null;
+  // A free offer on this article's subject replaces the plain newsletter box.
+  const offer = await offerForArticle({
+    title: article.title,
+    subtitle: article.subtitle,
+    kicker: article.kicker,
+    excerpt: article.excerpt,
+    tags: extra.tags.map((t) => t.name),
+  });
 
   const unread = await getUnreadCount(profile?.id ?? null);
   const { settings } = chrome;
@@ -372,6 +383,8 @@ export default async function ArticlePage({ params }: Props) {
             ) : (
               <p className="text-muted">This article has no body yet.</p>
             )}
+            {/* Learning-path progress, kept on the reader's device. */}
+            {!isDraft && <ReadTracker slug={article.slug} />}
 
             {extra.tags.length > 0 && (
               <ul className="mt-10 flex flex-wrap gap-2" aria-label="Tags">
@@ -455,7 +468,7 @@ export default async function ArticlePage({ params }: Props) {
               />
             )}
 
-            <InlineSubscribe slug={article.slug} />
+            {offer ? <OfferPromo offer={offer} /> : <InlineSubscribe slug={article.slug} />}
 
             {/* Repeated at the foot: the reader who just finished is the one
                 most likely to react and share. */}
@@ -525,6 +538,12 @@ export default async function ArticlePage({ params }: Props) {
             <RailSection title="Share" className="hidden lg:block">
               <ShareBar url={shareUrl} title={article.title} />
             </RailSection>
+
+            {offer && (
+              <div className="hidden lg:block">
+                <OfferPromo offer={offer} variant="rail" />
+              </div>
+            )}
 
             {related.length > 0 && (
               <RailSection title={`More in ${article.category?.name ?? "this topic"}`}>
