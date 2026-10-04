@@ -302,7 +302,7 @@ export function StartHere({
           <div>
             <p className={`${colTitle} text-ink`}>
               <BookOpen className="size-3.5" aria-hidden />
-              The book
+              Books & resources
             </p>
             {resources.map((r) => {
               const external = /^https?:\/\//.test(r.url);

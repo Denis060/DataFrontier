@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CircleUser, FileText, GraduationCap, Heart, Inbox, LayoutDashboard, LayoutGrid, LogOut, MessagesSquare, Shapes, Mail, MessageSquare, Settings, Users, Wrench } from "lucide-react";
+import { CircleUser, FileText, GraduationCap, Heart, Inbox, LayoutDashboard, LayoutGrid, LogOut, MessagesSquare, Shapes, Mail, MessageSquare, Settings, Users, BookOpen } from "lucide-react";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { createClient } from "@/lib/supabase/server";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -13,7 +13,7 @@ const NAV = [
   { href: "/admin/responses", label: "On my pieces", icon: MessagesSquare, roles: ["admin", "editor", "author"] },
   { href: "/admin/profile", label: "My profile", icon: CircleUser, roles: ["admin", "editor", "author"] },
   { href: "/admin/series", label: "Learning Paths", icon: GraduationCap, roles: ["admin", "editor"] },
-  { href: "/admin/resources", label: "Resources", icon: Wrench, roles: ["admin", "editor"] },
+  { href: "/admin/resources", label: "Books & resources", icon: BookOpen, roles: ["admin", "editor"] },
   { href: "/admin/comments", label: "Comments", icon: MessageSquare, roles: ["admin", "editor"] },
   { href: "/admin/applications", label: "Applications", icon: Inbox, roles: ["admin", "editor"] },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail, roles: ["admin", "editor"] },
