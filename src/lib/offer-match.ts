@@ -13,7 +13,9 @@ async function activeOffers(): Promise<Row[]> {
     .from("lead_magnets")
     .select("slug, title, tagline, cover_image, files, topics, sort_order")
     .eq("is_active", true)
-    .order("sort_order");
+    .order("sort_order")
+    // Same Order number: oldest first, so a new test never jumps ahead.
+    .order("created_at", { ascending: true });
   if (error) return [];
   return (data ?? []) as Row[];
 }
