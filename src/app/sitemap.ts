@@ -8,13 +8,15 @@ export const revalidate = 3600;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const db = await createClient();
 
-  const [articles, categories, authors, sheets, events, series] = await Promise.all([
+  const [articles, categories, authors, sheets, events, series, offers, tags] = await Promise.all([
     db.from("articles").select("slug, updated_at").eq("status", "published"),
     db.from("categories").select("slug"),
     db.from("profiles").select("slug").not("slug", "is", null),
     db.from("cheat_sheets").select("slug, created_at").eq("published", true),
     db.from("events").select("slug, updated_at").eq("published", true),
     db.from("series").select("slug"),
+    db.from("lead_magnets").select("slug, created_at").eq("is_active", true),
+    db.from("tags").select("slug"),
   ]);
 
   const url = (path: string) => `${SITE}${path}`;
@@ -24,6 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: url("/jobs"), changeFrequency: "daily", priority: 0.7 },
     { url: url("/series"), changeFrequency: "weekly", priority: 0.7 },
     { url: url("/cheat-sheets"), changeFrequency: "weekly", priority: 0.7 },
+    { url: url("/free"), changeFrequency: "weekly", priority: 0.7 },
     { url: url("/events"), changeFrequency: "weekly", priority: 0.7 },
     { url: url("/newsletter"), changeFrequency: "monthly", priority: 0.6 },
     { url: url("/newsletter/archive"), changeFrequency: "weekly", priority: 0.5 },
@@ -78,5 +81,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.5,
   }));
 
-  return [...staticPages, ...articleUrls, ...categoryUrls, ...authorUrls, ...sheetUrls, ...eventUrls, ...seriesUrls];
+  const offerUrls: MetadataRoute.Sitemap = (offers.data ?? []).map((o) => ({
+    url: url(`/free/${o.slug}`),
+    lastModified: o.created_at ?? undefined,
+    changeFrequency: "monthly",
+    priority: 0.7,
+  }));
+
+  const tagUrls: MetadataRoute.Sitemap = (tags.data ?? []).map((t) => ({
+    url: url(`/tag/${t.slug}`),
+    changeFrequency: "weekly",
+    priority: 0.4,
+  }));
+
+  return [...staticPages, ...articleUrls, ...categoryUrls, ...authorUrls, ...sheetUrls, ...eventUrls, ...seriesUrls, ...offerUrls, ...tagUrls];
 }
